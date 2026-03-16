@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>CCS | Login</title>
+  <link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="login-page">
+  <!-- NAVBAR -->
+  <nav>
+    <span class="nav-brand">College of Computer Studies Sit-in Monitoring System</span>
+    <ul class="nav-links">
+      <li><a href="#">Home</a></li>
+      <li><a href="#">Community ▾</a></li>
+      <li><a href="#">About</a></li>
+      <li><a href="#" class="active">Login</a></li>
+      <li><a href="register.html">Register</a></li>
+    </ul>
+  </nav>
+
+  <!-- MAIN CONTENT -->
+  <main>
+    <div class="login-card">
+      <!-- FIXED LOGO - NO FALLBACK BOX -->
+      <div class="logo-side">
+        <img src="images/logo.png" alt="UC CCS Logo" style="width:260px;height:auto;display:block;"/>
+      </div>
+
+      <!-- Form -->
+      <div class="form-side">
+        <form id="login-form">
+          <div class="field-group">
+            <input type="text" id="idNumber" name="idNumber" placeholder="Enter a valid id number" required/>
+            <label for="idNumber">ID Number</label>
+          </div>
+
+          <div class="field-group">
+            <input type="password" id="password" name="password" placeholder="Enter password" required/>
+            <label for="password">Password</label>
+          </div>
+
+          <div class="row-options">
+            <label class="remember">
+              <input type="checkbox" id="rememberMe"/>
+              Remember me
+            </label>
+            <a href="#" class="forgot">Forgot password?</a>
+          </div>
+
+          <button type="submit" class="btn-login">Login</button>
+
+          <p class="register-hint">
+            Don't have an account? <a href="register.html">Register</a>
+          </p>
+        </form>
+      </div>
+    </div>
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>
