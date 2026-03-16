@@ -1,20 +1,28 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>CCS | Register</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style-bootstrap.css">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Serif+Display&display=swap" rel="stylesheet"/>
+  <link href="style.css" rel="stylesheet"/>
 </head>
-<body class="bg-light min-vh-100">
-  <nav class="navbar navbar-expand-lg navbar-dark" style="background: #1e3a8a;">
-    <div class="container-fluid">
-      <span class="navbar-brand fw-semibold">College of Computer Studies Sit-in Monitoring System</span>
-      <ul class="navbar-nav ms-auto">
+<body>
+
+  <!-- Navbar -->
+  <nav class="navbar navbar-expand-lg navbar-dark px-4">
+    <a class="navbar-brand fw-semibold d-flex align-items-center" href="index.html" style="font-size:.9rem; text-decoration: none;">
+      <img src="images/UC_LOGO.png" alt="UC Logo" class="nav-logo me-2" onerror="this.src='images/UC_LOGO.jpg'; this.onerror=null;"/>
+      College of Computer Studies Sit-in Monitoring System
+    </a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMenu">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navMenu">
+      <ul class="navbar-nav ms-auto gap-1">
         <li class="nav-item"><a class="nav-link" href="index.html">Home</a></li>
-        <li class="nav-item dropdown"><a class="nav-link dropdown-toggle" href="#">Community</a></li>
+        <li class="nav-item"><a class="nav-link" href="#">Community ▾</a></li>
         <li class="nav-item"><a class="nav-link" href="#">About</a></li>
         <li class="nav-item"><a class="nav-link" href="index.html">Login</a></li>
         <li class="nav-item"><a class="nav-link active" href="#">Register</a></li>
@@ -22,164 +30,106 @@
     </div>
   </nav>
 
-  <main class="container py-5">
-    <div class="row justify-content-center">
-      <div class="col-xl-10">
-        <div class="card shadow-lg border-0 rounded-4 position-relative">
-          <a href="index.html" class="btn btn-danger position-absolute top-0 start-0 m-3 z-3 fw-semibold px-4 py-2 rounded-3">← Back</a>
-          
-          <div class="card-body p-5">
-            <div class="row align-items-center">
-              <div class="col-lg-7">
-                <h1 class="h2 fw-bold text-center mb-5 text-dark">Sign up</h1>
-                
-                <form id="register-form">
-                  <!-- 1. ID Number -->
-                  <div class="mb-4">
-                    <label class="form-label fw-medium text-muted">ID Number</label>
-                    <div class="form-floating">
-                      <input type="text" class="form-control" id="idNumber" name="idNumber" required>
-                      <label for="idNumber">ID Number</label>
-                    </div>
-                  </div>
+  <!-- Main -->
+  <div class="d-flex justify-content-center align-items-start py-4 px-3 register-wrapper">
+    <div class="register-card bg-white">
+      <!-- Header -->
+      <div class="card-header-ccs d-flex align-items-center justify-content-between">
+        <div>
+          <h1 class="mb-1">Create your account</h1>
+          <p>Fill in your details to get started with the sit-in system</p>
+        </div>
+        <a href="index.html" class="btn-back">← Back</a>
+      </div>
 
-                  <!-- 2. Last Name -->
-                  <div class="mb-4">
-                    <label class="form-label fw-medium text-muted">Last Name</label>
-                    <div class="form-floating">
-                      <input type="text" class="form-control" id="lastName" name="lastName" required>
-                      <label for="lastName">Last Name</label>
-                    </div>
-                  </div>
-
-                  <!-- 3. First Name -->
-                  <div class="mb-4">
-                    <label class="form-label fw-medium text-muted">First Name</label>
-                    <div class="form-floating">
-                      <input type="text" class="form-control" id="firstName" name="firstName" required>
-                      <label for="firstName">First Name</label>
-                    </div>
-                  </div>
-
-                  <!-- 4. Middle Name -->
-                  <div class="mb-4">
-                    <label class="form-label fw-medium text-muted">Middle Name</label>
-                    <div class="form-floating">
-                      <input type="text" class="form-control" id="middleName" name="middleName">
-                      <label for="middleName">Middle Name</label>
-                    </div>
-                  </div>
-
-                  <!-- 5. Course (DROPDOWN) -->
-                  <div class="mb-4">
-                    <label class="form-label fw-medium text-muted">Course</label>
-                    <div class="form-floating">
-                      <select class="form-select" id="course" name="course" required>
-                        <option value="" disabled selected>Choose your course</option>
-                        <option value="BSIT">BSIT - Information Technology</option>
-                        <option value="BSCS">BSCS - Computer Science</option>
-                        <option value="BSE">BSE - Engineering</option>
-                        <option value="BSN">BSN - Nursing</option>
-                        <option value="BSA">BSA - Accountancy</option>
-                      </select>
-                      <label for="course">Course</label>
-                    </div>
-                  </div>
-
-                  <!-- 6. Course Level -->
-                  <div class="mb-4">
-                    <label class="form-label fw-medium text-muted">Course Level</label>
-                    <div class="form-floating">
-                      <input type="number" class="form-control" id="courseLevel" name="courseLevel" value="1" min="1" max="5" required>
-                      <label for="courseLevel">Course Level</label>
-                    </div>
-                  </div>
-
-                  <!-- 7. Email -->
-                  <div class="mb-4">
-                    <label class="form-label fw-medium text-muted">Email</label>
-                    <div class="form-floating">
-                      <input type="email" class="form-control" id="email" name="email" required>
-                      <label for="email">Email</label>
-                    </div>
-                  </div>
-
-                  <!-- 8. Address -->
-                  <div class="mb-4">
-                    <label class="form-label fw-medium text-muted">Address</label>
-                    <div class="form-floating">
-                      <input type="text" class="form-control" id="address" name="address" required>
-                      <label for="address">Address</label>
-                    </div>
-                  </div>
-
-                  <!-- 9. Password -->
-                  <div class="mb-4">
-                    <label class="form-label fw-medium text-muted">Password</label>
-                    <div class="form-floating">
-                      <input type="password" class="form-control" id="password" name="password" required>
-                      <label for="password">Password</label>
-                    </div>
-                  </div>
-
-                  <!-- 10. Repeat Password -->
-                  <div class="mb-4">
-                    <label class="form-label fw-medium text-muted">Repeat Password</label>
-                    <div class="form-floating">
-                      <input type="password" class="form-control" id="repeatPassword" name="repeatPassword" required>
-                      <label for="repeatPassword">Repeat your password</label>
-                    </div>
-                  </div>
-
-                  <button type="submit" class="btn btn-primary btn-lg w-100 fw-semibold py-3">Register</button>
-                </form>
-              </div>
-
-              <div class="col-lg-5 d-none d-lg-flex align-items-center justify-content-center">
-                <svg class="svg-illustration" viewBox="0 0 200 280" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <rect x="90" y="30" width="100" height="145" rx="10" fill="#e8edf5" stroke="#c5cfe0" stroke-width="1.5"/>
-                  <rect x="98" y="50" width="84" height="18" rx="4" fill="#c7d2e8"/>
-                  <circle cx="121" cy="59" r="7" fill="#9aa8c9"/>
-                  <circle cx="121" cy="59" r="4" fill="#fff"/>
-                  <rect x="108" y="88" width="8" height="8" rx="2" fill="#9aa8c9"/>
-                  <rect x="120" y="88" width="8" height="8" rx="2" fill="#9aa8c9"/>
-                  <rect x="132" y="88" width="8" height="8" rx="2" fill="#9aa8c9"/>
-                  <rect x="144" y="88" width="8" height="8" rx="2" fill="#9aa8c9"/>
-                  <rect x="156" y="88" width="8" height="8" rx="2" fill="#9aa8c9"/>
-                  <rect x="108" y="102" width="8" height="8" rx="2" fill="#9aa8c9"/>
-                  <rect x="120" y="102" width="8" height="8" rx="2" fill="#9aa8c9"/>
-                  <rect x="132" y="102" width="8" height="8" rx="2" fill="#9aa8c9"/>
-                  <rect x="144" y="102" width="8" height="8" rx="2" fill="#9aa8c9"/>
-                  <rect x="156" y="102" width="8" height="8" rx="2" fill="#c5cfe0"/>
-                  <rect x="124" y="120" width="48" height="16" rx="4" fill="#ef4444"/>
-                  <text x="148" y="131" text-anchor="middle" fill="#fff" font-size="7" font-family="sans-serif" font-weight="600">Sign Up</text>
-                  <circle cx="60" cy="95" r="18" fill="#f5c09a"/>
-                  <ellipse cx="60" cy="79" rx="16" ry="8" fill="#2d1f0e"/>
-                  <rect x="36" y="110" width="50" height="55" rx="12" fill="#6366f1"/>
-                  <path d="M36 120 Q10 130 15 155" stroke="#6366f1" stroke-width="14" stroke-linecap="round" fill="none"/>
-                  <path d="M86 120 Q110 115 108 100" stroke="#6366f1" stroke-width="14" stroke-linecap="round" fill="none"/>
-                  <circle cx="108" cy="97" r="7" fill="#f5c09a"/>
-                  <rect x="8" y="148" width="36" height="50" rx="5" fill="#d1d9eb" stroke="#b0bcd5" stroke-width="1"/>
-                  <rect x="12" y="153" width="28" height="38" rx="3" fill="#f0f4ff"/>
-                  <rect x="45" y="163" width="18" height="55" rx="8" fill="#f59e0b"/>
-                  <rect x="63" y="163" width="18" height="55" rx="8" fill="#f59e0b"/>
-                  <ellipse cx="54" cy="218" rx="12" ry="6" fill="#dc2626"/>
-                  <ellipse cx="72" cy="218" rx="12" ry="6" fill="#dc2626"/>
-                  <ellipse cx="50" cy="248" rx="45" ry="12" fill="#dde4f0" opacity=".6"/>
-                  <ellipse cx="140" cy="258" rx="35" ry="9" fill="#dde4f0" opacity=".5"/>
-                </svg>
-              </div>
+      <!-- Body -->
+      <div class="p-4 p-md-5">
+        <form id="register-form">
+          <!-- Personal Info -->
+          <p class="section-heading">Personal Information</p>
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label for="idNumber" class="form-label">ID Number</label>
+              <input type="text" class="form-control" id="idNumber" name="idNumber" placeholder="e.g. 20-1234-567" required/>
+            </div>
+            <div class="col-md-6">
+              <label for="email" class="form-label">Email Address</label>
+              <input type="email" class="form-control" id="email" name="email" placeholder="you@example.com" required/>
+            </div>
+            <div class="col-md-4">
+              <label for="lastName" class="form-label">Last Name</label>
+              <input type="text" class="form-control" id="lastName" name="lastName" placeholder="Dela Cruz" required/>
+            </div>
+            <div class="col-md-4">
+              <label for="firstName" class="form-label">First Name</label>
+              <input type="text" class="form-control" id="firstName" name="firstName" placeholder="Juan" required/>
+            </div>
+            <div class="col-md-4">
+              <label for="middleName" class="form-label">
+                Middle Name <span class="text-muted fw-normal" style="font-size:.7rem;">(optional)</span>
+              </label>
+              <input type="text" class="form-control" id="middleName" name="middleName" placeholder="Santos"/>
+            </div>
+            <div class="col-12">
+              <label for="address" class="form-label">Address</label>
+              <input type="text" class="form-control" id="address" name="address" placeholder="City, Province" required/>
             </div>
           </div>
-        </div>
+
+          <!-- Academic Details -->
+          <p class="section-heading">Academic Details</p>
+          <div class="row g-3">
+            <div class="col-md-8">
+              <label for="course" class="form-label">Course</label>
+              <select class="form-select" id="course" name="course" required>
+                <option value="" disabled selected>Choose your course</option>
+                <option value="BSIT">BSIT — Information Technology</option>
+                <option value="BSCS">BSCS — Computer Science</option>
+                <option value="BSE">BSE — Engineering</option>
+                <option value="BSN">BSN — Nursing</option>
+                <option value="BSA">BSA — Accountancy</option>
+              </select>
+            </div>
+            <div class="col-md-4">
+              <label for="courseLevel" class="form-label">Year Level</label>
+              <select class="form-select" id="courseLevel" name="courseLevel" required>
+                <option value="" disabled selected>Select year</option>
+                <option value="1">1st Year</option>
+                <option value="2">2nd Year</option>
+                <option value="3">3rd Year</option>
+                <option value="4">4th Year</option>
+                <option value="5">5th Year</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Security -->
+          <p class="section-heading">Security</p>
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label for="password" class="form-label">Password</label>
+              <input type="password" class="form-control" id="password" name="password" placeholder="Min. 8 characters" required/>
+              <div class="strength-bar mt-2">
+                <span id="s1"></span><span id="s2"></span><span id="s3"></span><span id="s4"></span>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <label for="repeatPassword" class="form-label">Confirm Password</label>
+              <input type="password" class="form-control" id="repeatPassword" name="repeatPassword" placeholder="Repeat your password" required/>
+            </div>
+          </div>
+
+          <!-- Footer -->
+          <div class="form-footer d-flex align-items-center justify-content-between flex-wrap gap-3">
+            <p class="signin-hint mb-0">Already have an account? <a href="index.html">Sign in here</a></p>
+            <button type="submit" class="btn btn-ccs text-white">Create Account →</button>
+          </div>
+        </form>
       </div>
     </div>
-  </main>
+  </div>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script src="script.js"></script>
 </body>
 </html>
-
-test
-asdsa
