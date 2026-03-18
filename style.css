@@ -18,12 +18,12 @@ body { font-family: 'DM Sans', sans-serif; background-color: #f0f4f8; }
   overflow: hidden;
 }
 .brand-panel::before {
-  content:''; position:absolute; top:-60px; right:-60px;
+  position:absolute; top:-60px; right:-60px;
   width:200px; height:200px; border-radius:50%;
   background:rgba(201,168,76,.12);
 }
 .brand-panel::after {
-  content:''; position:absolute; bottom:-50px; left:-50px;
+  position:absolute; bottom:-50px; left:-50px;
   width:180px; height:180px; border-radius:50%;
   background:rgba(255,255,255,.05);
 }
@@ -49,7 +49,7 @@ body { font-family: 'DM Sans', sans-serif; background-color: #f0f4f8; }
   overflow:hidden;
 }
 .card-header-ccs::after {
-  content:''; position:absolute;
+  position:absolute;
   top:-50px; right:-50px;
   width:160px; height:160px; border-radius:50%;
   background:rgba(201,168,76,.15);
@@ -143,19 +143,31 @@ body { font-family: 'DM Sans', sans-serif; background-color: #f0f4f8; }
 /* Remove old nav-dot since we're not using it anymore */
 .nav-dot { display: none; }
 
-/* Add this to the end of your style.css file to remove ALL focus rings */
+/* NUCLEAR OPTION - Remove ALL focus rings and outlines globally */
+*,
+*::before,
+*::after {
+  box-shadow: none !important;
+  outline: none !important;
+  border-image: none !important;
+}
 
+/* Override Bootstrap form elements specifically */
 .form-check-input:focus,
 .form-control:focus,
 .form-select:focus,
 .btn:focus,
-.navbar-nav .nav-link:focus {
+input:focus,
+input:focus-visible,
+input:focus-within {
   box-shadow: none !important;
+  outline: none !important;
+  outline-offset: 0 !important;
+}
+
+/* Kill browser default focus styles */
+input:focus-visible,
+button:focus-visible {
   outline: none !important;
 }
 
-/* Also remove focus rings from brand-panel accessibility elements */
-.brand-panel:focus-within * {
-  box-shadow: none !important;
-  outline: none !important;
-}
