@@ -1,12 +1,86 @@
 <?php
+// dashboard.php
+ini_set('display_errors', 0);
+ini_set('display_startup_errors', 0);
+error_reporting(0);
+
 session_start();
 
 if (!isset($_SESSION['user_id'])) {
     header("Location: index.html");
     exit();
 }
-?>
 
+require_once 'config.php';
+
+try {
+    $conn = db_connect();
+    $uid  = (int) $_SESSION['user_id'];
+
+    // Re-fetch fresh user data from DB every load
+    $res  = $conn->query("SELECT * FROM `users` WHERE id = $uid LIMIT 1");
+    $user = ($res && $res->num_rows > 0) ? $res->fetch_assoc() : [];
+    if ($user) $_SESSION['user'] = array_merge($_SESSION['user'] ?? [], $user);
+
+    // Announcements (safe — only if table exists)
+    $announcements = [];
+    $ac = $conn->query("SHOW TABLES LIKE 'announcements'");
+    if ($ac && $ac->num_rows > 0) {
+        $ar = $conn->query("SELECT * FROM `announcements` ORDER BY created_at DESC LIMIT 10");
+        if ($ar) $announcements = $ar->fetch_all(MYSQLI_ASSOC);
+    }
+
+    // Sit-in history (safe — only if table exists)
+    $history      = [];
+    $active_sitin = null;
+    foreach (['sit_in','sitin','sit_ins','sit_in_records'] as $tbl) {
+        $tc = $conn->query("SHOW TABLES LIKE '$tbl'");
+        if ($tc && $tc->num_rows > 0) {
+            $fk  = 'student_id';
+            $fkc = $conn->query("SHOW COLUMNS FROM `$tbl` LIKE 'user_id'");
+            if ($fkc && $fkc->num_rows > 0) $fk = 'user_id';
+            $hr = $conn->query("SELECT * FROM `$tbl` WHERE `$fk`=$uid ORDER BY id DESC LIMIT 10");
+            if ($hr) {
+                $history = $hr->fetch_all(MYSQLI_ASSOC);
+                foreach ($history as $h) {
+                    if (($h['status'] ?? '') === 'Active') { $active_sitin = $h; break; }
+                }
+            }
+            break;
+        }
+    }
+
+    $conn->close();
+} catch (Throwable $e) {
+    $user = $_SESSION['user'] ?? [];
+    $announcements = [];
+    $history = [];
+    $active_sitin = null;
+}
+
+// Build the SESSION_USER object that script.js reads
+$su = [
+    'id_number'           => $user['id_number']           ?? '',
+    'first_name'          => $user['first_name']          ?? '',
+    'last_name'           => $user['last_name']           ?? '',
+    'middle_name'         => $user['middle_name']         ?? '',
+    'email'               => $user['email']               ?? '',
+    'address'             => $user['address']             ?? '',
+    'course'              => $user['course']              ?? '',
+    'year_level'          => $user['year_level']          ?? '',
+    'remaining_sessions'  => $user['remaining_sessions']  ?? 30,
+    'profile_photo'       => $user['profile_photo']       ?? '',
+];
+
+$fullname    = trim(($su['first_name'] ?? '') . ' ' . ($su['last_name'] ?? ''));
+$initials    = strtoupper(substr($su['first_name'],0,1) . substr($su['last_name'],0,1)) ?: 'S';
+$avatar_src  = !empty($su['profile_photo'])
+    ? htmlspecialchars($su['profile_photo'])
+    : 'https://api.dicebear.com/8.x/adventurer/svg?seed=' . urlencode($fullname ?: 'Student') . '&backgroundColor=b6e3f4';
+$year_label  = $su['year_level'] ? $su['year_level'] . ' Year' : '';
+$sess        = (int)($su['remaining_sessions'] ?? 30);
+$sess_pct    = min(100, ($sess / 30) * 100);
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -84,7 +158,7 @@ if (!isset($_SESSION['user_id'])) {
               <div class="notif-item">
                 <div class="notif-icon gold"><i class="fa-solid fa-triangle-exclamation"></i></div>
                 <div>
-                  <div class="notif-title">Session reminder: 30 remaining</div>
+                  <div class="notif-title">Session reminder: <?= $sess ?> remaining</div>
                   <div class="notif-time">Yesterday</div>
                 </div>
               </div>
@@ -140,11 +214,10 @@ if (!isset($_SESSION['user_id'])) {
           </div>
 
           <div class="stu-avatar-wrap">
-            <img id="mainAvatar"
-                 src="https://api.dicebear.com/8.x/adventurer/svg?seed=KimmyYammy&backgroundColor=b6e3f4"
-                 alt="Student Avatar" />
-            <div class="stu-name" id="dName">Kimmy D. Yammy</div>
-            <span class="stu-badge" id="dBadge">BSIT · Year 3</span>
+            <img id="mainAvatar" src="<?= $avatar_src ?>" alt="Student Avatar"
+              onerror="this.src='https://api.dicebear.com/8.x/adventurer/svg?seed=Student&backgroundColor=b6e3f4'"/>
+            <div class="stu-name" id="dName"><?= htmlspecialchars($fullname ?: 'Student') ?></div>
+            <span class="stu-badge" id="dBadge"><?= htmlspecialchars(trim($su['course'] . ($su['year_level'] ? ' · Year '.$su['year_level'] : ''))) ?></span>
           </div>
 
           <ul class="info-list">
@@ -152,45 +225,45 @@ if (!isset($_SESSION['user_id'])) {
               <span class="info-icon"><i class="fa-solid fa-hashtag"></i></span>
               <div>
                 <div class="info-label">ID Number</div>
-                <div class="info-value" id="dId">123123123</div>
+                <div class="info-value" id="dId"><?= htmlspecialchars($su['id_number'] ?: '—') ?></div>
               </div>
             </li>
             <li>
               <span class="info-icon"><i class="fa-solid fa-graduation-cap"></i></span>
               <div>
                 <div class="info-label">Course</div>
-                <div class="info-value" id="dCourse">BSIT</div>
+                <div class="info-value" id="dCourse"><?= htmlspecialchars($su['course'] ?: '—') ?></div>
               </div>
             </li>
             <li>
               <span class="info-icon"><i class="fa-solid fa-layer-group"></i></span>
               <div>
                 <div class="info-label">Year Level</div>
-                <div class="info-value" id="dYear">3rd Year</div>
+                <div class="info-value" id="dYear"><?= htmlspecialchars($su['year_level'] ? $su['year_level'].' Year' : '—') ?></div>
               </div>
             </li>
             <li>
               <span class="info-icon"><i class="fa-solid fa-envelope"></i></span>
               <div>
                 <div class="info-label">Email</div>
-                <div class="info-value" id="dEmail">Yammy@gmail.com</div>
+                <div class="info-value" id="dEmail"><?= htmlspecialchars($su['email'] ?: '—') ?></div>
               </div>
             </li>
             <li>
               <span class="info-icon"><i class="fa-solid fa-location-dot"></i></span>
               <div>
                 <div class="info-label">Address</div>
-                <div class="info-value" id="dAddr">Secret</div>
+                <div class="info-value" id="dAddr"><?= htmlspecialchars($su['address'] ?: '—') ?></div>
               </div>
             </li>
           </ul>
 
           <div class="session-block">
             <div class="s-label"><i class="fa-regular fa-hourglass"></i>&nbsp; Remaining Sessions</div>
-            <div class="s-num" id="sNum">30</div>
+            <div class="s-num" id="sNum"><?= $sess ?></div>
             <div class="s-sub">out of 30 total sessions</div>
             <div class="session-bar">
-              <div class="session-bar-fill" id="sessFill" style="width:100%"></div>
+              <div class="session-bar-fill" id="sessFill" style="width:<?= $sess_pct ?>%"></div>
             </div>
           </div>
         </div>
@@ -200,11 +273,15 @@ if (!isset($_SESSION['user_id'])) {
       <div class="col-lg-6 d-flex flex-column gap-3">
 
         <!-- Status strip -->
-        <div class="status-strip off" id="statusStrip">
-          <span class="pulse-dot off" id="pulseD"></span>
+        <div class="status-strip <?= $active_sitin ? 'on' : 'off' ?>" id="statusStrip">
+          <span class="pulse-dot <?= $active_sitin ? 'on' : 'off' ?>" id="pulseD"></span>
           <span id="statusMsg">
-            You are <strong>not currently sitting in.</strong>
-            Use <strong>Reservation</strong> to book a lab session.
+            <?php if ($active_sitin): ?>
+              You are <strong>currently sitting in.</strong>
+            <?php else: ?>
+              You are <strong>not currently sitting in.</strong>
+              Use <strong>Reservation</strong> to book a lab session.
+            <?php endif; ?>
           </span>
         </div>
 
@@ -229,7 +306,7 @@ if (!isset($_SESSION['user_id'])) {
                 </button>
               </div>
               <div class="col-6">
-                <button class="qa-btn" data-bs-toggle="dropdown" onclick="document.getElementById('notifToggle').click()">
+                <button class="qa-btn" onclick="document.getElementById('notifToggle').click()">
                   <i class="fa-solid fa-bell"></i> Notifications
                 </button>
               </div>
@@ -237,30 +314,47 @@ if (!isset($_SESSION['user_id'])) {
           </div>
         </div>
 
-        <!-- Announcements -->
+        <!-- Announcements — real data from DB, fallback to static if none -->
         <div class="ccs-card">
           <div class="ccs-card-header"><i class="fa-solid fa-bullhorn"></i> Announcements</div>
           <div class="ccs-card-body">
-
-            <div class="ann-item">
-              <div class="ann-meta">
-                <span class="ann-tag">CCS Admin</span>
-                <span class="ann-date"><i class="fa-regular fa-calendar"></i> 2026 Feb 11</span>
+            <?php if (!empty($announcements)): ?>
+              <?php foreach ($announcements as $ann): ?>
+                <div class="ann-item">
+                  <div class="ann-meta">
+                    <span class="ann-tag">CCS Admin</span>
+                    <span class="ann-date">
+                      <i class="fa-regular fa-calendar"></i>
+                      <?= htmlspecialchars(date('Y M d', strtotime($ann['created_at'] ?? 'now'))) ?>
+                    </span>
+                  </div>
+                  <div class="ann-text <?= empty($ann['message']) ? 'ann-empty' : '' ?>">
+                    <?= empty($ann['message'])
+                        ? 'No message content for this announcement.'
+                        : nl2br(htmlspecialchars($ann['message'])) ?>
+                  </div>
+                </div>
+              <?php endforeach; ?>
+            <?php else: ?>
+              <!-- Static announcements shown when table doesn't exist yet -->
+              <div class="ann-item">
+                <div class="ann-meta">
+                  <span class="ann-tag">CCS Admin</span>
+                  <span class="ann-date"><i class="fa-regular fa-calendar"></i> 2026 Feb 11</span>
+                </div>
+                <div class="ann-text ann-empty">No message content for this announcement.</div>
               </div>
-              <div class="ann-text ann-empty">No message content for this announcement.</div>
-            </div>
-
-            <div class="ann-item">
-              <div class="ann-meta">
-                <span class="ann-tag">CCS Admin</span>
-                <span class="ann-date"><i class="fa-regular fa-calendar"></i> 2024 May 08</span>
+              <div class="ann-item">
+                <div class="ann-meta">
+                  <span class="ann-tag">CCS Admin</span>
+                  <span class="ann-date"><i class="fa-regular fa-calendar"></i> 2024 May 08</span>
+                </div>
+                <div class="ann-text">
+                  🎉 <strong>Important Announcement</strong> — We are excited to announce the
+                  launch of our new website! Explore our latest products and services now!
+                </div>
               </div>
-              <div class="ann-text">
-                🎉 <strong>Important Announcement</strong> — We are excited to announce the
-                launch of our new website! Explore our latest products and services now!
-              </div>
-            </div>
-
+            <?php endif; ?>
           </div>
         </div>
 
@@ -275,12 +369,24 @@ if (!isset($_SESSION['user_id'])) {
                 </tr>
               </thead>
               <tbody id="miniHistBody">
-                <tr class="no-data-row">
-                  <td colspan="5">
-                    <i class="fa-regular fa-folder-open" style="font-size:1.3rem;display:block;margin-bottom:8px;opacity:.35"></i>
-                    No records yet
-                  </td>
-                </tr>
+                <?php if (!empty($history)): ?>
+                  <?php foreach (array_slice($history, 0, 3) as $h): ?>
+                    <tr>
+                      <td><?= htmlspecialchars($h['purpose'] ?? '—') ?></td>
+                      <td><?= htmlspecialchars($h['lab']     ?? '—') ?></td>
+                      <td><?= !empty($h['login_time'])  ? date('h:i A', strtotime($h['login_time']))  : '—' ?></td>
+                      <td><?= !empty($h['logout_time']) ? date('h:i A', strtotime($h['logout_time'])) : '—' ?></td>
+                      <td><?= !empty($h['login_time'])  ? date('Y-m-d', strtotime($h['login_time']))  : '—' ?></td>
+                    </tr>
+                  <?php endforeach; ?>
+                <?php else: ?>
+                  <tr class="no-data-row">
+                    <td colspan="5">
+                      <i class="fa-regular fa-folder-open" style="font-size:1.3rem;display:block;margin-bottom:8px;opacity:.35"></i>
+                      No records yet
+                    </td>
+                  </tr>
+                <?php endif; ?>
               </tbody>
             </table>
           </div>
@@ -394,11 +500,13 @@ if (!isset($_SESSION['user_id'])) {
             <div class="row g-3">
               <div class="col-md-6">
                 <label class="form-label-ccs">ID Number</label>
-                <input class="form-control-ccs" type="text" value="123123123" readonly />
+                <input class="form-control-ccs" type="text" id="rId"
+                  value="<?= htmlspecialchars($su['id_number']) ?>" readonly />
               </div>
               <div class="col-md-6">
                 <label class="form-label-ccs">Student Name</label>
-                <input class="form-control-ccs" type="text" id="rName" value="Kimmy D. Yammy" readonly />
+                <input class="form-control-ccs" type="text" id="rName"
+                  value="<?= htmlspecialchars($fullname) ?>" readonly />
               </div>
               <div class="col-12">
                 <label class="form-label-ccs">Purpose <span style="color:var(--red)">*</span></label>
@@ -424,7 +532,8 @@ if (!isset($_SESSION['user_id'])) {
               </div>
               <div class="col-md-6">
                 <label class="form-label-ccs">Remaining Sessions</label>
-                <input class="form-control-ccs" type="text" id="rSess" value="30" readonly />
+                <input class="form-control-ccs" type="text" id="rSess"
+                  value="<?= $sess ?>" readonly />
               </div>
               <div class="col-12 mt-1">
                 <button class="btn-ccs-primary" onclick="submitReservation()">
@@ -449,7 +558,7 @@ if (!isset($_SESSION['user_id'])) {
             </div>
             <div class="res-tip">
               <i class="fa-solid fa-laptop"></i>
-              <p><strong>Each session costs 1 session point.</strong> You have <strong id="tipSess">30</strong> remaining.</p>
+              <p><strong>Each session costs 1 session point.</strong> You have <strong id="tipSess"><?= $sess ?></strong> remaining.</p>
             </div>
             <div class="res-tip">
               <i class="fa-solid fa-ban"></i>
@@ -491,18 +600,17 @@ if (!isset($_SESSION['user_id'])) {
       <div class="col-lg-3">
         <div class="ccs-card">
           <div class="profile-av-card">
-            <img id="profAvatar"
-                 src="https://api.dicebear.com/8.x/adventurer/svg?seed=KimmyYammy&backgroundColor=b6e3f4"
-                 alt="Profile Avatar" />
-            <div class="profile-name" id="profName">Kimmy D. Yammy</div>
-            <div class="profile-role" id="profRole">BSIT · 3rd Year</div>
+            <img id="profAvatar" src="<?= $avatar_src ?>" alt="Profile Avatar"
+              onerror="this.src='https://api.dicebear.com/8.x/adventurer/svg?seed=Student&backgroundColor=b6e3f4'"/>
+            <div class="profile-name" id="profName"><?= htmlspecialchars($fullname) ?></div>
+            <div class="profile-role" id="profRole"><?= htmlspecialchars(trim($su['course'] . ($su['year_level'] ? ' · '.$su['year_level'].' Year' : ''))) ?></div>
             <button class="btn-photo" onclick="triggerPhotoInput()">
               <i class="fa-solid fa-camera"></i> Change Photo
             </button>
             <input type="file" id="photoInput" accept="image/*" style="display:none" onchange="previewPhoto(event)" />
             <div class="profile-sess-stat">
               <div class="sml">Remaining Sessions</div>
-              <div class="big" id="profSessNum">30</div>
+              <div class="big" id="profSessNum"><?= $sess ?></div>
               <div class="sml">out of 30</div>
             </div>
           </div>
@@ -517,44 +625,50 @@ if (!isset($_SESSION['user_id'])) {
             <div class="row g-3">
               <div class="col-md-6">
                 <label class="form-label-ccs">First Name</label>
-                <input class="form-control-ccs" type="text" id="pFn" value="Kimmy" />
+                <input class="form-control-ccs" type="text" id="pFn"
+                  value="<?= htmlspecialchars($su['first_name']) ?>" />
               </div>
               <div class="col-md-6">
                 <label class="form-label-ccs">Last Name</label>
-                <input class="form-control-ccs" type="text" id="pLn" value="Yammy" />
+                <input class="form-control-ccs" type="text" id="pLn"
+                  value="<?= htmlspecialchars($su['last_name']) ?>" />
               </div>
               <div class="col-md-6">
                 <label class="form-label-ccs">Middle Name <span style="color:var(--text3)">(optional)</span></label>
-                <input class="form-control-ccs" type="text" id="pMn" value="D." />
+                <input class="form-control-ccs" type="text" id="pMn"
+                  value="<?= htmlspecialchars($su['middle_name'] ?? '') ?>" />
               </div>
               <div class="col-md-6">
                 <label class="form-label-ccs">ID Number</label>
-                <input class="form-control-ccs" type="text" value="123123123" readonly />
+                <input class="form-control-ccs" type="text"
+                  value="<?= htmlspecialchars($su['id_number']) ?>" readonly />
               </div>
               <div class="col-md-6">
                 <label class="form-label-ccs">Email Address</label>
-                <input class="form-control-ccs" type="email" id="pEm" value="Yammy@gmail.com" />
+                <input class="form-control-ccs" type="email" id="pEm"
+                  value="<?= htmlspecialchars($su['email']) ?>" />
               </div>
               <div class="col-md-6">
                 <label class="form-label-ccs">Address</label>
-                <input class="form-control-ccs" type="text" id="pAd" value="Secret" />
+                <input class="form-control-ccs" type="text" id="pAd"
+                  value="<?= htmlspecialchars($su['address'] ?? '') ?>" />
               </div>
               <div class="col-md-6">
                 <label class="form-label-ccs">Course</label>
                 <select class="form-select-ccs" id="pCo">
-                  <option>BSIT</option>
-                  <option>BSCS</option>
-                  <option>BSIS</option>
-                  <option>ACT</option>
+                  <?php foreach (['BSIT','BSCS','BSIS','ACT'] as $c): ?>
+                    <option <?= $su['course']===$c?'selected':'' ?>><?= $c ?></option>
+                  <?php endforeach; ?>
                 </select>
               </div>
               <div class="col-md-6">
                 <label class="form-label-ccs">Year Level</label>
                 <select class="form-select-ccs" id="pYr">
-                  <option>1st Year</option>
-                  <option>2nd Year</option>
-                  <option selected>3rd Year</option>
-                  <option>4th Year</option>
+                  <?php foreach (['1','2','3','4'] as $y): ?>
+                    <option value="<?= $y ?>" <?= $su['year_level']==$y?'selected':'' ?>>
+                      <?= $y === '1' ? '1st' : ($y === '2' ? '2nd' : ($y === '3' ? '3rd' : '4th')) ?> Year
+                    </option>
+                  <?php endforeach; ?>
                 </select>
               </div>
 
@@ -562,11 +676,13 @@ if (!isset($_SESSION['user_id'])) {
 
               <div class="col-md-6">
                 <label class="form-label-ccs">New Password</label>
-                <input class="form-control-ccs" type="password" id="pPw" placeholder="Leave blank to keep current" />
+                <input class="form-control-ccs" type="password" id="pPw"
+                  placeholder="Leave blank to keep current" autocomplete="new-password"/>
               </div>
               <div class="col-md-6">
                 <label class="form-label-ccs">Confirm Password</label>
-                <input class="form-control-ccs" type="password" id="pPw2" placeholder="Repeat new password" />
+                <input class="form-control-ccs" type="password" id="pPw2"
+                  placeholder="Repeat new password" autocomplete="new-password"/>
               </div>
 
               <div class="col-12 mt-1">
@@ -596,7 +712,7 @@ if (!isset($_SESSION['user_id'])) {
       <div class="modal-body">
         <div class="m-icon"><i class="fa-solid fa-check"></i></div>
         <div class="m-title">Successful Login!</div>
-        <p class="m-sub">Welcome back, <strong id="welcomeName">Kimmy D. Yammy</strong>! 👋</p>
+        <p class="m-sub">Welcome back, <strong id="welcomeName"><?= htmlspecialchars($fullname) ?></strong>! 👋</p>
       </div>
       <div class="modal-footer">
         <button class="btn-m-ok" data-bs-dismiss="modal">OK</button>
@@ -660,6 +776,23 @@ if (!isset($_SESSION['user_id'])) {
      SCRIPTS
 ══════════════════════════════════════════════════════════ -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+<!-- Pass real DB data to script.js via SESSION_USER -->
+<script>
+const SESSION_USER = <?= json_encode([
+    'id_number'          => $su['id_number'],
+    'first_name'         => $su['first_name'],
+    'last_name'          => $su['last_name'],
+    'middle_name'        => $su['middle_name'] ?? '',
+    'email'              => $su['email'],
+    'address'            => $su['address'] ?? '',
+    'course'             => $su['course'],
+    'year_level'         => $su['year_level'],
+    'remaining_sessions' => $sess,
+    'profile_photo'      => $su['profile_photo'] ?? '',
+]) ?>;
+</script>
+
 <script src="script.js"></script>
 
 </body>
