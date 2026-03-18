@@ -1,4 +1,5 @@
 <?php
+session_start(); 
 header('Content-Type: application/json');
 require_once 'config.php';
 
@@ -13,11 +14,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($user && password_verify($password, $user['password'])) {
         $_SESSION['user_id'] = $user['id'];
         $_SESSION['user'] = $user;
-        echo json_encode(['success' => true, 'message' => 'Login successful', 'user' => ['id_number' => $user['id_number'], 'name' => $user['first_name'] . ' ' . $user['last_name']]]);
+
+        echo json_encode([
+            'success' => true,
+            'message' => 'Login successful',
+            'user' => [
+                'name' => $user['first_name'] . ' ' . $user['last_name']
+            ]
+        ]);
     } else {
-        echo json_encode(['success' => false, 'message' => 'Invalid credentials']);
+        echo json_encode([
+            'success' => false,
+            'message' => 'Invalid credentials'
+        ]);
     }
 } else {
-    echo json_encode(['success' => false, 'message' => 'Invalid request']);
+    echo json_encode([
+        'success' => false,
+        'message' => 'Invalid request'
+    ]);
 }
 ?>
