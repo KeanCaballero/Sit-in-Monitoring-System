@@ -116,8 +116,7 @@ $sess_pct    = min(100, ($sess / 30) * 100);
   <div class="container-fluid px-0">
 
     <a class="navbar-brand" href="#">
-      <span class="brand-pip"></span> CCS Sit-in Portal
-    </a>
+      <a class="navbar-brand" href="#"> <img src="images/UC_LOGO.png" alt="UC Logo" class="nav-logo me-2" onerror="this.src='images/UC_LOGO.jpg'; this.onerror=null;"/> College of Computer Studies Sit-in Monitoring System    </a>    </a>
 
     <button class="navbar-toggler border-0" type="button"
             data-bs-toggle="collapse" data-bs-target="#navbarMain"
@@ -399,25 +398,48 @@ $sess_pct    = min(100, ($sess / 30) * 100);
         <div class="ccs-card">
           <div class="ccs-card-header"><i class="fa-solid fa-shield-halved"></i> Rules &amp; Regulations</div>
           <div class="rules-scroll">
+
             <div class="rules-uni">University of Cebu</div>
             <div class="rules-dept">College of Information &amp; Computer Studies</div>
+
             <div class="rules-sec">Laboratory Rules and Regulations</div>
-            <p class="mb-2" style="font-size:.82rem">
-              To avoid embarrassment and maintain camaraderie with your friends and superiors
-              at our laboratories, please observe the following:
+
+            <p style="font-size:.78rem;line-height:1.55;margin-bottom:.6rem;">
+              To avoid embarrassment and maintain camaraderie with your friends and superiors at our laboratories, please observe the following:
             </p>
-            <ol>
-              <li>Maintain silence, proper decorum, and discipline inside the laboratory. Mobile phones and personal equipment must be switched off.</li>
-              <li>Games are not allowed inside the lab — computer-related, card games, or anything that may disturb operations.</li>
-              <li>Surfing the Internet is allowed only with the instructor's permission. Downloading and installing software are strictly prohibited.</li>
-              <li>Deleting computer files and changing computer setup is not allowed.</li>
-              <li>Observe proper sitting posture at all times.</li>
-              <li>Laboratory users must sign in the logbook before using any computer unit.</li>
-              <li>All bags must be deposited at the bag deposit area outside the laboratory.</li>
-              <li>Eating and drinking inside the laboratory is strictly prohibited.</li>
-              <li>Students must present their valid ID and log in to the sit-in monitoring system.</li>
-              <li>Violations will subject the student to disciplinary action.</li>
+
+            <ol style="font-size:.78rem;line-height:1.55;padding-left:1.1rem;margin-bottom:.75rem;">
+              <li style="margin-bottom:.45rem;">Maintain silence, proper decorum, and discipline inside the laboratory. Mobile phones, walkmans and other personal pieces of equipment must be switched off.</li>
+              <li style="margin-bottom:.45rem;">Games are not allowed inside the lab. This includes computer-related games, card games and other games that may disturb the operation of the lab.</li>
+              <li style="margin-bottom:.45rem;">Surfing the Internet is allowed only with the permission of the instructor. Downloading and installing of software are strictly prohibited.</li>
+              <li style="margin-bottom:.45rem;">Getting access to other websites not related to the course (especially pornographic and illicit sites) is strictly prohibited.</li>
+              <li style="margin-bottom:.45rem;">Deleting computer files and changing the set-up of the computer is a major offense.</li>
+              <li style="margin-bottom:.45rem;">Observe computer time usage carefully. A fifteen-minute allowance is given for each use. Otherwise, the unit will be given to those who wish to &ldquo;sit-in&rdquo;.</li>
+              <li style="margin-bottom:.45rem;">
+                Observe proper decorum while inside the laboratory.
+                <ul style="margin-top:.3rem;padding-left:1rem;list-style:disc;">
+                  <li style="margin-bottom:.25rem;">Do not get inside the lab unless the instructor is present.</li>
+                  <li style="margin-bottom:.25rem;">All bags, knapsacks, and the likes must be deposited at the counter.</li>
+                  <li style="margin-bottom:.25rem;">Follow the seating arrangement of your instructor.</li>
+                  <li style="margin-bottom:.25rem;">At the end of class, all software programs must be closed.</li>
+                  <li style="margin-bottom:.25rem;">Return all chairs to their proper places after using.</li>
+                </ul>
+              </li>
+              <li style="margin-bottom:.45rem;">Chewing gum, eating, drinking, smoking, and other forms of vandalism are prohibited inside the lab.</li>
+              <li style="margin-bottom:.45rem;">Anyone causing a continual disturbance will be asked to leave the lab. Acts or gestures offensive to the members of the community, including public display of physical intimacy, are not tolerated.</li>
+              <li style="margin-bottom:.45rem;">Persons exhibiting hostile or threatening behavior such as yelling, swearing, or disregarding requests made by lab personnel will be asked to leave the lab.</li>
+              <li style="margin-bottom:.45rem;">For serious offense, the lab personnel may call the Civil Security Office (CSU) for assistance.</li>
+              <li style="margin-bottom:.45rem;">Any technical problem or difficulty must be addressed to the laboratory supervisor, student assistant or instructor immediately.</li>
             </ol>
+
+            <div class="rules-sec" style="margin-top:.5rem;">Disciplinary Action</div>
+            <p style="font-size:.78rem;line-height:1.55;margin-bottom:.4rem;">
+              <strong>First Offense</strong> &mdash; The Head or the Dean or OIC recommends to the Guidance Center for a suspension from classes for each offender.
+            </p>
+            <p style="font-size:.78rem;line-height:1.55;margin-bottom:0;">
+              <strong>Second and Subsequent Offenses</strong> &mdash; A recommendation for a heavier sanction will be endorsed to the Guidance Center.
+            </p>
+
           </div>
         </div>
       </div><!-- /col right -->

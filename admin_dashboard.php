@@ -256,7 +256,7 @@ $admin = $_SESSION['user'];
 <nav class="admin-nav">
   <a class="brand" href="#">
     <div class="brand-icon">CCS</div>
-    College of Computer Studies Admin
+    College of Computer Studies Sit-in Monitoring System Admin
   </a>
   <div class="nav-links">
     <a onclick="showView('home')"           id="nav-home"        class="active"><i class="fa-solid fa-house-chimney"></i>Home</a>
