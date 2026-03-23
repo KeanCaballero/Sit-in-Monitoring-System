@@ -146,8 +146,9 @@ $photo       = !empty($user['profile_photo'])
 
     .alert-msg{border-radius:7px;padding:.65rem 1rem;font-size:.82rem;font-weight:500;
       display:none;align-items:center;gap:.5rem;margin-bottom:1rem;}
-    .alert-msg.success{background:#dcfce7;border:1px solid #86efac;color:#166534;display:flex;}
-    .alert-msg.error  {background:#fee2e2;border:1px solid #fca5a5;color:#991b1b;display:flex;}
+    .alert-msg.success{background:#dcfce7;border:1px solid #86efac;color:#166534;display:flex;align-items:center;}
+    .alert-msg.error  {background:#fee2e2;border:1px solid #fca5a5;color:#991b1b;display:flex;align-items:center;}
+    .alert-msg.info   {background:#dbeafe;border:1px solid #93c5fd;color:#1e40af;display:flex;align-items:center;}
 
     @media(max-width:768px){.profile-layout{grid-template-columns:1fr;}
       .sidebar-card{position:static;}.main-wrap{padding:1rem;}}
@@ -163,8 +164,8 @@ $photo       = !empty($user['profile_photo'])
   <div class="nav-links">
     <a href="dashboard.php"><i class="fa-solid fa-house-chimney"></i> Home</a>
     <a href="edit_profile.php" class="active"><i class="fa-solid fa-user-pen"></i> Edit Profile</a>
-    <a href="history.php"><i class="fa-solid fa-clock-rotate-left"></i> History</a>
-    <a href="reservation.php"><i class="fa-solid fa-calendar-check"></i> Reservation</a>
+    <a href="dashboard.php#history" onclick="sessionStorage.setItem('tab','history')"><i class="fa-solid fa-clock-rotate-left"></i> History</a>
+    <a href="dashboard.php#reservation" onclick="sessionStorage.setItem('tab','reservation')"><i class="fa-solid fa-calendar-check"></i> Reservation</a>
     <a href="logout.php" class="btn-logout"><i class="fa-solid fa-right-from-bracket"></i> Log out</a>
   </div>
 </nav>
@@ -293,6 +294,7 @@ $photo       = !empty($user['profile_photo'])
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script>
+/* ── SAVE PROFILE ── */
 async function saveProfile() {
   const btn     = document.getElementById('saveBtn');
   const spinner = document.getElementById('btnSpinner');
@@ -301,79 +303,138 @@ async function saveProfile() {
 
   const firstname  = document.getElementById('firstname').value.trim();
   const lastname   = document.getElementById('lastname').value.trim();
+  const middlename = document.getElementById('middlename').value.trim();
   const email      = document.getElementById('email').value.trim();
+  const address    = document.getElementById('address').value.trim();
   const course     = document.getElementById('course').value;
   const year_level = document.getElementById('year_level').value;
   const newpw      = document.getElementById('new_password').value;
   const confirmpw  = document.getElementById('confirm_password').value;
 
   if (!firstname || !lastname || !email) {
-    showAlert('Please fill in First Name, Last Name, and Email.','error'); return;
+    showAlert('Please fill in First Name, Last Name, and Email.', 'error'); return;
+  }
+  if (!email.includes('@')) {
+    showAlert('Please enter a valid email address.', 'error'); return;
   }
   if (newpw && newpw !== confirmpw) {
-    showAlert('Passwords do not match.','error'); return;
+    showAlert('Passwords do not match.', 'error'); return;
   }
   if (newpw && newpw.length < 6) {
-    showAlert('Password must be at least 6 characters.','error'); return;
+    showAlert('Password must be at least 6 characters.', 'error'); return;
   }
 
-  btn.disabled=true; spinner.style.display='block';
-  icon.style.display='none'; btnText.textContent='Saving…';
+  btn.disabled = true;
+  spinner.style.display = 'block';
+  icon.style.display = 'none';
+  btnText.textContent = 'Saving…';
 
   try {
     const res  = await fetch('update_profile.php', {
-      method:'POST', headers:{'Content-Type':'application/json'},
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        firstname, lastname,
-        middlename: document.getElementById('middlename').value.trim(),
-        email, address: document.getElementById('address').value.trim(),
-        course, year_level,
-        new_password: newpw, confirm_password: confirmpw,
+        firstname, lastname, middlename,
+        email, address, course, year_level,
+        new_password:     newpw,
+        confirm_password: confirmpw,
       })
     });
-    const data = await res.json();
+
+    // Read raw text first to catch PHP errors
+    const raw = await res.text();
+    let data;
+    try { data = JSON.parse(raw); }
+    catch (_) {
+      showAlert('Server error — check XAMPP logs.', 'error'); return;
+    }
+
     if (data.success) {
-      showAlert('✓ ' + data.message, 'success');
-      document.getElementById('sidebarName').textContent = data.firstname + ' ' + data.lastname;
-      document.getElementById('sidebarSub').textContent  = data.course + ' · Year ' + data.year_level;
-      document.getElementById('new_password').value = '';
+      showAlert('\u2713 ' + data.message, 'success');
+      // Update sidebar instantly
+      document.getElementById('sidebarName').textContent = (data.firstname || firstname) + ' ' + (data.lastname || lastname);
+      document.getElementById('sidebarSub').textContent  = (data.course || course) + ' \u00b7 Year ' + (data.year_level || year_level);
+      // Clear password fields
+      document.getElementById('new_password').value    = '';
       document.getElementById('confirm_password').value = '';
     } else {
-      showAlert('✕ ' + data.message, 'error');
+      showAlert('\u2715 ' + (data.message || 'Update failed.'), 'error');
     }
-  } catch(e) {
-    showAlert('✕ Could not reach the server.', 'error');
+  } catch (e) {
+    showAlert('\u2715 Could not reach the server.', 'error');
   } finally {
-    btn.disabled=false; spinner.style.display='none';
-    icon.style.display='inline'; btnText.textContent='Save Changes';
+    btn.disabled = false;
+    spinner.style.display = 'none';
+    icon.style.display = 'inline';
+    btnText.textContent = 'Save Changes';
   }
 }
 
+/* ── ALERT — fixed: clears inline style each call ── */
 function showAlert(msg, type) {
   const el = document.getElementById('alertMsg');
-  el.innerHTML = msg; el.className = 'alert-msg ' + type;
-  el.scrollIntoView({behavior:'smooth',block:'nearest'});
-  setTimeout(() => { el.style.display='none'; el.className='alert-msg'; }, 5000);
+  el.style.display = '';          // clear any previous inline display:none
+  el.className = 'alert-msg ' + type;
+  el.innerHTML = (type === 'success')
+    ? '<i class="fa-solid fa-circle-check" style="margin-right:6px"></i>' + msg
+    : '<i class="fa-solid fa-circle-xmark" style="margin-right:6px"></i>' + msg;
+  el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  clearTimeout(el._hideTimer);
+  el._hideTimer = setTimeout(() => {
+    el.style.display = 'none';
+    el.className = 'alert-msg';
+  }, 5000);
 }
 
+/* ── PASSWORD TOGGLE ── */
 function togglePw(id, btn) {
   const input = document.getElementById(id);
   const icon  = btn.querySelector('i');
-  if (input.type==='password') { input.type='text'; icon.className='fa-solid fa-eye-slash'; }
-  else { input.type='password'; icon.className='fa-solid fa-eye'; }
+  if (input.type === 'password') {
+    input.type = 'text';
+    icon.className = 'fa-solid fa-eye-slash';
+  } else {
+    input.type = 'password';
+    icon.className = 'fa-solid fa-eye';
+  }
 }
 
+/* ── PHOTO UPLOAD ── */
 function previewPhoto(input) {
   if (!input.files || !input.files[0]) return;
+
+  const file = input.files[0];
+
+  // Instant local preview
   const reader = new FileReader();
-  reader.onload = e => { document.getElementById('avatarPreview').src = e.target.result; };
-  reader.readAsDataURL(input.files[0]);
+  reader.onload = e => {
+    document.getElementById('avatarPreview').src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+
+  // Show uploading state
+  const camBtn = document.querySelector('.avatar-edit-btn');
+  if (camBtn) { camBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>'; camBtn.disabled = true; }
+  showAlert('Uploading photo…', 'info');
+
   const fd = new FormData();
-  fd.append('profile_photo', input.files[0]);
-  fetch('upload_photo.php', {method:'POST', body:fd})
-    .then(r => r.json())
-    .then(d => { if(d.success) showAlert('✓ Photo updated!','success'); else showAlert('✕ '+d.message,'error'); })
-    .catch(() => {});
+  fd.append('profile_photo', file);
+
+  fetch('upload_photo.php', { method: 'POST', body: fd })
+    .then(r => r.text())
+    .then(raw => {
+      let d;
+      try { d = JSON.parse(raw); } catch (_) { d = { success: false, message: 'Server error' }; }
+      if (d.success) {
+        showAlert('\u2713 Profile photo updated!', 'success');
+      } else {
+        showAlert('\u2715 ' + (d.message || 'Upload failed.'), 'error');
+      }
+    })
+    .catch(() => showAlert('Photo saved locally only \u2014 could not reach server.', 'error'))
+    .finally(() => {
+      if (camBtn) { camBtn.innerHTML = '<i class="fa-solid fa-camera"></i>'; camBtn.disabled = false; }
+    });
 }
 </script>
 </body>

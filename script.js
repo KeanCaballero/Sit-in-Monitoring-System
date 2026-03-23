@@ -124,7 +124,7 @@ const S = {
   address: _u.address     || '—',
   course:  _u.course      || '—',
   year:    _yrStr,
-  session: 30, totalSession: 30,
+  session: parseInt(_u.remaining_sessions) || 30, totalSession: 30,
 };
 
 let notifCount   = 3;
@@ -460,6 +460,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const opts = Array.from(pCo.options).map(o => o.value);
     pCo.value = opts.includes(S.course) ? S.course : opts[0];
   }
+
+  // Support redirect from edit_profile.php navbar links
+  const pendingTab = sessionStorage.getItem('tab');
+  if (pendingTab) { sessionStorage.removeItem('tab'); switchTab(pendingTab); }
 
   const loginModalEl = document.getElementById('modalLogin');
   if (loginModalEl) new bootstrap.Modal(loginModalEl).show();

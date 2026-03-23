@@ -116,7 +116,8 @@ $sess_pct    = min(100, ($sess / 30) * 100);
   <div class="container-fluid px-0">
 
     <a class="navbar-brand" href="#">
-      <a class="navbar-brand" href="#"> <img src="images/UC_LOGO.png" alt="UC Logo" class="nav-logo me-2" onerror="this.src='images/UC_LOGO.jpg'; this.onerror=null;"/> College of Computer Studies Sit-in Monitoring System    </a>    </a>
+      <img src="images/UC_LOGO.png" alt="UC Logo" class="nav-logo me-2" onerror="this.src='images/UC_LOGO.jpg'; this.onerror=null;"/> College of Computer Studies Sit-in Monitoring System
+    </a>
 
     <button class="navbar-toggler border-0" type="button"
             data-bs-toggle="collapse" data-bs-target="#navbarMain"
