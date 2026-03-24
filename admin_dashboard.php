@@ -248,6 +248,7 @@ $admin = $_SESSION['user'];
 
     @media (max-width: 900px) { .stat-cards-row { grid-template-columns: 1fr 1fr; } .admin-wrap { padding: 1rem; } }
     @media (max-width: 600px) { .stat-cards-row { grid-template-columns: 1fr; } .nav-links { display: none !important; } }
+
   </style>
 </head>
 <body>
@@ -262,8 +263,8 @@ $admin = $_SESSION['user'];
     <a onclick="showView('home')"           id="nav-home"        class="active"><i class="fa-solid fa-house-chimney"></i>Home</a>
     <a onclick="openSearch()"              id="nav-search"                      ><i class="fa-solid fa-magnifying-glass"></i>Search</a>
     <a onclick="showView('students')"      id="nav-students"                    ><i class="fa-solid fa-users"></i>Students</a>
-    <a onclick="openSitInModal()"          id="nav-sitin"                       ><i class="fa-solid fa-chair"></i>Sit-in</a>
-    <a onclick="showView('sitin-records')" id="nav-records"                     ><i class="fa-solid fa-table-list"></i>View Sit-in Records</a>
+    <a onclick="showView('current-sitin')"     id="nav-sitin"                       ><i class="fa-solid fa-chair"></i>Sit-in</a>
+    <a onclick="showView('sitin-records')" id="nav-records"                     ><i class="fa-solid fa-table-list"></i>Sit-in Records</a>
     <a onclick="showView('reports')"       id="nav-reports"                     ><i class="fa-solid fa-chart-bar"></i>Sit-in Reports</a>
     <a onclick="showView('feedback')"      id="nav-feedback"                    ><i class="fa-solid fa-comment-dots"></i>Feedback Reports</a>
     <a onclick="showView('reservation')"   id="nav-reservation"                 ><i class="fa-solid fa-calendar-check"></i>Reservation</a>
@@ -356,9 +357,34 @@ $admin = $_SESSION['user'];
     </div>
   </div>
 
+  <!-- ████ CURRENT SIT-IN ████ -->
+  <div class="view" id="view-current-sitin">
+    <div class="page-title"><i class="fa-solid fa-chair"></i> Current Sit-in
+      <button class="btn-a-primary ms-auto" onclick="openSitInModal()" style="font-size:.75rem;"><i class="fa-solid fa-plus"></i> New Sit-in</button>
+    </div>
+    <div class="a-card">
+      <div class="a-card-body">
+        <div class="tbl-top">
+          <div class="entries-wrap">Show <select id="curEntries" onchange="renderCurrentSitIn()"><option>10</option><option>25</option><option>50</option></select> entries</div>
+          <div class="tbl-search-wrap"><i class="fa-solid fa-magnifying-glass"></i><input type="text" id="curSearch" placeholder="Search…" oninput="renderCurrentSitIn()"/></div>
+        </div>
+        <div class="table-responsive">
+          <table class="a-table">
+            <thead><tr><th>Sit ID</th><th>ID Number</th><th>Name</th><th>Purpose</th><th>Lab</th><th>Session</th><th>Status</th><th>Actions</th></tr></thead>
+            <tbody id="curBody"></tbody>
+          </table>
+        </div>
+        <div class="pg-wrap">
+          <span id="curInfo" style="color:var(--text3);">Showing 0 entries</span>
+          <div id="curPagination" style="display:flex;gap:.25rem;flex-wrap:wrap;"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- ████ SIT-IN RECORDS ████ -->
   <div class="view" id="view-sitin-records">
-    <div class="page-title"><i class="fa-solid fa-computer"></i> Current Sit-in</div>
+    <div class="page-title"><i class="fa-solid fa-table-list"></i> All Sit-in Records</div>
     <div class="a-card">
       <div class="a-card-body">
         <div class="tbl-top">
@@ -448,7 +474,36 @@ $admin = $_SESSION['user'];
         <div class="row g-3">
           <div class="col-12"><label class="form-label">ID Number</label><input type="text" class="form-control" id="siIdNum" placeholder="Enter student ID…" oninput="lookupStudent()"/></div>
           <div class="col-12"><label class="form-label">Student Name</label><input type="text" class="form-control" id="siName" readonly placeholder="Auto-filled…"/></div>
-          <div class="col-12"><label class="form-label">Purpose / Language</label><input type="text" class="form-control" id="siPurpose" placeholder="e.g. C Programming, Thesis…"/></div>
+          <div class="col-12">
+            <label class="form-label">Purpose / Language</label>
+            <select class="form-select" id="siPurpose">
+              <option value="">Select purpose / language…</option>
+              <optgroup label="Programming Languages">
+                <option>C Programming</option>
+                <option>C++ Programming</option>
+                <option>Java</option>
+                <option>Python</option>
+                <option>PHP</option>
+                <option>JavaScript</option>
+                <option>ASP.Net</option>
+                <option>C# (.NET)</option>
+                <option>Visual Basic</option>
+                <option>SQL / Database</option>
+              </optgroup>
+              <optgroup label="Academic Work">
+                <option>Thesis / Capstone</option>
+                <option>Research Paper</option>
+                <option>Assignment</option>
+                <option>Laboratory Exercise</option>
+                <option>Online Class</option>
+              </optgroup>
+              <optgroup label="Other">
+                <option>Personal Project</option>
+                <option>Browsing / Research</option>
+                <option>Other</option>
+              </optgroup>
+            </select>
+          </div>
           <div class="col-12">
             <label class="form-label">Laboratory</label>
             <select class="form-select" id="siLab"><option value="">Select Lab…</option><option>524</option><option>526</option><option>528</option><option>530</option></select>
@@ -552,6 +607,7 @@ let students    = [];
 let sitInRecs   = [];
 let stuPage     = 1;
 let recPage     = 1;
+let curPage     = 1;
 let searchTimer = null;
 
 // ── TOAST ──────────────────────────────────────────────────
@@ -568,11 +624,12 @@ function showView(name) {
   document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
   document.querySelectorAll('.admin-nav .nav-links a').forEach(a => a.classList.remove('active'));
   document.getElementById('view-' + name).classList.add('active');
-  const navMap = { 'home':'home','students':'students','sitin-records':'records','reports':'reports','feedback':'feedback','reservation':'reservation' };
+  const navMap = { 'home':'home','students':'students','sitin-records':'records','current-sitin':'sitin','reports':'reports','feedback':'feedback','reservation':'reservation' };
   const navEl = document.getElementById('nav-' + (navMap[name] || name));
   if (navEl) navEl.classList.add('active');
   if (name === 'students') renderStudents();
   if (name === 'sitin-records') renderRecords();
+  if (name === 'current-sitin') renderCurrentSitIn();
   if (name === 'home') loadStats();
 }
 
@@ -684,6 +741,60 @@ function renderRecords() {
   renderPagination('recPagination', recPage, pages, p => { recPage=p; renderRecords(); });
 }
 
+
+// ── RENDER CURRENT SIT-IN (Active only) ────────────────────
+function renderCurrentSitIn() {
+  const q   = (document.getElementById('curSearch').value || '').toLowerCase();
+  const pp  = parseInt(document.getElementById('curEntries').value || 10);
+  const data = sitInRecs.filter(r =>
+    r.status === 'Active' &&
+    (r.id_number+' '+r.name+' '+r.purpose+' '+r.lab).toLowerCase().includes(q)
+  );
+  const total = data.length, pages = Math.max(1, Math.ceil(total/pp));
+  if (curPage > pages) curPage = pages;
+  const slice = data.slice((curPage-1)*pp, curPage*pp);
+  const tbody = document.getElementById('curBody');
+  if (!total) {
+    tbody.innerHTML = `<tr><td colspan="8" class="no-data"><i class="fa-solid fa-circle-info" style="margin-right:.4rem;opacity:.4;"></i>No active sit-in sessions right now.</td></tr>`;
+  } else {
+    tbody.innerHTML = slice.map(r => `
+      <tr>
+        <td><span class="id-badge">${r.sit_id}</span></td>
+        <td><span class="id-badge">${r.id_number}</span></td>
+        <td style="font-weight:600;">${r.name}</td>
+        <td style="color:var(--text2);">${r.purpose}</td>
+        <td><span style="background:rgba(201,168,76,.12);color:var(--gold2);padding:2px 8px;border-radius:5px;font-size:.72rem;font-weight:700;">${r.lab}</span></td>
+        <td style="color:var(--text2);">${r.session}</td>
+        <td><span class="badge-active">Active</span></td>
+        <td><button class="btn-a-danger" onclick="timeOutAndRefresh(${r.sit_id})"><i class="fa-solid fa-clock"></i> Time Out</button></td>
+      </tr>`).join('');
+  }
+  document.getElementById('curInfo').textContent = total
+    ? `Showing ${(curPage-1)*pp+1}–${Math.min(curPage*pp,total)} of ${total} active sessions` : 'No active sessions';
+  renderPagination('curPagination', curPage, pages, p => { curPage=p; renderCurrentSitIn(); });
+}
+function timeOutAndRefresh(sitId) {
+  fetch('admin_sitin_timeout.php', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ sit_id: sitId })
+  })
+  .then(r => r.json())
+  .then(d => {
+    if (!d.success) { toast('Could not time out.', 'danger'); return; }
+    toast('Student timed out.', 'warning');
+    fetchSitInRecords();
+  })
+  .catch(() => {
+    const rec = sitInRecs.find(r => r.sit_id === sitId);
+    if (rec) rec.status = 'Done';
+    renderCurrentSitIn();
+    renderRecords();
+    loadStats();
+    toast('Student timed out.', 'warning');
+  });
+}
+
 // ── PAGINATION ─────────────────────────────────────────────
 function renderPagination(id, cur, total, cb) {
   const el = document.getElementById(id);
@@ -724,7 +835,8 @@ function liveSearch() {
       }
       res.innerHTML = data.map(s => {
         const initials = ((s.firstname||'?')[0] + (s.lastname||'?')[0]).toUpperCase();
-        return `<div class="search-result-card">
+        const safeData = encodeURIComponent(JSON.stringify(s));
+        return `<div class="search-result-card" style="cursor:pointer;" onclick="selectStudentForSitIn(JSON.parse(decodeURIComponent('${safeData}')))">
           <div class="src-avatar">${initials}</div>
           <div class="src-info">
             <div class="src-name">${s.firstname} ${s.lastname}</div>
@@ -735,6 +847,7 @@ function liveSearch() {
             </div>
           </div>
           <div class="src-session"><i class="fa-solid fa-rotate" style="margin-right:3px;"></i>${s.remaining_sessions ?? 30} sess.</div>
+          <div style="margin-left:8px;color:var(--gold2);font-size:.7rem;font-weight:700;white-space:nowrap;"><i class="fa-solid fa-chair"></i> Sit In</div>
         </div>`;
       }).join('');
     } catch (e) {
@@ -748,7 +861,9 @@ function liveSearch() {
       }
       res.innerHTML = found.map(s => {
         const initials = ((s.first_name||'?')[0]+(s.last_name||'?')[0]).toUpperCase();
-        return `<div class="search-result-card">
+        const mapped = { id: s.id_number, firstname: s.first_name, lastname: s.last_name, course: s.course, year: s.year_level, remaining_sessions: s.remaining_sessions ?? 30 };
+        const safeData = encodeURIComponent(JSON.stringify(mapped));
+        return `<div class="search-result-card" style="cursor:pointer;" onclick="selectStudentForSitIn(JSON.parse(decodeURIComponent('${safeData}')))">
           <div class="src-avatar">${initials}</div>
           <div class="src-info">
             <div class="src-name">${s.first_name} ${s.last_name}</div>
@@ -759,17 +874,57 @@ function liveSearch() {
             </div>
           </div>
           <div class="src-session"><i class="fa-solid fa-rotate" style="margin-right:3px;"></i>${s.remaining_sessions ?? 30} sess.</div>
+          <div style="margin-left:8px;color:var(--gold2);font-size:.7rem;font-weight:700;white-space:nowrap;"><i class="fa-solid fa-chair"></i> Sit In</div>
         </div>`;
       }).join('');
     }
   }, 300);
 }
 
+// ── FETCH SIT-IN RECORDS FROM DB ───────────────────────────
+function fetchSitInRecords() {
+  fetch('admin_sitin_fetch.php?filter=all')
+    .then(r => r.json())
+    .then(d => {
+      sitInRecs = d.map(r => ({
+        sit_id:    r.sit_id,
+        id_number: r.id_number,
+        name:      r.name,
+        purpose:   r.purpose,
+        lab:       r.lab,
+        session:   r.session,
+        status:    r.status,
+        created_at: r.created_at
+      }));
+      renderRecords();
+      renderCurrentSitIn();
+      loadStats();
+    })
+    .catch(() => { /* keep existing sitInRecs if offline */ });
+}
+
 // ── SIT-IN ─────────────────────────────────────────────────
 function openSitInModal() {
-  ['siIdNum','siName','siPurpose','siSession'].forEach(id => document.getElementById(id).value = '');
+  ['siIdNum','siName','siSession'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('siPurpose').value = '';
   document.getElementById('siLab').value = '';
   new bootstrap.Modal(document.getElementById('modalSitIn')).show();
+}
+
+// Called when a student card is clicked in the Search modal
+function selectStudentForSitIn(s) {
+  const searchModalEl = document.getElementById('modalSearch');
+  const searchModal   = bootstrap.Modal.getInstance(searchModalEl);
+  if (searchModal) searchModal.hide();
+  searchModalEl.addEventListener('hidden.bs.modal', function handler() {
+    searchModalEl.removeEventListener('hidden.bs.modal', handler);
+    document.getElementById('siIdNum').value   = s.id            ?? '';
+    document.getElementById('siName').value    = (s.firstname + ' ' + s.lastname).trim();
+    document.getElementById('siSession').value = s.remaining_sessions ?? 30;
+    document.getElementById('siPurpose').value = '';
+    document.getElementById('siLab').value     = '';
+    new bootstrap.Modal(document.getElementById('modalSitIn')).show();
+  });
 }
 function lookupStudent() {
   const id  = document.getElementById('siIdNum').value.trim();
@@ -788,16 +943,34 @@ function submitSitIn() {
   const purpose = document.getElementById('siPurpose').value.trim();
   const lab     = document.getElementById('siLab').value;
   if (!id||!name||!purpose||!lab) { alert('Please fill in all fields.'); return; }
-  sitInRecs.push({ sit_id:sitInRecs.length+1, id_number:id, name, purpose, lab, session:document.getElementById('siSession').value, status:'Active' });
-  bootstrap.Modal.getInstance(document.getElementById('modalSitIn')).hide();
-  toast('Student sat in successfully!');
-  loadStats();
+
+  fetch('admin_sitin_submit.php', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ id_number: id, purpose, lab })
+  })
+  .then(r => r.json())
+  .then(d => {
+    if (!d.success) { alert(d.message || 'Could not save sit-in.'); return; }
+    bootstrap.Modal.getInstance(document.getElementById('modalSitIn')).hide();
+    toast('Student sat in successfully!');
+    fetchSitInRecords();   // reload from DB so data is fresh
+    showView('current-sitin');
+    // Refresh student session count
+    fetchStudents();
+  })
+  .catch(() => {
+    // Offline fallback – save in memory only
+    sitInRecs.push({ sit_id: sitInRecs.length+1, id_number:id, name, purpose, lab,
+                     session: document.getElementById('siSession').value, status:'Active' });
+    bootstrap.Modal.getInstance(document.getElementById('modalSitIn')).hide();
+    toast('Saved locally (DB unavailable).', 'warning');
+    renderCurrentSitIn();
+    showView('current-sitin');
+  });
 }
 function timeOut(sitId) {
-  const rec = sitInRecs.find(r => r.sit_id === sitId);
-  if (rec) rec.status = 'Done';
-  renderRecords();
-  toast('Student timed out.', 'warning');
+  timeOutAndRefresh(sitId);
 }
 
 // ── ADD STUDENT ────────────────────────────────────────────
@@ -875,6 +1048,7 @@ function doLogout() { window.location.href = 'logout.php'; }
 // ── INIT ───────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
   fetchStudents();
+  fetchSitInRecords();
   loadStats();
 });
 </script>
