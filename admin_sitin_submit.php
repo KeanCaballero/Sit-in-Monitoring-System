@@ -17,9 +17,10 @@ try {
     $conn = db_connect();
 
     $data      = json_decode(file_get_contents('php://input'), true);
-    $id_number = trim($data['id_number'] ?? '');
-    $purpose   = trim($data['purpose']   ?? '');
-    $lab       = trim($data['lab']       ?? '');
+    $id_number         = trim($data['id_number']         ?? '');
+    $purpose           = trim($data['purpose']           ?? '');
+    $lab               = trim($data['lab']               ?? '');
+    $override_sessions = isset($data['override_sessions']) && $data['override_sessions'] !== '' ? (int)$data['override_sessions'] : null;
 
     if (!$id_number || !$purpose || !$lab) {
         ob_end_clean();
@@ -63,7 +64,8 @@ try {
         "INSERT INTO sit_ins (id_number, purpose, lab, session_at_entry, status, created_at)
          VALUES (?, ?, ?, ?, 'Active', NOW())"
     );
-    $stmt->bind_param('sssi', $id_number, $purpose, $lab, $row['remaining_sessions']);
+    $session_to_store = ($override_sessions !== null) ? $override_sessions : $row['remaining_sessions'];
+    $stmt->bind_param('sssi', $id_number, $purpose, $lab, $session_to_store);
     $stmt->execute();
     $new_sit_id = $conn->insert_id;
     $stmt->close();
