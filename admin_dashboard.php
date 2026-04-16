@@ -1355,15 +1355,6 @@ function confirmLogout() { new bootstrap.Modal(document.getElementById('modalLog
 function doLogout() { window.location.href = 'logout.php'; }
 
 // ── INIT ───────────────────────────────────────────────────
-document.addEventListener('DOMContentLoaded', () => {
-  fetchStudents();
-  fetchSitInRecords();
-  loadStats();
-  // Set today's date on the map date picker
-  const mapDate = document.getElementById('adminMapDate');
-  if (mapDate) mapDate.valueAsDate = new Date();
-});
-
 // ══════════════════════════════════════════════════════════
 // ── ADMIN PC MAP ──────────────────────────────────────────
 // ══════════════════════════════════════════════════════════

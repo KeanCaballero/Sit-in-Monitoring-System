@@ -62,15 +62,8 @@ try {
     $stmt->close();
 
     if ($user) {
-        // Check if users table has a 'role' column
-        $rc = $conn->query("SHOW COLUMNS FROM `users` LIKE 'role'");
-        if ($rc && $rc->num_rows > 0) {
-            // Use the role column directly
-            $role = ($user['role'] ?? 'student') === 'admin' ? 'admin' : 'student';
-        } else {
-            // No role column — everyone in users table is a student by default
-            $role = 'student';
-        }
+        // Users table = students (always)
+        $role = 'student';
     }
 
     // ── STEP 2: If not found in users, check admin table ───────
