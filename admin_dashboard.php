@@ -99,6 +99,7 @@ $admin = $_SESSION['user'];
       color: var(--text2); text-decoration: none; font-size: .775rem; font-weight: 500;
       padding: .45rem .68rem; border-radius: 7px; transition: all .15s;
       cursor: pointer; white-space: nowrap; display: flex; align-items: center; gap: .3rem;
+      user-select: none; pointer-events: auto; outline: none;
     }
     .admin-nav .nav-links a i { font-size: .68rem; opacity: .7; }
     .admin-nav .nav-links a:hover { background: var(--surface3); color: var(--text1); }
@@ -314,20 +315,20 @@ $admin = $_SESSION['user'];
     College of Computer Studies Sit-in Monitoring System Admin
   </a>
   <div class="nav-links">
-    <a onclick="showView('home')"           id="nav-home"        class="active"><i class="fa-solid fa-house-chimney"></i>Home</a>
-    <a onclick="openSearch()"              id="nav-search"                      ><i class="fa-solid fa-magnifying-glass"></i>Search</a>
-    <a onclick="showView('students')"      id="nav-students"                    ><i class="fa-solid fa-users"></i>Students</a>
-    <a onclick="showView('current-sitin')"     id="nav-sitin"                       ><i class="fa-solid fa-chair"></i>Sit-in</a>
-    <a onclick="showView('sitin-records')" id="nav-records"                     ><i class="fa-solid fa-table-list"></i>Sit-in Records</a>
-    <a onclick="showView('reports')"       id="nav-reports"                     ><i class="fa-solid fa-chart-bar"></i>Sit-in Reports</a>
-    <a onclick="showView('feedback')"      id="nav-feedback"                    ><i class="fa-solid fa-comment-dots"></i>Feedback Reports</a>
-    <a onclick="showView('reservation')"   id="nav-reservation"                 ><i class="fa-solid fa-calendar-check"></i>Reservation</a>
-    <a onclick="showView('leaderboard')"   id="nav-leaderboard"                 ><i class="fa-solid fa-trophy"></i>Leaderboard</a>
-    <a onclick="showView('analytics')"     id="nav-analytics"                   ><i class="fa-solid fa-chart-line"></i>Analytics</a>
-    <a onclick="showView('announcement')"  id="nav-announcement"                ><i class="fa-solid fa-bullhorn"></i>Announce</a>
-    <a onclick="showView('rewards')"       id="nav-rewards"                     ><i class="fa-solid fa-gift"></i>Rewards</a>
+    <a href="javascript:void(0);" class="nav-link" data-view="home"            id="nav-home"        ><i class="fa-solid fa-house-chimney"></i>Home</a>
+    <a href="javascript:void(0);" class="nav-link" data-search="1"             id="nav-search"      ><i class="fa-solid fa-magnifying-glass"></i>Search</a>
+    <a href="javascript:void(0);" class="nav-link" data-view="students"        id="nav-students"    ><i class="fa-solid fa-users"></i>Students</a>
+    <a href="javascript:void(0);" class="nav-link" data-view="current-sitin"   id="nav-sitin"       ><i class="fa-solid fa-chair"></i>Sit-in</a>
+    <a href="javascript:void(0);" class="nav-link" data-view="sitin-records"   id="nav-records"     ><i class="fa-solid fa-table-list"></i>Sit-in Records</a>
+    <a href="javascript:void(0);" class="nav-link" data-view="reports"         id="nav-reports"     ><i class="fa-solid fa-chart-bar"></i>Sit-in Reports</a>
+    <a href="javascript:void(0);" class="nav-link" data-view="feedback"        id="nav-feedback"    ><i class="fa-solid fa-comment-dots"></i>Feedback Reports</a>
+    <a href="javascript:void(0);" class="nav-link" data-view="reservation"     id="nav-reservation" ><i class="fa-solid fa-calendar-check"></i>Reservation</a>
+    <a href="javascript:void(0);" class="nav-link" data-view="leaderboard"     id="nav-leaderboard" ><i class="fa-solid fa-trophy"></i>Leaderboard</a>
+    <a href="javascript:void(0);" class="nav-link" data-view="analytics"       id="nav-analytics"   ><i class="fa-solid fa-chart-line"></i>Analytics</a>
+    <a href="javascript:void(0);" class="nav-link" data-view="announcement"    id="nav-announcement"><i class="fa-solid fa-bullhorn"></i>Announce</a>
+    <a href="javascript:void(0);" class="nav-link" data-view="rewards"         id="nav-rewards"     ><i class="fa-solid fa-gift"></i>Rewards</a>
   </div>
-  <button class="btn-logout" onclick="confirmLogout()">
+  <button class="btn-logout" id="logoutBtn" onclick="confirmLogout()">
     <i class="fa-solid fa-right-from-bracket"></i> Log out
   </button>
 </nav>
@@ -1327,9 +1328,7 @@ function deleteStudent(id) {
 
 // ── RESET SESSIONS ─────────────────────────────────────────
 function confirmResetAll() {
-  if (!confirm('Reset all student sessions to 30?')) return;
-  students.forEach(s => s.remaining_sessions = 30);
-  toast('All sessions reset to 30.'); renderStudents();
+  resetAllSessionsDB(); // persists to DB and refreshes student list
 }
 
 // ── ANNOUNCEMENT ───────────────────────────────────────────
@@ -1354,143 +1353,7 @@ async function postAnnouncement() {
   loadAnnouncementsDB();  // refresh the dedicated announcement view too
 }
 
-// ── LOGOUT ─────────────────────────────────────────────────
-function confirmLogout() { new bootstrap.Modal(document.getElementById('modalLogout')).show(); }
-function doLogout() { window.location.href = 'logout.php'; }
 
-// ── INIT ───────────────────────────────────────────────────
-// ══════════════════════════════════════════════════════════
-// ── ADMIN PC MAP ──────────────────────────────────────────
-// ══════════════════════════════════════════════════════════
-let currentAdminLab = '524';
-let adminPcData = null;
-let adminResData = [];
-
-async function loadAdminPcMap(lab, btn) {
-  if (!lab) lab = currentAdminLab;
-  currentAdminLab = lab;
-  const date = document.getElementById('adminMapDate')?.value || new Date().toISOString().slice(0,10);
-
-  // Update active button style
-  if (btn) {
-    document.querySelectorAll('.lab-btn-admin').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-  }
-
-  const grid    = document.getElementById('adminPcGrid');
-  const loading = document.getElementById('adminPcMapLoading');
-  if (grid)    grid.style.display    = 'none';
-  if (loading) loading.style.display = 'block';
-
-  try {
-    const r = await fetch(`api/lab_pc_status.php?lab=${encodeURIComponent(lab)}&date=${encodeURIComponent(date)}`);
-    adminPcData = await r.json();
-  } catch(e) {
-    // Offline fallback — show all as available
-    adminPcData = { lab, total_pcs:40, pc_map:{}, available_count:40, occupied_count:0, reserved_count:0 };
-    for (let i=1;i<=40;i++) adminPcData.pc_map[i] = 'available';
-  }
-
-  renderAdminPcGrid();
-  if (loading) loading.style.display = 'none';
-  if (grid)    grid.style.display    = 'grid';
-}
-
-function renderAdminPcGrid() {
-  const map   = adminPcData?.pc_map || {};
-  const total = adminPcData?.total_pcs || 40;
-  const grid  = document.getElementById('adminPcGrid');
-  if (!grid) return;
-
-  const labels = {
-    available: 'Available',
-    occupied:  'Occupied — In Use',
-    reserved:  'Reserved (Approved)',
-    pending:   'Pending Reservation'
-  };
-
-  let html = `<div class="admin-teacher-desk"><i class="fa-solid fa-chalkboard-user"></i>&nbsp; INSTRUCTOR'S DESK</div>`;
-  for (let i = 1; i <= total; i++) {
-    const st = map[i] || 'available';
-    html += `<div class="admin-pc-item ${st}">
-      <i class="fa-solid fa-desktop"></i>
-      <span>PC${i}</span>
-      <div class="pc-tip">${labels[st] || st}</div>
-    </div>`;
-  }
-  grid.innerHTML = html;
-
-  // Stats strip
-  const statsEl = document.getElementById('adminLabStats');
-  if (statsEl) {
-    statsEl.innerHTML = `
-      <div class="stat-card c3" style="padding:10px 14px;flex:0 0 auto;">
-        <div class="stat-icon ic-green" style="width:34px;height:34px;font-size:13px"><i class="fa-solid fa-check"></i></div>
-        <div class="stat-info"><label>Available</label><div class="stat-value" style="font-size:22px">${adminPcData?.available_count||0}</div></div>
-      </div>
-      <div class="stat-card" style="padding:10px 14px;flex:0 0 auto;border-color:rgba(239,68,68,.25)">
-        <div class="stat-icon" style="width:34px;height:34px;font-size:13px;background:rgba(239,68,68,.15);color:#fca5a5"><i class="fa-solid fa-xmark"></i></div>
-        <div class="stat-info"><label>Occupied</label><div class="stat-value" style="font-size:22px;color:#ef4444">${adminPcData?.occupied_count||0}</div></div>
-      </div>
-      <div class="stat-card" style="padding:10px 14px;flex:0 0 auto;border-color:rgba(245,158,11,.25)">
-        <div class="stat-icon ic-gold" style="width:34px;height:34px;font-size:13px"><i class="fa-solid fa-calendar-check"></i></div>
-        <div class="stat-info"><label>Reserved</label><div class="stat-value" style="font-size:22px;color:var(--gold)">${adminPcData?.reserved_count||0}</div></div>
-      </div>`;
-  }
-}
-
-// ══════════════════════════════════════════════════════════
-// ── RESERVATION TABLE ─────────────────────────────────────
-// ══════════════════════════════════════════════════════════
-// ══════════════════════════════════════════════════════════
-// ── LEADERBOARD ───────────────────────────────────────────
-// ══════════════════════════════════════════════════════════
-async function loadAdminLeaderboard() {
-  const lbBody = document.getElementById('adminLbBody');
-  const rwBody = document.getElementById('rwLbBody');
-  try {
-    const data = await fetch('api/leaderboard.php').then(r => r.json());
-    const medals = ['🥇','🥈','🥉'];
-
-    if (lbBody) {
-      lbBody.innerHTML = data.length ? data.map((s, i) => `
-        <tr class="${i < 3 ? 'lb-rank-' + (i+1) : ''}">
-          <td style="font-size:1.1rem">${medals[i] || '#'+(i+1)}</td>
-          <td style="font-weight:600">${s.first_name} ${s.last_name}
-            <span style="font-size:.7rem;color:var(--text3);margin-left:4px">${s.id_number}</span>
-          </td>
-          <td style="color:var(--text2)">${s.course} Y${s.year_level}</td>
-          <td style="color:var(--text2)">${s.total_sitins}</td>
-          <td style="font-weight:800;color:var(--gold2)">${s.points}</td>
-          <td>
-            <button class="btn-a-success" style="font-size:.7rem"
-              onclick="document.getElementById('rwIdNum').value='${s.id_number}';showView('rewards')">
-              <i class="fa-solid fa-plus"></i> Award
-            </button>
-          </td>
-        </tr>`).join('')
-      : '<tr><td colspan="6" class="no-data">No data yet.</td></tr>';
-    }
-
-    if (rwBody) {
-      rwBody.innerHTML = data.slice(0, 10).map((s, i) => `
-        <tr class="${i < 3 ? 'lb-rank-' + (i+1) : ''}">
-          <td>${medals[i] || '#'+(i+1)}</td>
-          <td style="font-weight:600">${s.first_name} ${s.last_name}</td>
-          <td style="color:var(--text2)">${s.course}</td>
-          <td style="color:var(--text2)">${s.total_sitins}</td>
-          <td style="font-weight:800;color:var(--gold2)">${s.points}</td>
-        </tr>`).join('') || '<tr><td colspan="5" class="no-data">No data yet.</td></tr>';
-    }
-  } catch(e) {
-    if (lbBody) lbBody.innerHTML = '<tr><td colspan="6" class="no-data">Could not load leaderboard.</td></tr>';
-    if (rwBody) rwBody.innerHTML = '<tr><td colspan="5" class="no-data">Could not load.</td></tr>';
-  }
-}
-
-// ══════════════════════════════════════════════════════════
-// ── ANALYTICS ─────────────────────────────────────────────
-// ══════════════════════════════════════════════════════════
 let reportChartInst = null, purposeChart2Inst = null, labChartInst = null;
 
 async function loadAnalytics() {
@@ -1899,30 +1762,30 @@ async function loadAdminPcMap(lab, btn) {
   if (dateEl && !dateEl.value) dateEl.value = date;
 
   try {
-    const d = await fetch(`lab_pc_status.php?lab=${lab}&date=${date}`).then(r => r.json());
+    const d = await fetch(`api/lab_pc_status.php?lab=${lab}&date=${date}`).then(r => r.json());
     if (d.error) throw new Error(d.error);
 
     const pcMap   = d.pc_map || {};
     const total   = d.total_pcs || 40;
     const colors  = {
-      available:'rgba(34,197,94,.18)', occupied:'rgba(239,68,68,.2)',
-      reserved:'rgba(245,158,11,.2)',  pending:'rgba(139,92,246,.2)'
+      available:'rgba(34,197,94,.35)',  occupied:'rgba(239,68,68,.45)',
+      reserved:'rgba(245,158,11,.45)',  pending:'rgba(139,92,246,.45)'
     };
     const borders = {
-      available:'rgba(34,197,94,.6)',  occupied:'rgba(239,68,68,.6)',
-      reserved:'rgba(245,158,11,.6)',  pending:'rgba(139,92,246,.6)'
+      available:'rgba(34,197,94,.8)',  occupied:'rgba(239,68,68,.9)',
+      reserved:'rgba(245,158,11,.9)',  pending:'rgba(139,92,246,.9)'
     };
     const texts = {
-      available:'#22c55e', occupied:'#ef4444', reserved:'#f59e0b', pending:'#8b5cf6'
+      available:'#4ade80', occupied:'#fca5a5', reserved:'#fcd34d', pending:'#c4b5fd'
     };
 
-    let html = `<div class="admin-pc-item" style="background:rgba(59,130,246,.12);border:1px solid rgba(59,130,246,.4);grid-column:1/-1;display:flex;align-items:center;justify-content:center;gap:.5rem;font-size:.78rem;font-weight:700;color:#93c5fd;padding:.6rem;border-radius:8px;margin-bottom:.25rem;">
+    let html = `<div style="grid-column:1/-1;background:rgba(59,130,246,.2);border:1px solid rgba(59,130,246,.5);display:flex;align-items:center;justify-content:center;gap:.5rem;font-size:.78rem;font-weight:700;color:#93c5fd;padding:.5rem;border-radius:8px;margin-bottom:4px;">
       <i class="fa-solid fa-chalkboard-user"></i> INSTRUCTOR'S DESK</div>`;
     for (let i=1; i<=total; i++) {
       const st = pcMap[i] || 'available';
-      html += `<div class="admin-pc-item" style="background:${colors[st]};border:1.5px solid ${borders[st]};border-radius:8px;padding:.6rem .3rem;text-align:center;cursor:default;">
-        <i class="fa-solid fa-desktop" style="font-size:.85rem;color:${texts[st]};display:block;margin-bottom:3px;"></i>
-        <div style="font-size:.62rem;font-weight:700;color:${texts[st]};">PC${i}</div>
+      html += `<div style="background:${colors[st]};border:2px solid ${borders[st]};border-radius:8px;padding:.5rem .2rem;text-align:center;cursor:default;min-height:52px;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;" title="${st}">
+        <i class="fa-solid fa-desktop" style="font-size:.9rem;color:${texts[st]};display:block;margin-bottom:2px;"></i>
+        <div style="font-size:.6rem;font-weight:800;color:${texts[st]};">PC${i}</div>
         <div class="pc-tip">${st.charAt(0).toUpperCase()+st.slice(1)}</div>
       </div>`;
     }
@@ -1960,6 +1823,28 @@ async function pollAdminNotifications() {
 // ── AUTO INIT ────────────────────────────────────
 // ══════════════════════════════════════════════════
 document.addEventListener('DOMContentLoaded', () => {
+  // Setup navbar click handlers
+  document.querySelectorAll('.nav-link').forEach(link => {
+    link.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (link.dataset.view) {
+        showView(link.dataset.view);
+      } else if (link.dataset.search) {
+        openSearch();
+      }
+    });
+  });
+
+  // Setup logout button
+  const logoutBtn = document.getElementById('logoutBtn');
+  if (logoutBtn) {
+    logoutBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      confirmLogout();
+    });
+  }
+
   // Set today's date in admin map date picker
   const adminMapDate = document.getElementById('adminMapDate');
   if (adminMapDate && !adminMapDate.value) adminMapDate.value = new Date().toISOString().slice(0,10);
@@ -1982,16 +1867,9 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function confirmLogout() {
-  const modal = document.getElementById('modalLogout');
-  if (modal) {
-    new bootstrap.Modal(modal).show();
-  } else {
-    if (confirm('Are you sure you want to log out?')) window.location.href='logout.php';
+  if (confirm('Are you sure you want to log out?')) {
+    window.location.href = 'logout.php';
   }
-}
-
-function doLogout() {
-  window.location.href = 'logout.php';
 }
 </script>
 </body>

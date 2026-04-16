@@ -64,8 +64,8 @@ try {
     $stmt->close();
 
     if ($user) {
-        // Users table = students (always)
-        $role = 'student';
+        // Use the role from the database
+        $role = $user['role'] ?? 'student';
     }
 
     // ── STEP 2: If not found in users, check admin table ───────
