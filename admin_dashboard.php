@@ -3,10 +3,14 @@ ini_set('display_errors', 0);
 ini_set('display_startup_errors', 0);
 error_reporting(0);
 session_start();
-if (!isset($_SESSION['user_id']) || ($_SESSION['user']['role'] ?? '') !== 'admin') {
+
+// Strict admin access check
+$isAdmin = isset($_SESSION['user_id']) && isset($_SESSION['user']['role']) && $_SESSION['user']['role'] === 'admin';
+if (!$isAdmin) {
     header("Location: index.html");
     exit();
 }
+
 $admin = $_SESSION['user'];
 ?>
 <!DOCTYPE html>
@@ -1438,70 +1442,6 @@ function renderAdminPcGrid() {
 // ══════════════════════════════════════════════════════════
 // ── RESERVATION TABLE ─────────────────────────────────────
 // ══════════════════════════════════════════════════════════
-async function loadAdminReservations() {
-  try {
-    const r = await fetch('api/reservation_fetch.php?admin=1');
-    adminResData = await r.json();
-  } catch(e) { adminResData = []; }
-  renderAdminReservations();
-}
-
-function renderAdminReservations() {
-  const q    = (document.getElementById('resSearch')?.value || '').toLowerCase();
-  const data = adminResData.filter(r =>
-    (r.id_number + ' ' + (r.student_name||'') + ' ' + r.lab + ' ' + r.purpose + ' ' + r.status)
-      .toLowerCase().includes(q)
-  );
-  const statusColors = {
-    Pending:'#8b5cf6', Approved:'#10b981',
-    Rejected:'#ef4444', Cancelled:'#64748b', Done:'#94a3b8'
-  };
-  const tbody = document.getElementById('resBody');
-  if (!tbody) return;
-  tbody.innerHTML = data.length ? data.map(r => `
-    <tr>
-      <td><span class="id-badge">#${r.id}</span></td>
-      <td style="font-weight:600">${r.student_name || r.id_number}</td>
-      <td><span style="background:rgba(201,168,76,.12);color:var(--gold2);padding:2px 8px;border-radius:5px;font-size:.72rem;font-weight:700;">Lab ${r.lab}</span></td>
-      <td style="color:var(--text2)">PC ${r.pc_number}</td>
-      <td style="color:var(--text2)">${r.date}</td>
-      <td style="color:var(--text2)">${r.time_in}</td>
-      <td style="color:var(--text2);max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${r.purpose}</td>
-      <td><span style="font-size:.7rem;font-weight:700;padding:2px 8px;border-radius:20px;background:rgba(100,116,139,.1);color:${statusColors[r.status]||'#94a3b8'}">${r.status}</span></td>
-      <td style="display:flex;gap:.3rem;flex-wrap:wrap;">
-        ${r.status === 'Pending' ? `
-          <button class="btn-a-success" onclick="approveRes(${r.id})"><i class="fa-solid fa-check"></i> Approve</button>
-          <button class="btn-a-danger"  onclick="rejectRes(${r.id})"><i class="fa-solid fa-xmark"></i> Reject</button>
-        ` : `<span style="color:var(--text3);font-size:.75rem">${r.status}</span>`}
-      </td>
-    </tr>`).join('')
-  : '<tr><td colspan="9" class="no-data">No reservation requests yet.</td></tr>';
-}
-
-async function approveRes(id) {
-  try {
-    await fetch('api/reservation_fetch.php', {
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ action:'approve', id })
-    });
-    toast('Reservation approved!');
-  } catch(e) { toast('Could not connect.','danger'); }
-  loadAdminReservations();
-  loadAdminPcMap(currentAdminLab);
-}
-
-async function rejectRes(id) {
-  try {
-    await fetch('api/reservation_fetch.php', {
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ action:'reject', id })
-    });
-    toast('Reservation rejected.', 'warning');
-  } catch(e) { toast('Could not connect.','danger'); }
-  loadAdminReservations();
-  loadAdminPcMap(currentAdminLab);
-}
-
 // ══════════════════════════════════════════════════════════
 // ── LEADERBOARD ───────────────────────────────────────────
 // ══════════════════════════════════════════════════════════
@@ -2042,7 +1982,16 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function confirmLogout() {
-  if (confirm('Are you sure you want to log out?')) window.location.href='logout.php';
+  const modal = document.getElementById('modalLogout');
+  if (modal) {
+    new bootstrap.Modal(modal).show();
+  } else {
+    if (confirm('Are you sure you want to log out?')) window.location.href='logout.php';
+  }
+}
+
+function doLogout() {
+  window.location.href = 'logout.php';
 }
 </script>
 </body>

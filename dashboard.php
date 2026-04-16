@@ -5,7 +5,8 @@ error_reporting(0);
 session_start();
 
 // Redirect if not logged in or if admin
-if (!isset($_SESSION['user_id']) || ($_SESSION['user']['role'] ?? '') === 'admin') {
+$isStudent = isset($_SESSION['user_id']) && isset($_SESSION['user']['role']) && $_SESSION['user']['role'] === 'student';
+if (!$isStudent) {
     header("Location: index.html");
     exit();
 }

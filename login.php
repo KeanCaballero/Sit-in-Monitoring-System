@@ -8,6 +8,8 @@ header('Content-Type: application/json; charset=utf-8');
 
 try {
     session_start();
+    // Clear any existing session on fresh login attempt
+    $_SESSION = [];
 
     $DB_HOST = 'localhost';
     $DB_NAME = 'sit_in_monitoring';
