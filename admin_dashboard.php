@@ -249,6 +249,56 @@ $admin = $_SESSION['user'];
     @media (max-width: 900px) { .stat-cards-row { grid-template-columns: 1fr 1fr; } .admin-wrap { padding: 1rem; } }
     @media (max-width: 600px) { .stat-cards-row { grid-template-columns: 1fr; } .nav-links { display: none !important; } }
 
+    /* ── PC MAP (admin) ── */
+    .lab-btn-admin {
+      border: 1.5px solid var(--border2); background: transparent;
+      color: var(--text2); padding: .3rem .75rem; border-radius: 7px;
+      font-size: .78rem; font-weight: 600; cursor: pointer; transition: all .15s;
+    }
+    .lab-btn-admin.active, .lab-btn-admin:hover {
+      background: var(--gold); color: var(--navy); border-color: var(--gold);
+    }
+    .admin-pc-grid {
+      display: grid;
+      grid-template-columns: repeat(8, 1fr);
+      gap: 6px; padding: .75rem;
+      background: var(--surface2);
+      border-radius: 12px;
+      border: 1px solid var(--border);
+    }
+    .admin-teacher-desk {
+      grid-column: 1/-1; background: var(--navy3); color: var(--gold2);
+      border-radius: 8px; padding: .4rem; text-align: center;
+      font-size: .75rem; font-weight: 700; letter-spacing: 1px; margin-bottom: 4px;
+    }
+    .admin-pc-item {
+      aspect-ratio: 1; border-radius: 7px; display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      font-size: .6rem; font-weight: 700; transition: all .12s;
+      border: 1.5px solid transparent; position: relative;
+    }
+    .admin-pc-item i { font-size: .85rem; margin-bottom: 1px; }
+    .admin-pc-item.available { background: rgba(34,197,94,.18);  color:#16a34a; border-color:rgba(34,197,94,.35); }
+    .admin-pc-item.occupied  { background: rgba(239,68,68,.18);  color:#991b1b; border-color:rgba(239,68,68,.35); }
+    .admin-pc-item.reserved  { background: rgba(245,158,11,.18); color:#92400e; border-color:rgba(245,158,11,.35); }
+    .admin-pc-item.pending   { background: rgba(139,92,246,.18); color:#5b21b6; border-color:rgba(139,92,246,.35); }
+    .admin-pc-item .pc-tip {
+      display: none; position: absolute; bottom: 110%; left: 50%;
+      transform: translateX(-50%); background: var(--navy);
+      color: var(--text1); font-size: .65rem; padding: 3px 7px;
+      border-radius: 4px; white-space: nowrap; z-index: 10;
+      border: 1px solid var(--border2); pointer-events: none;
+    }
+    .admin-pc-item:hover .pc-tip { display: block; }
+    .pc-legend { display: flex; gap: 1rem; flex-wrap: wrap; font-size: .74rem; color: var(--text2); margin-bottom: .85rem; }
+    .pc-legend span { display: flex; align-items: center; gap: .35rem; }
+    .pc-legend .dot { width: 11px; height: 11px; border-radius: 3px; flex-shrink: 0; }
+
+    /* ── leaderboard medals ── */
+    .lb-rank-1 td { background: rgba(201,168,76,.07); }
+    .lb-rank-2 td { background: rgba(255,255,255,.02); }
+    .lb-rank-3 td { background: rgba(245,158,11,.05); }
+
   </style>
 </head>
 <body>
@@ -268,6 +318,10 @@ $admin = $_SESSION['user'];
     <a onclick="showView('reports')"       id="nav-reports"                     ><i class="fa-solid fa-chart-bar"></i>Sit-in Reports</a>
     <a onclick="showView('feedback')"      id="nav-feedback"                    ><i class="fa-solid fa-comment-dots"></i>Feedback Reports</a>
     <a onclick="showView('reservation')"   id="nav-reservation"                 ><i class="fa-solid fa-calendar-check"></i>Reservation</a>
+    <a onclick="showView('leaderboard')"   id="nav-leaderboard"                 ><i class="fa-solid fa-trophy"></i>Leaderboard</a>
+    <a onclick="showView('analytics')"     id="nav-analytics"                   ><i class="fa-solid fa-chart-line"></i>Analytics</a>
+    <a onclick="showView('announcement')"  id="nav-announcement"                ><i class="fa-solid fa-bullhorn"></i>Announce</a>
+    <a onclick="showView('rewards')"       id="nav-rewards"                     ><i class="fa-solid fa-gift"></i>Rewards</a>
   </div>
   <button class="btn-logout" onclick="confirmLogout()">
     <i class="fa-solid fa-right-from-bracket"></i> Log out
@@ -408,25 +462,224 @@ $admin = $_SESSION['user'];
   <!-- ████ REPORTS ████ -->
   <div class="view" id="view-reports">
     <div class="page-title"><i class="fa-solid fa-chart-bar"></i> Sit-in Reports</div>
-    <div class="a-card"><div class="a-card-body"><div class="empty-state"><i class="fa-solid fa-chart-bar"></i><p>No report data available yet.</p></div></div></div>
+    <div class="a-card mb-3">
+      <div class="a-card-header"><i class="fa-solid fa-filter"></i> Filter Reports
+        <div style="margin-left:auto;display:flex;gap:.5rem;align-items:center;flex-wrap:wrap;">
+          <span style="font-size:.74rem;color:var(--text3);">Show:</span>
+          <select id="rptLimit" style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text1);padding:.25rem .5rem;font-size:.78rem;outline:none;">
+            <option value="5">5 records</option>
+            <option value="10" selected>10 records</option>
+            <option value="25">25 records</option>
+            <option value="50">50 records</option>
+            <option value="0">All records</option>
+          </select>
+          <span style="font-size:.74rem;color:var(--text3);">From:</span>
+          <input type="date" id="rptFrom" style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text1);padding:.28rem .5rem;font-size:.78rem;outline:none;"/>
+          <span style="font-size:.74rem;color:var(--text3);">To:</span>
+          <input type="date" id="rptTo" style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text1);padding:.28rem .5rem;font-size:.78rem;outline:none;"/>
+          <button class="btn-a-primary" onclick="loadReportsList()"><i class="fa-solid fa-filter"></i> Apply</button>
+          <button class="btn-a-success" onclick="openPrintReport()"><i class="fa-solid fa-print"></i> Print Report</button>
+        </div>
+      </div>
+    </div>
+    <div class="a-card">
+      <div class="a-card-body">
+        <div class="table-responsive">
+          <table class="a-table">
+            <thead><tr><th>#</th><th>ID Number</th><th>Name</th><th>Course</th><th>Purpose</th><th>Lab</th><th>PC</th><th>Date</th><th>Time In</th><th>Time Out</th><th>Duration</th><th>Status</th></tr></thead>
+            <tbody id="rptBody"><tr><td colspan="12" class="no-data">Click Apply to load reports.</td></tr></tbody>
+          </table>
+        </div>
+        <div style="font-size:.75rem;color:var(--text3);margin-top:.6rem;" id="rptInfo"></div>
+      </div>
+    </div>
   </div>
 
   <!-- ████ FEEDBACK ████ -->
   <div class="view" id="view-feedback">
     <div class="page-title"><i class="fa-solid fa-comments"></i> Feedback Reports</div>
-    <div class="a-card"><div class="a-card-body"><div class="empty-state"><i class="fa-solid fa-comments"></i><p>No feedback data available yet.</p></div></div></div>
+    <div class="a-card">
+      <div class="a-card-header"><i class="fa-solid fa-star"></i> Student Feedback
+        <div class="tbl-search-wrap ms-auto"><i class="fa-solid fa-magnifying-glass"></i><input type="text" id="fbSearch" placeholder="Search…" oninput="filterFeedback()"/></div>
+      </div>
+      <div class="a-card-body">
+        <div class="table-responsive">
+          <table class="a-table">
+            <thead><tr><th>#</th><th>Student</th><th>Course</th><th>Lab</th><th>Purpose</th><th>Rating</th><th>Feedback Message</th><th>Date</th></tr></thead>
+            <tbody id="fbBody"><tr><td colspan="8" class="no-data">Loading feedback…</td></tr></tbody>
+          </table>
+        </div>
+        <div style="font-size:.75rem;color:var(--text3);margin-top:.6rem;" id="fbInfo"></div>
+      </div>
+    </div>
   </div>
 
   <!-- ████ RESERVATION ████ -->
   <div class="view" id="view-reservation">
-    <div class="page-title"><i class="fa-solid fa-calendar-check"></i> Reservation Requests</div>
+    <div class="page-title"><i class="fa-solid fa-calendar-check"></i> Reservation Management</div>
+
+    <!-- Live PC Map -->
+    <div class="a-card mb-3">
+      <div class="a-card-header"><i class="fa-solid fa-desktop"></i> Live Lab PC Map
+        <div style="margin-left:auto;display:flex;gap:.4rem;align-items:center;">
+          <button class="lab-btn-admin active" onclick="loadAdminPcMap('524',this)">Lab 524</button>
+          <button class="lab-btn-admin"        onclick="loadAdminPcMap('526',this)">Lab 526</button>
+          <button class="lab-btn-admin"        onclick="loadAdminPcMap('528',this)">Lab 528</button>
+          <button class="lab-btn-admin"        onclick="loadAdminPcMap('530',this)">Lab 530</button>
+          <input type="date" id="adminMapDate" style="background:var(--surface2);border:1px solid var(--border);border-radius:7px;color:var(--text1);padding:.28rem .55rem;font-size:.78rem;outline:none;" onchange="loadAdminPcMap(currentAdminLab)"/>
+          <button onclick="loadAdminPcMap(currentAdminLab)" style="background:rgba(201,168,76,.15);color:var(--gold2);border:none;border-radius:7px;padding:.3rem .7rem;font-size:.75rem;font-weight:700;cursor:pointer;"><i class="fa-solid fa-arrows-rotate"></i></button>
+        </div>
+      </div>
+      <div class="a-card-body">
+        <div class="pc-legend">
+          <span><span class="dot" style="background:rgba(34,197,94,.5);border:1px solid #16a34a"></span>Available</span>
+          <span><span class="dot" style="background:rgba(239,68,68,.5);border:1px solid #991b1b"></span>Occupied (Sit-in)</span>
+          <span><span class="dot" style="background:rgba(245,158,11,.5);border:1px solid #92400e"></span>Reserved (Approved)</span>
+          <span><span class="dot" style="background:rgba(139,92,246,.5);border:1px solid #5b21b6"></span>Pending Approval</span>
+        </div>
+        <div id="adminPcMapLoading" style="text-align:center;padding:2.5rem;color:var(--text3);">
+          <i class="fa-solid fa-spinner fa-spin fa-2x"></i><br><br>Loading PC map…
+        </div>
+        <div id="adminPcGrid" class="admin-pc-grid" style="display:none;"></div>
+        <div style="display:flex;gap:.75rem;flex-wrap:wrap;margin-top:.85rem;" id="adminLabStats"></div>
+      </div>
+    </div>
+
+    <!-- Reservation Requests Table -->
     <div class="a-card">
+      <div class="a-card-header"><i class="fa-solid fa-list-check"></i> Reservation Requests
+        <div class="tbl-search-wrap ms-auto"><i class="fa-solid fa-magnifying-glass"></i><input type="text" id="resSearch" placeholder="Search…" oninput="renderAdminReservations()"/></div>
+      </div>
       <div class="a-card-body">
         <div class="table-responsive">
           <table class="a-table">
-            <thead><tr><th>ID Number</th><th>Student Name</th><th>Lab</th><th>Purpose</th><th>Date</th><th>Time</th><th>Status</th><th>Actions</th></tr></thead>
-            <tbody id="resBody"><tr><td colspan="8" class="no-data">No reservation requests yet.</td></tr></tbody>
+            <thead><tr><th>#</th><th>Student</th><th>Lab</th><th>PC</th><th>Date</th><th>Time</th><th>Purpose</th><th>Status</th><th>Action</th></tr></thead>
+            <tbody id="resBody"><tr><td colspan="9" class="no-data">Loading…</td></tr></tbody>
           </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ████ LEADERBOARD ████ -->
+  <div class="view" id="view-leaderboard">
+    <div class="page-title"><i class="fa-solid fa-trophy"></i> Leaderboard</div>
+    <div class="a-card">
+      <div class="a-card-header"><i class="fa-solid fa-ranking-star"></i> Top Students by Points</div>
+      <div class="a-card-body">
+        <div class="table-responsive">
+          <table class="a-table">
+            <thead><tr><th>Rank</th><th>Student</th><th>Course</th><th>Sit-ins</th><th>Points</th><th>Action</th></tr></thead>
+            <tbody id="adminLbBody"><tr><td colspan="6" class="no-data">Loading…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ████ ANALYTICS ████ -->
+  <div class="view" id="view-analytics">
+    <div class="page-title"><i class="fa-solid fa-chart-line"></i> Analytics &amp; Reports</div>
+    <div class="stat-cards-row mb-4">
+      <div class="stat-card c1"><div class="stat-icon ic-blue"><i class="fa-solid fa-users"></i></div><div class="stat-info"><label>Registered</label><div class="stat-value" id="anaRegistered">—</div></div></div>
+      <div class="stat-card c2"><div class="stat-icon ic-gold"><i class="fa-solid fa-chair"></i></div><div class="stat-info"><label>Total Sit-ins</label><div class="stat-value" id="anaTotalSitins">—</div></div></div>
+      <div class="stat-card c3"><div class="stat-icon ic-green"><i class="fa-solid fa-circle-check"></i></div><div class="stat-info"><label>Active Now</label><div class="stat-value" id="anaActive">—</div></div></div>
+    </div>
+    <div class="row g-3">
+      <div class="col-lg-6">
+        <div class="a-card">
+          <div class="a-card-header"><i class="fa-solid fa-chart-bar"></i> Sit-ins Over Time
+            <div style="margin-left:auto;display:flex;gap:.3rem;">
+              <button class="pg-btn" onclick="loadReport('daily')">Daily</button>
+              <button class="pg-btn" onclick="loadReport('weekly')">Weekly</button>
+              <button class="pg-btn" onclick="loadReport('monthly')">Monthly</button>
+            </div>
+          </div>
+          <div class="a-card-body"><canvas id="reportChart" height="200"></canvas></div>
+        </div>
+      </div>
+      <div class="col-lg-3">
+        <div class="a-card">
+          <div class="a-card-header"><i class="fa-solid fa-chart-pie"></i> By Purpose</div>
+          <div class="a-card-body"><canvas id="purposeChart2" height="200"></canvas></div>
+        </div>
+      </div>
+      <div class="col-lg-3">
+        <div class="a-card">
+          <div class="a-card-header"><i class="fa-solid fa-flask"></i> By Lab</div>
+          <div class="a-card-body"><canvas id="labChart" height="200"></canvas></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ████ ANNOUNCEMENT ████ -->
+  <div class="view" id="view-announcement">
+    <div class="page-title"><i class="fa-solid fa-bullhorn"></i> Create Announcement</div>
+    <div class="row g-4">
+      <div class="col-lg-5">
+        <div class="a-card">
+          <div class="a-card-header"><i class="fa-solid fa-pen-to-square"></i> Post New Announcement</div>
+          <div class="a-card-body">
+            <div style="margin-bottom:.75rem;">
+              <div style="font-size:.78rem;font-weight:600;color:var(--text2);margin-bottom:.35rem;">Title (optional)</div>
+              <input type="text" id="annTitleNew" placeholder="Announcement title…" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:9px;color:var(--text1);padding:.5rem .85rem;font-size:.82rem;outline:none;font-family:'Plus Jakarta Sans',sans-serif;transition:border-color .2s;" onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--border)'"/>
+            </div>
+            <div style="margin-bottom:.75rem;">
+              <div style="font-size:.78rem;font-weight:600;color:var(--text2);margin-bottom:.35rem;">Message</div>
+              <textarea id="annTextNew" class="ann-textarea" placeholder="Write your announcement…" rows="5"></textarea>
+            </div>
+            <button class="btn-a-success" onclick="postAnnouncementDB()"><i class="fa-solid fa-paper-plane"></i> Post Announcement</button>
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-7">
+        <div class="a-card">
+          <div class="a-card-header"><i class="fa-solid fa-list"></i> Posted Announcements</div>
+          <div class="a-card-body" id="annListNew" style="max-height:360px;overflow-y:auto;">
+            <div class="ann-item"><div class="ann-meta"><span class="ann-badge">CCS Admin</span></div><div class="ann-text ann-empty">No announcements yet.</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ████ REWARDS ████ -->
+  <div class="view" id="view-rewards">
+    <div class="page-title"><i class="fa-solid fa-gift"></i> Add Reward / Points</div>
+    <div class="row g-4">
+      <div class="col-lg-4">
+        <div class="a-card">
+          <div class="a-card-header"><i class="fa-solid fa-star"></i> Award Points to Student</div>
+          <div class="a-card-body">
+            <div style="margin-bottom:.7rem;">
+              <div style="font-size:.78rem;font-weight:600;color:var(--text2);margin-bottom:.35rem;">Student ID Number</div>
+              <input type="text" id="rwIdNum" placeholder="e.g. 20-1234-567" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:9px;color:var(--text1);padding:.5rem .85rem;font-size:.82rem;outline:none;font-family:'Plus Jakarta Sans',sans-serif;"/>
+            </div>
+            <div style="margin-bottom:.7rem;">
+              <div style="font-size:.78rem;font-weight:600;color:var(--text2);margin-bottom:.35rem;">Points to Add</div>
+              <input type="number" id="rwPoints" min="1" max="100" value="10" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:9px;color:var(--text1);padding:.5rem .85rem;font-size:.82rem;outline:none;font-family:'Plus Jakarta Sans',sans-serif;"/>
+            </div>
+            <div style="margin-bottom:.85rem;">
+              <div style="font-size:.78rem;font-weight:600;color:var(--text2);margin-bottom:.35rem;">Reason</div>
+              <input type="text" id="rwReason" placeholder="e.g. Perfect attendance…" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:9px;color:var(--text1);padding:.5rem .85rem;font-size:.82rem;outline:none;font-family:'Plus Jakarta Sans',sans-serif;"/>
+            </div>
+            <div style="display:flex;gap:.5rem;flex-wrap:wrap;">
+              <button class="btn-a-success" onclick="awardPoints()"><i class="fa-solid fa-star"></i> Award Points</button>
+              <button class="btn-a-primary" onclick="resetAllSessionsDB()"><i class="fa-solid fa-arrows-rotate"></i> Reset All Sessions</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-8">
+        <div class="a-card">
+          <div class="a-card-header"><i class="fa-solid fa-ranking-star"></i> Points Leaderboard</div>
+          <div class="table-responsive">
+            <table class="a-table">
+              <thead><tr><th>Rank</th><th>Student</th><th>Course</th><th>Sit-ins</th><th>Points</th></tr></thead>
+              <tbody id="rwLbBody"><tr><td colspan="5" class="no-data">Loading…</td></tr></tbody>
+            </table>
+          </div>
         </div>
       </div>
     </div>
@@ -660,13 +913,25 @@ function showView(name) {
   document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
   document.querySelectorAll('.admin-nav .nav-links a').forEach(a => a.classList.remove('active'));
   document.getElementById('view-' + name).classList.add('active');
-  const navMap = { 'home':'home','students':'students','sitin-records':'records','current-sitin':'sitin','reports':'reports','feedback':'feedback','reservation':'reservation' };
+  const navMap = {
+    'home':'home','students':'students','sitin-records':'records',
+    'current-sitin':'sitin','reports':'reports','feedback':'feedback',
+    'reservation':'reservation','leaderboard':'leaderboard',
+    'analytics':'analytics','announcement':'announcement','rewards':'rewards'
+  };
   const navEl = document.getElementById('nav-' + (navMap[name] || name));
   if (navEl) navEl.classList.add('active');
-  if (name === 'students') renderStudents();
+  if (name === 'students')      renderStudents();
   if (name === 'sitin-records') renderRecords();
   if (name === 'current-sitin') renderCurrentSitIn();
-  if (name === 'home') loadStats();
+  if (name === 'home')          loadStats();
+  if (name === 'reservation')   { loadAdminPcMap('524'); loadAdminReservations(); }
+  if (name === 'leaderboard')   loadAdminLeaderboard();
+  if (name === 'analytics')     loadAnalytics();
+  if (name === 'announcement')  loadAnnouncementsDB();
+  if (name === 'rewards')       loadAdminLeaderboard();
+  if (name === 'reports')       loadReportsList();
+  if (name === 'feedback')      loadFeedback();
 }
 
 // ── STATS ──────────────────────────────────────────────────
@@ -863,7 +1128,7 @@ function liveSearch() {
   searchTimer = setTimeout(async () => {
     res.innerHTML = `<div class="loading-row"><div class="spinner"></div> Searching database…</div>`;
     try {
-      const r    = await fetch(`search_student.php?q=${encodeURIComponent(q)}`);
+      const r    = await fetch(`api/search_student.php?q=${encodeURIComponent(q)}`);
       const data = await r.json();
       if (!data.length) {
         res.innerHTML = `<div class="search-hint"><i class="fa-solid fa-user-slash"></i>No student found for "<strong style="color:var(--text1);">${q}</strong>"</div>`;
@@ -1064,9 +1329,16 @@ function confirmResetAll() {
 }
 
 // ── ANNOUNCEMENT ───────────────────────────────────────────
-function postAnnouncement() {
+async function postAnnouncement() {
   const text = document.getElementById('annText').value.trim();
   if (!text) { alert('Please enter an announcement.'); return; }
+  try {
+    const d = await fetch('api/announcement_post.php', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ title:'', message: text })
+    }).then(r => r.json());
+    if (!d.success) { toast(d.message || 'Failed.', 'danger'); return; }
+  } catch(e) { /* offline — add visually */ }
   const now = new Date();
   const label = `${now.getFullYear()}-${now.toLocaleString('en',{month:'short'})}-${String(now.getDate()).padStart(2,'0')}`;
   const item = document.createElement('div');
@@ -1075,6 +1347,7 @@ function postAnnouncement() {
   document.getElementById('annList').prepend(item);
   document.getElementById('annText').value = '';
   toast('Announcement posted!');
+  loadAnnouncementsDB();  // refresh the dedicated announcement view too
 }
 
 // ── LOGOUT ─────────────────────────────────────────────────
@@ -1086,7 +1359,700 @@ document.addEventListener('DOMContentLoaded', () => {
   fetchStudents();
   fetchSitInRecords();
   loadStats();
+  // Set today's date on the map date picker
+  const mapDate = document.getElementById('adminMapDate');
+  if (mapDate) mapDate.valueAsDate = new Date();
 });
+
+// ══════════════════════════════════════════════════════════
+// ── ADMIN PC MAP ──────────────────────────────────────────
+// ══════════════════════════════════════════════════════════
+let currentAdminLab = '524';
+let adminPcData = null;
+let adminResData = [];
+
+async function loadAdminPcMap(lab, btn) {
+  if (!lab) lab = currentAdminLab;
+  currentAdminLab = lab;
+  const date = document.getElementById('adminMapDate')?.value || new Date().toISOString().slice(0,10);
+
+  // Update active button style
+  if (btn) {
+    document.querySelectorAll('.lab-btn-admin').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+  }
+
+  const grid    = document.getElementById('adminPcGrid');
+  const loading = document.getElementById('adminPcMapLoading');
+  if (grid)    grid.style.display    = 'none';
+  if (loading) loading.style.display = 'block';
+
+  try {
+    const r = await fetch(`api/lab_pc_status.php?lab=${encodeURIComponent(lab)}&date=${encodeURIComponent(date)}`);
+    adminPcData = await r.json();
+  } catch(e) {
+    // Offline fallback — show all as available
+    adminPcData = { lab, total_pcs:40, pc_map:{}, available_count:40, occupied_count:0, reserved_count:0 };
+    for (let i=1;i<=40;i++) adminPcData.pc_map[i] = 'available';
+  }
+
+  renderAdminPcGrid();
+  if (loading) loading.style.display = 'none';
+  if (grid)    grid.style.display    = 'grid';
+}
+
+function renderAdminPcGrid() {
+  const map   = adminPcData?.pc_map || {};
+  const total = adminPcData?.total_pcs || 40;
+  const grid  = document.getElementById('adminPcGrid');
+  if (!grid) return;
+
+  const labels = {
+    available: 'Available',
+    occupied:  'Occupied — In Use',
+    reserved:  'Reserved (Approved)',
+    pending:   'Pending Reservation'
+  };
+
+  let html = `<div class="admin-teacher-desk"><i class="fa-solid fa-chalkboard-user"></i>&nbsp; INSTRUCTOR'S DESK</div>`;
+  for (let i = 1; i <= total; i++) {
+    const st = map[i] || 'available';
+    html += `<div class="admin-pc-item ${st}">
+      <i class="fa-solid fa-desktop"></i>
+      <span>PC${i}</span>
+      <div class="pc-tip">${labels[st] || st}</div>
+    </div>`;
+  }
+  grid.innerHTML = html;
+
+  // Stats strip
+  const statsEl = document.getElementById('adminLabStats');
+  if (statsEl) {
+    statsEl.innerHTML = `
+      <div class="stat-card c3" style="padding:10px 14px;flex:0 0 auto;">
+        <div class="stat-icon ic-green" style="width:34px;height:34px;font-size:13px"><i class="fa-solid fa-check"></i></div>
+        <div class="stat-info"><label>Available</label><div class="stat-value" style="font-size:22px">${adminPcData?.available_count||0}</div></div>
+      </div>
+      <div class="stat-card" style="padding:10px 14px;flex:0 0 auto;border-color:rgba(239,68,68,.25)">
+        <div class="stat-icon" style="width:34px;height:34px;font-size:13px;background:rgba(239,68,68,.15);color:#fca5a5"><i class="fa-solid fa-xmark"></i></div>
+        <div class="stat-info"><label>Occupied</label><div class="stat-value" style="font-size:22px;color:#ef4444">${adminPcData?.occupied_count||0}</div></div>
+      </div>
+      <div class="stat-card" style="padding:10px 14px;flex:0 0 auto;border-color:rgba(245,158,11,.25)">
+        <div class="stat-icon ic-gold" style="width:34px;height:34px;font-size:13px"><i class="fa-solid fa-calendar-check"></i></div>
+        <div class="stat-info"><label>Reserved</label><div class="stat-value" style="font-size:22px;color:var(--gold)">${adminPcData?.reserved_count||0}</div></div>
+      </div>`;
+  }
+}
+
+// ══════════════════════════════════════════════════════════
+// ── RESERVATION TABLE ─────────────────────────────────────
+// ══════════════════════════════════════════════════════════
+async function loadAdminReservations() {
+  try {
+    const r = await fetch('api/reservation_fetch.php?admin=1');
+    adminResData = await r.json();
+  } catch(e) { adminResData = []; }
+  renderAdminReservations();
+}
+
+function renderAdminReservations() {
+  const q    = (document.getElementById('resSearch')?.value || '').toLowerCase();
+  const data = adminResData.filter(r =>
+    (r.id_number + ' ' + (r.student_name||'') + ' ' + r.lab + ' ' + r.purpose + ' ' + r.status)
+      .toLowerCase().includes(q)
+  );
+  const statusColors = {
+    Pending:'#8b5cf6', Approved:'#10b981',
+    Rejected:'#ef4444', Cancelled:'#64748b', Done:'#94a3b8'
+  };
+  const tbody = document.getElementById('resBody');
+  if (!tbody) return;
+  tbody.innerHTML = data.length ? data.map(r => `
+    <tr>
+      <td><span class="id-badge">#${r.id}</span></td>
+      <td style="font-weight:600">${r.student_name || r.id_number}</td>
+      <td><span style="background:rgba(201,168,76,.12);color:var(--gold2);padding:2px 8px;border-radius:5px;font-size:.72rem;font-weight:700;">Lab ${r.lab}</span></td>
+      <td style="color:var(--text2)">PC ${r.pc_number}</td>
+      <td style="color:var(--text2)">${r.date}</td>
+      <td style="color:var(--text2)">${r.time_in}</td>
+      <td style="color:var(--text2);max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${r.purpose}</td>
+      <td><span style="font-size:.7rem;font-weight:700;padding:2px 8px;border-radius:20px;background:rgba(100,116,139,.1);color:${statusColors[r.status]||'#94a3b8'}">${r.status}</span></td>
+      <td style="display:flex;gap:.3rem;flex-wrap:wrap;">
+        ${r.status === 'Pending' ? `
+          <button class="btn-a-success" onclick="approveRes(${r.id})"><i class="fa-solid fa-check"></i> Approve</button>
+          <button class="btn-a-danger"  onclick="rejectRes(${r.id})"><i class="fa-solid fa-xmark"></i> Reject</button>
+        ` : `<span style="color:var(--text3);font-size:.75rem">${r.status}</span>`}
+      </td>
+    </tr>`).join('')
+  : '<tr><td colspan="9" class="no-data">No reservation requests yet.</td></tr>';
+}
+
+async function approveRes(id) {
+  try {
+    await fetch('api/reservation_fetch.php', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ action:'approve', id })
+    });
+    toast('Reservation approved!');
+  } catch(e) { toast('Could not connect.','danger'); }
+  loadAdminReservations();
+  loadAdminPcMap(currentAdminLab);
+}
+
+async function rejectRes(id) {
+  try {
+    await fetch('api/reservation_fetch.php', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ action:'reject', id })
+    });
+    toast('Reservation rejected.', 'warning');
+  } catch(e) { toast('Could not connect.','danger'); }
+  loadAdminReservations();
+  loadAdminPcMap(currentAdminLab);
+}
+
+// ══════════════════════════════════════════════════════════
+// ── LEADERBOARD ───────────────────────────────────────────
+// ══════════════════════════════════════════════════════════
+async function loadAdminLeaderboard() {
+  const lbBody = document.getElementById('adminLbBody');
+  const rwBody = document.getElementById('rwLbBody');
+  try {
+    const data = await fetch('api/leaderboard.php').then(r => r.json());
+    const medals = ['🥇','🥈','🥉'];
+
+    if (lbBody) {
+      lbBody.innerHTML = data.length ? data.map((s, i) => `
+        <tr class="${i < 3 ? 'lb-rank-' + (i+1) : ''}">
+          <td style="font-size:1.1rem">${medals[i] || '#'+(i+1)}</td>
+          <td style="font-weight:600">${s.first_name} ${s.last_name}
+            <span style="font-size:.7rem;color:var(--text3);margin-left:4px">${s.id_number}</span>
+          </td>
+          <td style="color:var(--text2)">${s.course} Y${s.year_level}</td>
+          <td style="color:var(--text2)">${s.total_sitins}</td>
+          <td style="font-weight:800;color:var(--gold2)">${s.points}</td>
+          <td>
+            <button class="btn-a-success" style="font-size:.7rem"
+              onclick="document.getElementById('rwIdNum').value='${s.id_number}';showView('rewards')">
+              <i class="fa-solid fa-plus"></i> Award
+            </button>
+          </td>
+        </tr>`).join('')
+      : '<tr><td colspan="6" class="no-data">No data yet.</td></tr>';
+    }
+
+    if (rwBody) {
+      rwBody.innerHTML = data.slice(0, 10).map((s, i) => `
+        <tr class="${i < 3 ? 'lb-rank-' + (i+1) : ''}">
+          <td>${medals[i] || '#'+(i+1)}</td>
+          <td style="font-weight:600">${s.first_name} ${s.last_name}</td>
+          <td style="color:var(--text2)">${s.course}</td>
+          <td style="color:var(--text2)">${s.total_sitins}</td>
+          <td style="font-weight:800;color:var(--gold2)">${s.points}</td>
+        </tr>`).join('') || '<tr><td colspan="5" class="no-data">No data yet.</td></tr>';
+    }
+  } catch(e) {
+    if (lbBody) lbBody.innerHTML = '<tr><td colspan="6" class="no-data">Could not load leaderboard.</td></tr>';
+    if (rwBody) rwBody.innerHTML = '<tr><td colspan="5" class="no-data">Could not load.</td></tr>';
+  }
+}
+
+// ══════════════════════════════════════════════════════════
+// ── ANALYTICS ─────────────────────────────────────────────
+// ══════════════════════════════════════════════════════════
+let reportChartInst = null, purposeChart2Inst = null, labChartInst = null;
+
+async function loadAnalytics() {
+  try {
+    const [summary, purposeData, labData, dailyData] = await Promise.all([
+      fetch('api/reports.php?type=summary').then(r => r.json()),
+      fetch('api/reports.php?type=by_purpose').then(r => r.json()),
+      fetch('api/reports.php?type=by_lab').then(r => r.json()),
+      fetch('api/reports.php?type=daily').then(r => r.json()),
+    ]);
+    const rEl = document.getElementById('anaRegistered');
+    const tEl = document.getElementById('anaTotalSitins');
+    const aEl = document.getElementById('anaActive');
+    if (rEl) rEl.textContent = summary.registered  ?? '—';
+    if (tEl) tEl.textContent = summary.total_sitin  ?? '—';
+    if (aEl) aEl.textContent = summary.active       ?? '—';
+    drawReportChart(dailyData, 'daily');
+    drawPurposeChart2(purposeData);
+    drawLabChart(labData);
+  } catch(e) { /* DB not ready yet — charts stay empty */ }
+}
+
+async function loadReport(type) {
+  try {
+    const data = await fetch(`api/reports.php?type=${type}`).then(r => r.json());
+    drawReportChart(data, type);
+  } catch(e) {}
+}
+
+function drawReportChart(data, type) {
+  const el = document.getElementById('reportChart'); if (!el) return;
+  const labels = data.map(d => d.day || d.week || d.month || '');
+  const vals   = data.map(d => d.count || 0);
+  if (reportChartInst) reportChartInst.destroy();
+  reportChartInst = new Chart(el.getContext('2d'), {
+    type: 'bar',
+    data: { labels, datasets: [{ label:'Sit-ins', data:vals, backgroundColor:'rgba(59,130,246,.7)', borderRadius:5 }] },
+    options: { responsive:true, plugins:{legend:{display:false}},
+      scales: { x:{ticks:{color:'#94a8cc',font:{size:10}}}, y:{ticks:{color:'#94a8cc'},beginAtZero:true} } }
+  });
+}
+
+function drawPurposeChart2(data) {
+  const el = document.getElementById('purposeChart2'); if (!el) return;
+  if (purposeChart2Inst) purposeChart2Inst.destroy();
+  const colors = ['#3b82f6','#ef4444','#f97316','#eab308','#22c55e','#8b5cf6','#06b6d4'];
+  purposeChart2Inst = new Chart(el.getContext('2d'), {
+    type: 'doughnut',
+    data: { labels: data.map(d=>d.purpose), datasets:[{ data:data.map(d=>d.count), backgroundColor:colors, borderWidth:2, borderColor:'#0d1b35' }] },
+    options: { responsive:true, cutout:'55%',
+      plugins:{ legend:{ position:'bottom', labels:{color:'#94a8cc',font:{size:9},padding:8,boxWidth:9} } } }
+  });
+}
+
+function drawLabChart(data) {
+  const el = document.getElementById('labChart'); if (!el) return;
+  if (labChartInst) labChartInst.destroy();
+  labChartInst = new Chart(el.getContext('2d'), {
+    type: 'bar',
+    data: { labels: data.map(d=>'Lab '+d.lab), datasets:[{ label:'Sit-ins', data:data.map(d=>d.count), backgroundColor:['rgba(201,168,76,.7)','rgba(59,130,246,.7)','rgba(16,185,129,.7)','rgba(245,158,11,.7)'], borderRadius:5 }] },
+    options: { indexAxis:'y', responsive:true, plugins:{legend:{display:false}},
+      scales:{ x:{ticks:{color:'#94a8cc'}}, y:{ticks:{color:'#94a8cc'}} } }
+  });
+}
+
+// ══════════════════════════════════════════════════════════
+// ── ANNOUNCEMENT (saves to DB) ────────────────────────────
+// ══════════════════════════════════════════════════════════
+async function postAnnouncementDB() {
+  const title = document.getElementById('annTitleNew')?.value.trim() || '';
+  const text  = document.getElementById('annTextNew')?.value.trim() || '';
+  if (!text) { alert('Please enter a message.'); return; }
+  try {
+    const d = await fetch('api/announcement_post.php', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ title, message: text })
+    }).then(r => r.json());
+    if (d.success) {
+      toast('Announcement posted!');
+      if (document.getElementById('annTitleNew')) document.getElementById('annTitleNew').value = '';
+      if (document.getElementById('annTextNew'))  document.getElementById('annTextNew').value  = '';
+      loadAnnouncementsDB();
+    } else { toast(d.message || 'Failed to post.', 'danger'); }
+  } catch(e) {
+    // Offline fallback: add visually
+    const now = new Date();
+    const item = document.createElement('div');
+    item.className = 'ann-item';
+    item.innerHTML = `<div class="ann-meta"><span class="ann-badge">CCS Admin</span> ${now.toLocaleDateString()}</div><div class="ann-text">${text}</div>`;
+    document.getElementById('annListNew')?.prepend(item);
+    if (document.getElementById('annTextNew')) document.getElementById('annTextNew').value = '';
+    toast('Announcement posted (offline mode)!');
+  }
+}
+
+async function loadAnnouncementsDB() {
+  const el = document.getElementById('annListNew');
+  if (!el) return;
+  try {
+    const data = await fetch('api/announcement_post.php').then(r => r.json());
+    el.innerHTML = data.length
+      ? data.map(a => `
+          <div class="ann-item">
+            <div class="ann-meta"><span class="ann-badge">CCS Admin</span> ${(a.created_at||'').slice(0,10)}</div>
+            ${a.title ? `<div style="font-size:.8rem;font-weight:700;color:var(--text1);margin-bottom:.2rem;">${a.title}</div>` : ''}
+            <div class="ann-text">${a.message}</div>
+          </div>`).join('')
+      : '<div class="ann-item"><div class="ann-text ann-empty">No announcements yet.</div></div>';
+  } catch(e) { /* leave as-is */ }
+}
+
+// ══════════════════════════════════════════════════════════
+// ── REWARDS / POINTS ──────────────────────────────────────
+// ══════════════════════════════════════════════════════════
+async function awardPoints() {
+  const id_number = (document.getElementById('rwIdNum')?.value || '').trim();
+  const points    = parseInt(document.getElementById('rwPoints')?.value || 0);
+  const reason    = (document.getElementById('rwReason')?.value || '').trim();
+  if (!id_number || !points) { alert('Please fill in Student ID and Points.'); return; }
+  try {
+    const d = await fetch('api/leaderboard.php', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ action:'add_points', id_number, points, reason })
+    }).then(r => r.json());
+    if (d.success) {
+      toast(`+${points} points awarded to ${id_number}!`);
+      loadAdminLeaderboard();
+    } else { toast(d.message || 'Failed.', 'danger'); }
+  } catch(e) { toast('Could not connect to DB.', 'danger'); }
+}
+
+async function resetAllSessionsDB() {
+  if (!confirm('Reset ALL student sessions back to 30? This cannot be undone.')) return;
+  try {
+    const d = await fetch('api/leaderboard.php', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ action:'reset_sessions' })
+    }).then(r => r.json());
+    if (d.success) {
+      toast('All sessions reset to 30!');
+      fetchStudents();
+    } else { toast('Failed to reset.', 'danger'); }
+  } catch(e) {
+    students.forEach(s => s.remaining_sessions = 30);
+    toast('Sessions reset (offline mode).'); renderStudents();
+  }
+}
+
+// ══════════════════════════════════════════════════
+// ── REPORTS LIST ─────────────────────────────────
+// ══════════════════════════════════════════════════
+async function loadReportsList() {
+  const limit     = document.getElementById('rptLimit').value || '10';
+  const date_from = document.getElementById('rptFrom').value || '';
+  const date_to   = document.getElementById('rptTo').value   || '';
+  const tbody     = document.getElementById('rptBody');
+  const info      = document.getElementById('rptInfo');
+  tbody.innerHTML = '<tr><td colspan="12" class="no-data"><i class="fa-solid fa-spinner fa-spin"></i> Loading…</td></tr>';
+  try {
+    const params = new URLSearchParams({ type:'sitin_list', limit, date_from, date_to });
+    const data   = await fetch(`api/reports.php?${params}`).then(r => r.json());
+    if (!data.length) {
+      tbody.innerHTML = '<tr><td colspan="12" class="no-data">No records found for the selected filter.</td></tr>';
+      info.textContent = 'No records found.';
+      return;
+    }
+    const fmtTime = dt => { if (!dt) return '—'; const d=new Date(dt); return d.toLocaleTimeString('en',{hour:'2-digit',minute:'2-digit'}); };
+    const fmtDate = dt => { if (!dt) return '—'; const d=new Date(dt); return d.toLocaleDateString('en',{month:'short',day:'numeric',year:'numeric'}); };
+    const duration = (s,e) => {
+      if (!s||!e) return '—';
+      const diff = (new Date(e)-new Date(s))/1000;
+      if (diff<0) return '—';
+      const h=Math.floor(diff/3600), m=Math.floor((diff%3600)/60);
+      return (h>0?h+'h ':'')+m+'m';
+    };
+    tbody.innerHTML = data.map((r,i) => `
+      <tr>
+        <td style="color:var(--text3);">${i+1}</td>
+        <td><span class="id-badge">${r.id_number||'—'}</span></td>
+        <td style="font-weight:600;">${(r.name||'—').trim()}</td>
+        <td style="color:var(--text2);font-size:.72rem;">${r.course||'—'} ${r.year_level?'Yr'+r.year_level:''}</td>
+        <td>${r.purpose||'—'}</td>
+        <td><span style="background:rgba(201,168,76,.12);color:var(--gold2);padding:2px 8px;border-radius:5px;font-size:.72rem;font-weight:700;">${r.lab||'—'}</span></td>
+        <td>${r.pc_number||'—'}</td>
+        <td>${fmtDate(r.created_at)}</td>
+        <td>${fmtTime(r.created_at)}</td>
+        <td>${fmtTime(r.timed_out_at)}</td>
+        <td>${duration(r.created_at,r.timed_out_at)}</td>
+        <td><span class="badge-${r.status==='Active'?'active':'done'}">${r.status}</span></td>
+      </tr>`).join('');
+    info.textContent = `Showing ${data.length} record${data.length!==1?'s':''}.`;
+  } catch(e) {
+    tbody.innerHTML = '<tr><td colspan="12" class="no-data">Could not load report data.</td></tr>';
+  }
+}
+
+function openPrintReport() {
+  const limit     = document.getElementById('rptLimit').value || '10';
+  const date_from = document.getElementById('rptFrom').value || '';
+  const date_to   = document.getElementById('rptTo').value   || '';
+  const params    = new URLSearchParams({ limit, date_from, date_to });
+  window.open(`reports_print.php?${params}`, '_blank');
+}
+
+// ══════════════════════════════════════════════════
+// ── FEEDBACK REPORTS ──────────────────────────────
+// ══════════════════════════════════════════════════
+let allFeedback = [];
+
+async function loadFeedback() {
+  const tbody = document.getElementById('fbBody');
+  if (!tbody) return;
+  tbody.innerHTML = '<tr><td colspan="8" class="no-data"><i class="fa-solid fa-spinner fa-spin"></i> Loading…</td></tr>';
+  try {
+    allFeedback = await fetch('api/reports.php?type=feedback').then(r => r.json());
+    filterFeedback();
+  } catch(e) {
+    allFeedback = [];
+    tbody.innerHTML = '<tr><td colspan="8" class="no-data">No feedback data available.</td></tr>';
+  }
+}
+
+function filterFeedback() {
+  const q     = (document.getElementById('fbSearch')?.value || '').toLowerCase();
+  const tbody = document.getElementById('fbBody');
+  const info  = document.getElementById('fbInfo');
+  if (!tbody) return;
+
+  const data = allFeedback.filter(f =>
+    (f.id_number+' '+(f.name||'')+' '+(f.message||'')+' '+(f.lab||'')).toLowerCase().includes(q)
+  );
+
+  if (!data.length) {
+    tbody.innerHTML = '<tr><td colspan="8" class="no-data">No feedback data available yet.</td></tr>';
+    if (info) info.textContent = '';
+    return;
+  }
+
+  const stars = n => '★'.repeat(Math.min(5,Math.max(0,n||0)))+'☆'.repeat(5-Math.min(5,Math.max(0,n||0)));
+  const starColor = n => n>=4?'#10b981':n>=3?'#f59e0b':'#ef4444';
+  tbody.innerHTML = data.map((f,i) => `
+    <tr>
+      <td style="color:var(--text3);">${i+1}</td>
+      <td>
+        <div style="font-weight:600;font-size:.8rem;">${(f.name||'Unknown').trim()}</div>
+        <div style="font-size:.7rem;color:var(--text3);">${f.id_number||''}</div>
+      </td>
+      <td style="font-size:.72rem;color:var(--text2);">${f.course||'—'}</td>
+      <td><span style="background:rgba(201,168,76,.12);color:var(--gold2);padding:2px 7px;border-radius:5px;font-size:.72rem;font-weight:700;">${f.lab||'—'}</span></td>
+      <td style="font-size:.78rem;">${f.purpose||'—'}</td>
+      <td style="color:${starColor(f.rating)};font-size:.88rem;letter-spacing:1px;" title="${f.rating}/5 stars">${stars(f.rating)}</td>
+      <td style="font-size:.78rem;max-width:260px;">${f.message ? f.message.substring(0,120)+(f.message.length>120?'…':'') : '<em style="color:var(--text3)">No comment</em>'}</td>
+      <td style="font-size:.72rem;color:var(--text3);">${f.created_at ? new Date(f.created_at).toLocaleDateString('en',{month:'short',day:'numeric',year:'numeric'}) : '—'}</td>
+    </tr>`).join('');
+  if (info) info.textContent = `Showing ${data.length} feedback entr${data.length!==1?'ies':'y'}.`;
+}
+
+// ══════════════════════════════════════════════════
+// ── LEADERBOARD (admin) ───────────────────────────
+// ══════════════════════════════════════════════════
+async function loadAdminLeaderboard() {
+  const lbBody = document.getElementById('adminLbBody');
+  const rwBody = document.getElementById('rwLbBody');
+  const loading = '<tr><td colspan="6" class="no-data"><i class="fa-solid fa-spinner fa-spin"></i> Loading…</td></tr>';
+  if (lbBody) lbBody.innerHTML = loading;
+  if (rwBody) rwBody.innerHTML = loading;
+  try {
+    const data = await fetch('api/leaderboard.php').then(r => r.json());
+    const medals = ['🥇','🥈','🥉'];
+    const rowsHtml = data.length
+      ? data.map((s,i) => `
+          <tr class="${i<3?'lb-rank-'+(i+1):''}">
+            <td><span style="font-size:1rem;">${medals[i]||'#'+(i+1)}</span></td>
+            <td>
+              <div style="font-weight:600;">${s.first_name} ${s.last_name}</div>
+              <div style="font-size:.7rem;color:var(--text3);">${s.id_number}</div>
+            </td>
+            <td><span style="background:rgba(59,130,246,.12);color:#60a5fa;padding:2px 7px;border-radius:5px;font-size:.7rem;font-weight:700;">${s.course}</span></td>
+            <td style="font-family:'Bebas Neue',cursive;font-size:1.1rem;color:var(--text1);">${s.total_sitins}</td>
+            <td style="font-family:'Bebas Neue',cursive;font-size:1.1rem;color:var(--gold2);">${s.points}</td>
+            <td>
+              <button class="btn-a-success" onclick="quickAwardPoints('${s.id_number}')">
+                <i class="fa-solid fa-plus"></i> Points
+              </button>
+            </td>
+          </tr>`).join('')
+      : '<tr><td colspan="6" class="no-data">No student data yet.</td></tr>';
+
+    if (lbBody) lbBody.innerHTML = rowsHtml;
+    if (rwBody) rwBody.innerHTML = data.length
+      ? data.map((s,i) => `
+          <tr>
+            <td>${medals[i]||'#'+(i+1)}</td>
+            <td style="font-weight:600;">${s.first_name} ${s.last_name}</td>
+            <td style="font-size:.72rem;color:var(--text2);">${s.course}</td>
+            <td>${s.total_sitins}</td>
+            <td style="font-weight:800;color:var(--gold2);">${s.points}</td>
+          </tr>`).join('')
+      : '<tr><td colspan="5" class="no-data">No data yet.</td></tr>';
+  } catch(e) {
+    if (lbBody) lbBody.innerHTML = '<tr><td colspan="6" class="no-data">Could not load leaderboard.</td></tr>';
+    if (rwBody) rwBody.innerHTML = '<tr><td colspan="5" class="no-data">Could not load.</td></tr>';
+  }
+}
+
+function quickAwardPoints(id_number) {
+  if (document.getElementById('rwIdNum')) {
+    document.getElementById('rwIdNum').value = id_number;
+    showView('rewards');
+  }
+}
+
+// ══════════════════════════════════════════════════
+// ── RESERVATION (admin) ───────────────────────────
+// ══════════════════════════════════════════════════
+let adminReservations  = [];
+let currentAdminLab    = '524';
+
+async function loadAdminReservations() {
+  try {
+    const data = await fetch('api/reservation_fetch.php?admin=1').then(r => r.json());
+    adminReservations = Array.isArray(data) ? data : [];
+    renderAdminReservations();
+  } catch(e) { adminReservations = []; renderAdminReservations(); }
+}
+
+function renderAdminReservations() {
+  const tbody = document.getElementById('resBody');
+  if (!tbody) return;
+  const q    = (document.getElementById('resSearch')?.value || '').toLowerCase();
+  const data = adminReservations.filter(r =>
+    (r.id_number+' '+(r.student_name||'')+' '+r.lab+' '+r.status).toLowerCase().includes(q)
+  );
+  if (!data.length) {
+    tbody.innerHTML = '<tr><td colspan="9" class="no-data">No reservations found.</td></tr>'; return;
+  }
+  const statusColor = { Pending:'#8b5cf6', Approved:'#10b981', Rejected:'#ef4444', Cancelled:'#64748b', Done:'#64748b' };
+  tbody.innerHTML = data.map(r => `
+    <tr>
+      <td style="color:var(--text3);">${r.id}</td>
+      <td>
+        <div style="font-weight:600;">${r.student_name || r.id_number}</div>
+        <div style="font-size:.7rem;color:var(--text3);">${r.id_number}</div>
+      </td>
+      <td><span style="background:rgba(201,168,76,.12);color:var(--gold2);padding:2px 7px;border-radius:5px;font-size:.72rem;font-weight:700;">${r.lab}</span></td>
+      <td>${r.pc_number||'—'}</td>
+      <td>${r.date||'—'}</td>
+      <td>${r.time_in||'—'}</td>
+      <td style="font-size:.78rem;">${r.purpose||'—'}</td>
+      <td><span style="font-size:.72rem;font-weight:700;padding:2px 8px;border-radius:20px;background:rgba(100,116,139,.12);color:${statusColor[r.status]||'#64748b'}">${r.status}</span></td>
+      <td style="display:flex;gap:.3rem;">
+        ${r.status==='Pending'
+          ? `<button class="btn-a-success" onclick="adminResAction(${r.id},'approve')"><i class="fa-solid fa-check"></i> Approve</button>
+             <button class="btn-a-danger"  onclick="adminResAction(${r.id},'reject')"><i class="fa-solid fa-xmark"></i> Reject</button>`
+          : `<span style="font-size:.72rem;color:var(--text3);">${r.status}</span>`}
+      </td>
+    </tr>`).join('');
+}
+
+async function adminResAction(id, action) {
+  try {
+    const d = await fetch('api/reservation_fetch.php', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ action, id })
+    }).then(r => r.json());
+    if (d.success) {
+      toast(action==='approve'?'Reservation approved!':'Reservation rejected.', action==='approve'?'success':'warning');
+
+      // Notify student
+      const res = adminReservations.find(r => r.id === id);
+      if (res) {
+        await fetch('api/notifications.php', {
+          method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({
+            action:'send', target: res.id_number,
+            type:  action==='approve'?'success':'danger',
+            title: action==='approve'?'Reservation Approved ✅':'Reservation Rejected ❌',
+            message: `Your reservation for Lab ${res.lab} PC ${res.pc_number} on ${res.date} has been ${action==='approve'?'approved':'rejected'}.`
+          })
+        });
+      }
+      loadAdminReservations();
+      loadAdminPcMap(currentAdminLab);
+    } else { toast(d.message||'Action failed.','danger'); }
+  } catch(e) { toast('DB unavailable.','danger'); }
+}
+
+async function loadAdminPcMap(lab, btn) {
+  currentAdminLab = lab;
+  document.querySelectorAll('.lab-btn-admin').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  else {
+    document.querySelectorAll('.lab-btn-admin').forEach(b => {
+      if (b.textContent.trim() === 'Lab '+lab) b.classList.add('active');
+    });
+  }
+  const grid    = document.getElementById('adminPcGrid');
+  const loading = document.getElementById('adminPcMapLoading');
+  const stats   = document.getElementById('adminLabStats');
+  if (!grid) return;
+  grid.style.display = 'none';
+  if (loading) loading.style.display = 'block';
+
+  const dateEl  = document.getElementById('adminMapDate');
+  const date    = dateEl?.value || new Date().toISOString().slice(0,10);
+  if (dateEl && !dateEl.value) dateEl.value = date;
+
+  try {
+    const d = await fetch(`lab_pc_status.php?lab=${lab}&date=${date}`).then(r => r.json());
+    if (d.error) throw new Error(d.error);
+
+    const pcMap   = d.pc_map || {};
+    const total   = d.total_pcs || 40;
+    const colors  = {
+      available:'rgba(34,197,94,.18)', occupied:'rgba(239,68,68,.2)',
+      reserved:'rgba(245,158,11,.2)',  pending:'rgba(139,92,246,.2)'
+    };
+    const borders = {
+      available:'rgba(34,197,94,.6)',  occupied:'rgba(239,68,68,.6)',
+      reserved:'rgba(245,158,11,.6)',  pending:'rgba(139,92,246,.6)'
+    };
+    const texts = {
+      available:'#22c55e', occupied:'#ef4444', reserved:'#f59e0b', pending:'#8b5cf6'
+    };
+
+    let html = `<div class="admin-pc-item" style="background:rgba(59,130,246,.12);border:1px solid rgba(59,130,246,.4);grid-column:1/-1;display:flex;align-items:center;justify-content:center;gap:.5rem;font-size:.78rem;font-weight:700;color:#93c5fd;padding:.6rem;border-radius:8px;margin-bottom:.25rem;">
+      <i class="fa-solid fa-chalkboard-user"></i> INSTRUCTOR'S DESK</div>`;
+    for (let i=1; i<=total; i++) {
+      const st = pcMap[i] || 'available';
+      html += `<div class="admin-pc-item" style="background:${colors[st]};border:1.5px solid ${borders[st]};border-radius:8px;padding:.6rem .3rem;text-align:center;cursor:default;">
+        <i class="fa-solid fa-desktop" style="font-size:.85rem;color:${texts[st]};display:block;margin-bottom:3px;"></i>
+        <div style="font-size:.62rem;font-weight:700;color:${texts[st]};">PC${i}</div>
+        <div class="pc-tip">${st.charAt(0).toUpperCase()+st.slice(1)}</div>
+      </div>`;
+    }
+    grid.innerHTML = html;
+    grid.style.display = 'grid';
+    if (loading) loading.style.display = 'none';
+    if (stats) stats.innerHTML = `
+      <span style="background:rgba(34,197,94,.1);color:#22c55e;padding:3px 10px;border-radius:6px;font-size:.75rem;font-weight:700;"><i class="fa-solid fa-circle" style="font-size:.45rem;margin-right:4px;"></i>${d.available_count} Available</span>
+      <span style="background:rgba(239,68,68,.1);color:#ef4444;padding:3px 10px;border-radius:6px;font-size:.75rem;font-weight:700;"><i class="fa-solid fa-circle" style="font-size:.45rem;margin-right:4px;"></i>${d.occupied_count} Occupied</span>
+      <span style="background:rgba(245,158,11,.1);color:#f59e0b;padding:3px 10px;border-radius:6px;font-size:.75rem;font-weight:700;"><i class="fa-solid fa-circle" style="font-size:.45rem;margin-right:4px;"></i>${d.reserved_count} Reserved</span>`;
+  } catch(e) {
+    if (loading) loading.style.display = 'none';
+    grid.style.display = 'grid';
+    grid.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--text3);grid-column:1/-1;">Could not load PC map. Is lab_pc_status.php accessible?</div>';
+  }
+}
+
+// ══════════════════════════════════════════════════
+// ── NOTIFICATIONS (admin badge) ───────────────────
+// ══════════════════════════════════════════════════
+async function pollAdminNotifications() {
+  // Admin uses leaderboard/student activity as "notifications" — just a badge of pending reservations
+  try {
+    const data = adminReservations || [];
+    const pending = data.filter(r => r.status === 'Pending').length;
+    const badge   = document.getElementById('adminNotifBadge');
+    if (badge) {
+      badge.textContent = pending;
+      badge.style.display = pending > 0 ? 'inline-flex' : 'none';
+    }
+  } catch(e) {}
+}
+
+// ══════════════════════════════════════════════════
+// ── AUTO INIT ────────────────────────────────────
+// ══════════════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', () => {
+  // Set today's date in admin map date picker
+  const adminMapDate = document.getElementById('adminMapDate');
+  if (adminMapDate && !adminMapDate.value) adminMapDate.value = new Date().toISOString().slice(0,10);
+
+  // Load initial data
+  fetchStudents();
+  fetchSitInRecords();
+  loadStats();
+  loadAnnouncementsDB();
+
+  // Auto-refresh every 30 seconds
+  setInterval(() => {
+    fetchSitInRecords();
+    loadStats();
+    if (adminReservations.length > 0 || document.getElementById('view-reservation')?.classList.contains('active')) {
+      loadAdminReservations();
+    }
+    pollAdminNotifications();
+  }, 30000);
+});
+
+function confirmLogout() {
+  if (confirm('Are you sure you want to log out?')) window.location.href='logout.php';
+}
 </script>
 </body>
 </html>

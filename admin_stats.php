@@ -6,7 +6,7 @@ ob_start();
 session_start();
 header('Content-Type: application/json');
 
-if (!isset($_SESSION['user_id'])) {
+if (!isset($_SESSION['user_id']) || ($_SESSION['user']['role'] ?? '') !== 'admin') {
     ob_end_clean();
     echo json_encode(['registered'=>0,'current'=>0,'total'=>0,'purposes'=>[]]);
     exit();
@@ -20,15 +20,15 @@ try {
     $r1 = $conn->query("SELECT COUNT(*) AS cnt FROM `users`");
     $registered = $r1 ? (int)$r1->fetch_assoc()['cnt'] : 0;
 
-    // Current / total sit-ins (check if sit_in table exists)
+    // Current / total sit-ins (check if sit_ins table exists)
     $current = 0; $total = 0; $purposes = [];
-    $tc = $conn->query("SHOW TABLES LIKE 'sit_in'");
+    $tc = $conn->query("SHOW TABLES LIKE 'sit_ins'");
     if ($tc && $tc->num_rows > 0) {
-        $r2 = $conn->query("SELECT COUNT(*) AS cnt FROM `sit_in` WHERE status='Active'");
+        $r2 = $conn->query("SELECT COUNT(*) AS cnt FROM `sit_ins` WHERE status='Active'");
         if ($r2) $current = (int)$r2->fetch_assoc()['cnt'];
-        $r3 = $conn->query("SELECT COUNT(*) AS cnt FROM `sit_in`");
+        $r3 = $conn->query("SELECT COUNT(*) AS cnt FROM `sit_ins`");
         if ($r3) $total = (int)$r3->fetch_assoc()['cnt'];
-        $r4 = $conn->query("SELECT purpose, COUNT(*) AS cnt FROM `sit_in` GROUP BY purpose");
+        $r4 = $conn->query("SELECT purpose, COUNT(*) AS cnt FROM `sit_ins` GROUP BY purpose");
         if ($r4) {
             while ($row = $r4->fetch_assoc()) {
                 $purposes[$row['purpose']] = (int)$row['cnt'];

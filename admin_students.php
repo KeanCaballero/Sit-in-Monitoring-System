@@ -6,7 +6,7 @@ ob_start();
 session_start();
 header('Content-Type: application/json');
 
-if (!isset($_SESSION['user_id'])) {
+if (!isset($_SESSION['user_id']) || ($_SESSION['user']['role'] ?? '') !== 'admin') {
     ob_end_clean(); echo json_encode([]); exit();
 }
 
