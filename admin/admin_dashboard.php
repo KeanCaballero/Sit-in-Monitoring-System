@@ -2,6 +2,7 @@
 ini_set('display_errors', 0);
 ini_set('display_startup_errors', 0);
 error_reporting(0);
+header('Content-Type: text/html; charset=utf-8');
 session_start();
 
 // Strict admin access check
@@ -18,7 +19,7 @@ $admin = $_SESSION['user'];
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>CCS Admin – Dashboard</title>
+  <title>CCS Admin  Dashboard</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet"/>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Bebas+Neue&display=swap" rel="stylesheet"/>
@@ -60,6 +61,12 @@ $admin = $_SESSION['user'];
       color: var(--text1);
       min-height: 100vh;
       overflow-x: hidden;
+      transition: background-color .25s ease, color .25s ease;
+    }
+
+    /* Smooth transitions on all themed elements */
+    *, *::before, *::after {
+      transition: background-color .2s ease, border-color .2s ease, color .2s ease;
     }
 
     ::-webkit-scrollbar { width: 5px; height: 5px; }
@@ -67,7 +74,7 @@ $admin = $_SESSION['user'];
     ::-webkit-scrollbar-thumb { background: var(--navy4); border-radius: 4px; }
     ::-webkit-scrollbar-thumb:hover { background: var(--gold); }
 
-    /* ── NAVBAR ── */
+    /*  NAVBAR  */
     .admin-nav {
       background: var(--surface);
       border-bottom: 1px solid var(--border2);
@@ -117,20 +124,20 @@ $admin = $_SESSION['user'];
     }
     .btn-logout:hover { filter: brightness(1.1); transform: translateY(-1px); }
 
-    /* ── WRAP / VIEWS ── */
+    /*  WRAP / VIEWS  */
     .admin-wrap { padding: 1.5rem 2rem; max-width: 1400px; margin: 0 auto; }
     .view { display: none; animation: fadeUp .25s ease; }
     .view.active { display: block; }
     @keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; } }
 
-    /* ── PAGE TITLE ── */
+    /*  PAGE TITLE  */
     .page-title {
       font-size: 1.3rem; font-weight: 800; color: var(--text1);
       margin-bottom: 1.2rem; display: flex; align-items: center; gap: .6rem; letter-spacing: -.3px;
     }
     .page-title i { color: var(--gold); font-size: 1.1rem; }
 
-    /* ── STAT CARDS ── */
+    /*  STAT CARDS  */
     .stat-cards-row { display: grid; grid-template-columns: repeat(3,1fr); gap: 14px; margin-bottom: 1.25rem; }
     .stat-card {
       background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
@@ -149,13 +156,13 @@ $admin = $_SESSION['user'];
     .stat-info label { display: block; font-size: 11px; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: .8px; margin-bottom: 3px; }
     .stat-value { font-family: 'Bebas Neue', cursive; font-size: 32px; letter-spacing: .5px; line-height: 1; color: var(--text1); }
 
-    /* ── CARD ── */
+    /*  CARD  */
     .a-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; box-shadow: 0 2px 16px rgba(0,0,0,.3); }
     .a-card-header { background: var(--surface2); border-bottom: 1px solid var(--border); padding: .7rem 1.1rem; font-size: .82rem; font-weight: 700; display: flex; align-items: center; gap: .5rem; color: var(--text1); }
     .a-card-header i { color: var(--gold); }
     .a-card-body { padding: 1.1rem; }
 
-    /* ── TABLE ── */
+    /*  TABLE  */
     .a-table { width: 100%; border-collapse: collapse; font-size: .8rem; }
     .a-table th { background: var(--surface2); color: var(--text2); padding: .6rem .85rem; text-align: left; font-weight: 700; font-size: .72rem; text-transform: uppercase; letter-spacing: .6px; white-space: nowrap; }
     .a-table th:first-child { border-radius: 8px 0 0 8px; }
@@ -165,7 +172,7 @@ $admin = $_SESSION['user'];
     .a-table tr:hover td { background: rgba(255,255,255,.03); }
     .a-table .no-data { text-align: center; color: var(--text3); font-style: italic; padding: 2.5rem; }
 
-    /* ── BUTTONS ── */
+    /*  BUTTONS  */
     .btn-a-primary { background: linear-gradient(135deg, #2563eb, #3b82f6); color: #fff; border: none; border-radius: 7px; padding: .32rem .8rem; font-size: .75rem; font-weight: 600; cursor: pointer; transition: all .15s; display: inline-flex; align-items: center; gap: .3rem; box-shadow: 0 2px 8px rgba(59,130,246,.25); }
     .btn-a-primary:hover { filter: brightness(1.1); transform: translateY(-1px); }
     .btn-a-danger  { background: linear-gradient(135deg, #dc2626, #ef4444); color: #fff; border: none; border-radius: 7px; padding: .32rem .8rem; font-size: .75rem; font-weight: 600; cursor: pointer; transition: all .15s; display: inline-flex; align-items: center; gap: .3rem; box-shadow: 0 2px 8px rgba(239,68,68,.25); }
@@ -173,7 +180,7 @@ $admin = $_SESSION['user'];
     .btn-a-success { background: linear-gradient(135deg, #059669, #10b981); color: #fff; border: none; border-radius: 7px; padding: .32rem .8rem; font-size: .75rem; font-weight: 600; cursor: pointer; transition: all .15s; display: inline-flex; align-items: center; gap: .3rem; box-shadow: 0 2px 8px rgba(16,185,129,.25); }
     .btn-a-success:hover { filter: brightness(1.1); transform: translateY(-1px); }
 
-    /* ── ANNOUNCEMENT ── */
+    /*  ANNOUNCEMENT  */
     .ann-item { padding: .7rem .85rem; border-radius: 9px; background: var(--surface2); border-left: 3px solid var(--gold); margin-bottom: .6rem; animation: fadeUp .2s ease; }
     .ann-meta { font-size: .72rem; color: var(--text3); font-weight: 600; margin-bottom: .25rem; display: flex; align-items: center; gap: .5rem; }
     .ann-badge { background: rgba(201,168,76,.15); color: var(--gold2); padding: 1px 7px; border-radius: 20px; font-size: .68rem; font-weight: 700; }
@@ -183,11 +190,11 @@ $admin = $_SESSION['user'];
     .ann-textarea::placeholder { color: var(--text3); }
     .ann-textarea:focus { border-color: var(--gold); }
 
-    /* ── BADGE ── */
+    /*  BADGE  */
     .badge-active { background: rgba(16,185,129,.15); color: #34d399; font-size: .7rem; padding: .2rem .6rem; border-radius: 20px; font-weight: 700; }
     .badge-done   { background: var(--surface3); color: var(--text3); font-size: .7rem; padding: .2rem .6rem; border-radius: 20px; font-weight: 600; }
 
-    /* ── TABLE TOP ── */
+    /*  TABLE TOP  */
     .tbl-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: .85rem; flex-wrap: wrap; gap: .5rem; }
     .tbl-search-wrap { position: relative; }
     .tbl-search-wrap input { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; color: var(--text1); font-family: 'Plus Jakarta Sans', sans-serif; font-size: .8rem; padding: .38rem .7rem .38rem 1.9rem; width: 190px; outline: none; transition: border-color .2s; }
@@ -197,13 +204,13 @@ $admin = $_SESSION['user'];
     .entries-wrap { display: flex; align-items: center; gap: .4rem; font-size: .78rem; color: var(--text2); }
     .entries-wrap select { background: var(--surface2); border: 1px solid var(--border); border-radius: 6px; color: var(--text1); padding: .25rem .5rem; font-size: .78rem; outline: none; }
 
-    /* ── PAGINATION ── */
+    /*  PAGINATION  */
     .pg-wrap { display: flex; align-items: center; justify-content: space-between; font-size: .75rem; color: var(--text2); margin-top: .85rem; flex-wrap: wrap; gap: .5rem; }
     .pg-btn { border: 1px solid var(--border); background: var(--surface2); color: var(--text2); padding: .2rem .55rem; border-radius: 5px; cursor: pointer; font-size: .75rem; transition: all .15s; }
     .pg-btn:hover { border-color: var(--gold); color: var(--gold2); }
     .pg-btn.active { background: var(--gold); color: var(--navy); border-color: var(--gold); font-weight: 700; }
 
-    /* ── MODAL ── */
+    /*  MODAL  */
     .modal-content { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); box-shadow: var(--shadow-lg); }
     .modal-header { background: var(--surface2); border-bottom: 1px solid var(--border); border-radius: var(--radius-lg) var(--radius-lg) 0 0; padding: .9rem 1.2rem; }
     .modal-title { font-size: .88rem; font-weight: 700; color: var(--text1); }
@@ -222,7 +229,7 @@ $admin = $_SESSION['user'];
     .modal .btn-danger { background: linear-gradient(135deg, #dc2626, #ef4444) !important; border: none !important; border-radius: 8px !important; font-size: .82rem; font-weight: 700 !important; }
     .modal .btn-outline-secondary { background: transparent !important; border: 1px solid var(--border) !important; color: var(--text2) !important; border-radius: 8px !important; font-size: .82rem; font-weight: 600 !important; }
 
-    /* ── SEARCH MODAL ── */
+    /*  SEARCH MODAL  */
     .search-input-wrap { position: relative; }
     .search-input-wrap i { position: absolute; left: .75rem; top: 50%; transform: translateY(-50%); color: var(--text3); font-size: .8rem; }
     .search-input-wrap input { width: 100%; background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; color: var(--text1); font-family: 'Plus Jakarta Sans', sans-serif; font-size: .85rem; padding: .55rem .75rem .55rem 2.1rem; outline: none; transition: border-color .2s; }
@@ -243,7 +250,7 @@ $admin = $_SESSION['user'];
     .spinner { width: 16px; height: 16px; border: 2px solid var(--border); border-top-color: var(--gold); border-radius: 50%; animation: spin .6s linear infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    /* ── MISC ── */
+    /*  MISC  */
     .id-badge { font-family: 'Bebas Neue', cursive; font-size: .85rem; letter-spacing: .5px; background: var(--surface3); color: var(--gold2); padding: 2px 8px; border-radius: 5px; }
     .empty-state { text-align: center; color: var(--text3); padding: 3rem 1rem; }
     .empty-state i { font-size: 2.5rem; display: block; margin-bottom: .75rem; opacity: .3; }
@@ -254,7 +261,59 @@ $admin = $_SESSION['user'];
     @media (max-width: 900px) { .stat-cards-row { grid-template-columns: 1fr 1fr; } .admin-wrap { padding: 1rem; } }
     @media (max-width: 600px) { .stat-cards-row { grid-template-columns: 1fr; } .nav-links { display: none !important; } }
 
-    /* ── PC MAP (admin) ── */
+    /*  DARK MODE TOGGLE BTN  */
+    .dm-admin-btn {
+      background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.18);
+      color: #fff; cursor: pointer; border-radius: 7px; padding: .32rem .65rem;
+      font-size: .78rem; font-weight: 600; display: flex; align-items: center; gap: .35rem;
+      transition: all .15s; flex-shrink: 0;
+    }
+    .dm-admin-btn:hover { background: rgba(255,255,255,.22); }
+
+    /*  LIGHT MODE OVERRIDE (admin uses dark by default)  */
+    body.admin-light {
+      /* Re-map all core variables to light values */
+      --bg:        #f0f4fb;
+      --surface:   #ffffff;
+      --surface2:  #f5f7fc;
+      --surface3:  #eef1f8;
+      --border:    rgba(13,34,85,0.10);
+      --border2:   rgba(13,34,85,0.18);
+      --text1:     #0d1f45;
+      --text2:     #3d4f75;
+      --text3:     #8494b8;
+      --shadow:    0 4px 24px rgba(13,34,85,.10);
+      --shadow-lg: 0 12px 48px rgba(13,34,85,.15);
+    }
+    body.admin-light ::-webkit-scrollbar-track { background: #e2e8f0; }
+    body.admin-light ::-webkit-scrollbar-thumb { background: #94a3b8; }
+
+    /*  SOFTWARE UPLOAD ZONE  */
+    .upload-drop-zone {
+      border: 2px dashed var(--border2);
+      border-radius: var(--radius); padding: 2.5rem 1.5rem; text-align: center;
+      cursor: pointer; transition: all .2s; background: var(--surface2);
+      position: relative;
+    }
+    .upload-drop-zone:hover, .upload-drop-zone.drag-over {
+      border-color: var(--gold); background: rgba(201,168,76,.06);
+    }
+    .upload-drop-zone input[type="file"] {
+      position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%;
+    }
+    .upload-file-item {
+      display: flex; align-items: center; gap: .75rem; padding: .6rem .85rem;
+      background: var(--surface2); border: 1px solid var(--border2); border-radius: 9px;
+      margin-bottom: .5rem;
+    }
+    .upload-file-icon { width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1rem; flex-shrink: 0; background: rgba(201,168,76,.15); color: var(--gold2); }
+    .upload-file-name { font-size: .82rem; font-weight: 600; color: var(--text1); flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .upload-file-size { font-size: .72rem; color: var(--text3); }
+    .upload-progress { height: 4px; border-radius: 2px; background: var(--border2); margin-top: .4rem; overflow: hidden; }
+    .upload-progress-bar { height: 100%; background: linear-gradient(90deg, var(--gold), var(--gold2)); border-radius: 2px; transition: width .3s; }
+
+
+    /*  PC MAP (admin)  */
     .lab-btn-admin {
       border: 1.5px solid var(--border2); background: transparent;
       color: var(--text2); padding: .3rem .75rem; border-radius: 7px;
@@ -299,7 +358,7 @@ $admin = $_SESSION['user'];
     .pc-legend span { display: flex; align-items: center; gap: .35rem; }
     .pc-legend .dot { width: 11px; height: 11px; border-radius: 3px; flex-shrink: 0; }
 
-    /* ── leaderboard medals ── */
+    /*  leaderboard medals  */
     .lb-rank-1 td { background: rgba(201,168,76,.07); }
     .lb-rank-2 td { background: rgba(255,255,255,.02); }
     .lb-rank-3 td { background: rgba(245,158,11,.05); }
@@ -308,7 +367,7 @@ $admin = $_SESSION['user'];
 </head>
 <body>
 
-<!-- ── NAVBAR ── -->
+<!--  NAVBAR  -->
 <nav class="admin-nav">
   <a class="brand" href="#">
     <div class="brand-icon">CCS</div>
@@ -327,7 +386,11 @@ $admin = $_SESSION['user'];
     <a href="javascript:void(0);" class="nav-link" data-view="analytics"       id="nav-analytics"   ><i class="fa-solid fa-chart-line"></i>Analytics</a>
     <a href="javascript:void(0);" class="nav-link" data-view="announcement"    id="nav-announcement"><i class="fa-solid fa-bullhorn"></i>Announce</a>
     <a href="javascript:void(0);" class="nav-link" data-view="rewards"         id="nav-rewards"     ><i class="fa-solid fa-gift"></i>Rewards</a>
+    <a href="javascript:void(0);" class="nav-link" data-view="software-import" id="nav-software"    ><i class="fa-solid fa-upload"></i>Software</a>
   </div>
+  <button class="dm-admin-btn" onclick="toggleAdminDarkMode()" id="adminDmBtn" title="Toggle Dark/Light Mode">
+    <i class="fa-solid fa-sun" id="adminDmIcon"></i>
+  </button>
   <button class="btn-logout" id="logoutBtn" onclick="confirmLogout()">
     <i class="fa-solid fa-right-from-bracket"></i> Log out
   </button>
@@ -335,20 +398,20 @@ $admin = $_SESSION['user'];
 
 <div class="admin-wrap">
 
-  <!-- ████ HOME ████ -->
+  <!--  HOME  -->
   <div class="view active" id="view-home">
     <div class="stat-cards-row">
       <div class="stat-card c1">
         <div class="stat-icon ic-blue"><i class="fa-solid fa-users"></i></div>
-        <div class="stat-info"><label>Students Registered</label><div class="stat-value" id="statRegistered">—</div></div>
+        <div class="stat-info"><label>Students Registered</label><div class="stat-value" id="statRegistered"></div></div>
       </div>
       <div class="stat-card c2">
         <div class="stat-icon ic-gold"><i class="fa-solid fa-chair"></i></div>
-        <div class="stat-info"><label>Currently Sit-in</label><div class="stat-value" id="statCurrent">—</div></div>
+        <div class="stat-info"><label>Currently Sit-in</label><div class="stat-value" id="statCurrent"></div></div>
       </div>
       <div class="stat-card c3">
         <div class="stat-icon ic-green"><i class="fa-solid fa-circle-check"></i></div>
-        <div class="stat-info"><label>Total Sit-in</label><div class="stat-value" id="statTotal">—</div></div>
+        <div class="stat-info"><label>Total Sit-in</label><div class="stat-value" id="statTotal"></div></div>
       </div>
     </div>
     <div class="row g-3">
@@ -365,7 +428,7 @@ $admin = $_SESSION['user'];
           <div class="a-card-header"><i class="fa-solid fa-bullhorn"></i> Announcement</div>
           <div class="a-card-body d-flex flex-column gap-3">
             <div>
-              <textarea class="ann-textarea" id="annText" placeholder="Write a new announcement…"></textarea>
+              <textarea class="ann-textarea" id="annText" placeholder="Write a new announcement"></textarea>
               <button class="btn-a-success mt-2" onclick="postAnnouncement()">
                 <i class="fa-solid fa-paper-plane"></i> Post Announcement
               </button>
@@ -379,7 +442,7 @@ $admin = $_SESSION['user'];
                 </div>
                 <div class="ann-item">
                   <div class="ann-meta"><span class="ann-badge">CCS Admin</span> 2024-May-08</div>
-                  <div class="ann-text">🎉 <strong>Important Announcement</strong> — We are excited to announce the launch of our new website! Explore our latest products and services now!</div>
+                  <div class="ann-text"> <strong>Important Announcement</strong>  We are excited to announce the launch of our new website! Explore our latest products and services now!</div>
                 </div>
               </div>
             </div>
@@ -389,7 +452,7 @@ $admin = $_SESSION['user'];
     </div>
   </div>
 
-  <!-- ████ STUDENTS ████ -->
+  <!--  STUDENTS  -->
   <div class="view" id="view-students">
     <div class="page-title"><i class="fa-solid fa-users"></i> Students Information</div>
     <div class="a-card">
@@ -400,7 +463,7 @@ $admin = $_SESSION['user'];
         </div>
         <div class="tbl-top">
           <div class="entries-wrap">Show <select id="stuEntries" onchange="renderStudents()"><option>10</option><option>25</option><option>50</option></select> entries</div>
-          <div class="tbl-search-wrap"><i class="fa-solid fa-magnifying-glass"></i><input type="text" id="stuSearch" placeholder="Search…" oninput="renderStudents()"/></div>
+          <div class="tbl-search-wrap"><i class="fa-solid fa-magnifying-glass"></i><input type="text" id="stuSearch" placeholder="Search" oninput="renderStudents()"/></div>
         </div>
         <div class="table-responsive">
           <table class="a-table">
@@ -416,7 +479,7 @@ $admin = $_SESSION['user'];
     </div>
   </div>
 
-  <!-- ████ CURRENT SIT-IN ████ -->
+  <!--  CURRENT SIT-IN  -->
   <div class="view" id="view-current-sitin">
     <div class="page-title"><i class="fa-solid fa-chair"></i> Current Sit-in
       <button class="btn-a-primary ms-auto" onclick="openSitInModal()" style="font-size:.75rem;"><i class="fa-solid fa-plus"></i> New Sit-in</button>
@@ -425,7 +488,7 @@ $admin = $_SESSION['user'];
       <div class="a-card-body">
         <div class="tbl-top">
           <div class="entries-wrap">Show <select id="curEntries" onchange="renderCurrentSitIn()"><option>10</option><option>25</option><option>50</option></select> entries</div>
-          <div class="tbl-search-wrap"><i class="fa-solid fa-magnifying-glass"></i><input type="text" id="curSearch" placeholder="Search…" oninput="renderCurrentSitIn()"/></div>
+          <div class="tbl-search-wrap"><i class="fa-solid fa-magnifying-glass"></i><input type="text" id="curSearch" placeholder="Search" oninput="renderCurrentSitIn()"/></div>
         </div>
         <div class="table-responsive">
           <table class="a-table">
@@ -441,14 +504,14 @@ $admin = $_SESSION['user'];
     </div>
   </div>
 
-  <!-- ████ SIT-IN RECORDS ████ -->
+  <!--  SIT-IN RECORDS  -->
   <div class="view" id="view-sitin-records">
     <div class="page-title"><i class="fa-solid fa-table-list"></i> All Sit-in Records</div>
     <div class="a-card">
       <div class="a-card-body">
         <div class="tbl-top">
           <div class="entries-wrap">Show <select id="recEntries" onchange="renderRecords()"><option>10</option><option>25</option><option>50</option></select> entries</div>
-          <div class="tbl-search-wrap"><i class="fa-solid fa-magnifying-glass"></i><input type="text" id="recSearch" placeholder="Search…" oninput="renderRecords()"/></div>
+          <div class="tbl-search-wrap"><i class="fa-solid fa-magnifying-glass"></i><input type="text" id="recSearch" placeholder="Search" oninput="renderRecords()"/></div>
         </div>
         <div class="table-responsive">
           <table class="a-table">
@@ -464,7 +527,7 @@ $admin = $_SESSION['user'];
     </div>
   </div>
 
-  <!-- ████ REPORTS ████ -->
+  <!--  REPORTS  -->
   <div class="view" id="view-reports">
     <div class="page-title"><i class="fa-solid fa-chart-bar"></i> Sit-in Reports</div>
     <div class="a-card mb-3">
@@ -500,18 +563,18 @@ $admin = $_SESSION['user'];
     </div>
   </div>
 
-  <!-- ████ FEEDBACK ████ -->
+  <!--  FEEDBACK  -->
   <div class="view" id="view-feedback">
     <div class="page-title"><i class="fa-solid fa-comments"></i> Feedback Reports</div>
     <div class="a-card">
       <div class="a-card-header"><i class="fa-solid fa-star"></i> Student Feedback
-        <div class="tbl-search-wrap ms-auto"><i class="fa-solid fa-magnifying-glass"></i><input type="text" id="fbSearch" placeholder="Search…" oninput="filterFeedback()"/></div>
+        <div class="tbl-search-wrap ms-auto"><i class="fa-solid fa-magnifying-glass"></i><input type="text" id="fbSearch" placeholder="Search" oninput="filterFeedback()"/></div>
       </div>
       <div class="a-card-body">
         <div class="table-responsive">
           <table class="a-table">
             <thead><tr><th>#</th><th>Student</th><th>Course</th><th>Lab</th><th>Purpose</th><th>Rating</th><th>Feedback Message</th><th>Date</th></tr></thead>
-            <tbody id="fbBody"><tr><td colspan="8" class="no-data">Loading feedback…</td></tr></tbody>
+            <tbody id="fbBody"><tr><td colspan="8" class="no-data">Loading feedback</td></tr></tbody>
           </table>
         </div>
         <div style="font-size:.75rem;color:var(--text3);margin-top:.6rem;" id="fbInfo"></div>
@@ -519,7 +582,7 @@ $admin = $_SESSION['user'];
     </div>
   </div>
 
-  <!-- ████ RESERVATION ████ -->
+  <!--  RESERVATION  -->
   <div class="view" id="view-reservation">
     <div class="page-title"><i class="fa-solid fa-calendar-check"></i> Reservation Management</div>
 
@@ -543,7 +606,7 @@ $admin = $_SESSION['user'];
           <span><span class="dot" style="background:rgba(139,92,246,.5);border:1px solid #5b21b6"></span>Pending Approval</span>
         </div>
         <div id="adminPcMapLoading" style="text-align:center;padding:2.5rem;color:var(--text3);">
-          <i class="fa-solid fa-spinner fa-spin fa-2x"></i><br><br>Loading PC map…
+          <i class="fa-solid fa-spinner fa-spin fa-2x"></i><br><br>Loading PC map
         </div>
         <div id="adminPcGrid" class="admin-pc-grid" style="display:none;"></div>
         <div style="display:flex;gap:.75rem;flex-wrap:wrap;margin-top:.85rem;" id="adminLabStats"></div>
@@ -553,42 +616,46 @@ $admin = $_SESSION['user'];
     <!-- Reservation Requests Table -->
     <div class="a-card">
       <div class="a-card-header"><i class="fa-solid fa-list-check"></i> Reservation Requests
-        <div class="tbl-search-wrap ms-auto"><i class="fa-solid fa-magnifying-glass"></i><input type="text" id="resSearch" placeholder="Search…" oninput="renderAdminReservations()"/></div>
+        <div class="tbl-search-wrap ms-auto"><i class="fa-solid fa-magnifying-glass"></i><input type="text" id="resSearch" placeholder="Search" oninput="renderAdminReservations()"/></div>
       </div>
       <div class="a-card-body">
         <div class="table-responsive">
           <table class="a-table">
             <thead><tr><th>#</th><th>Student</th><th>Lab</th><th>PC</th><th>Date</th><th>Time</th><th>Purpose</th><th>Status</th><th>Action</th></tr></thead>
-            <tbody id="resBody"><tr><td colspan="9" class="no-data">Loading…</td></tr></tbody>
+            <tbody id="resBody"><tr><td colspan="9" class="no-data">Loading</td></tr></tbody>
           </table>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- ████ LEADERBOARD ████ -->
+  <!--  LEADERBOARD  -->
   <div class="view" id="view-leaderboard">
     <div class="page-title"><i class="fa-solid fa-trophy"></i> Leaderboard</div>
     <div class="a-card">
-      <div class="a-card-header"><i class="fa-solid fa-ranking-star"></i> Top Students by Points</div>
+      <div class="a-card-header"><i class="fa-solid fa-ranking-star"></i> Top Students by Points
+        <div style="margin-left:auto;font-size:.7rem;color:var(--text3);font-weight:400;">
+          🏅 Points = +1 completion &nbsp;|&nbsp; +1 per 30min (max 3) &nbsp;|&nbsp; +1 bonus if ≥2h
+        </div>
+      </div>
       <div class="a-card-body">
         <div class="table-responsive">
           <table class="a-table">
-            <thead><tr><th>Rank</th><th>Student</th><th>Course</th><th>Sit-ins</th><th>Points</th><th>Action</th></tr></thead>
-            <tbody id="adminLbBody"><tr><td colspan="6" class="no-data">Loading…</td></tr></tbody>
+            <thead><tr><th>Rank</th><th>Student</th><th>Course</th><th>Sit-ins</th><th>Total Hours</th><th>Avg Session</th><th>Points</th><th>Action</th></tr></thead>
+            <tbody id="adminLbBody"><tr><td colspan="8" class="no-data">Loading</td></tr></tbody>
           </table>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- ████ ANALYTICS ████ -->
+  <!--  ANALYTICS  -->
   <div class="view" id="view-analytics">
     <div class="page-title"><i class="fa-solid fa-chart-line"></i> Analytics &amp; Reports</div>
     <div class="stat-cards-row mb-4">
-      <div class="stat-card c1"><div class="stat-icon ic-blue"><i class="fa-solid fa-users"></i></div><div class="stat-info"><label>Registered</label><div class="stat-value" id="anaRegistered">—</div></div></div>
-      <div class="stat-card c2"><div class="stat-icon ic-gold"><i class="fa-solid fa-chair"></i></div><div class="stat-info"><label>Total Sit-ins</label><div class="stat-value" id="anaTotalSitins">—</div></div></div>
-      <div class="stat-card c3"><div class="stat-icon ic-green"><i class="fa-solid fa-circle-check"></i></div><div class="stat-info"><label>Active Now</label><div class="stat-value" id="anaActive">—</div></div></div>
+      <div class="stat-card c1"><div class="stat-icon ic-blue"><i class="fa-solid fa-users"></i></div><div class="stat-info"><label>Registered</label><div class="stat-value" id="anaRegistered"></div></div></div>
+      <div class="stat-card c2"><div class="stat-icon ic-gold"><i class="fa-solid fa-chair"></i></div><div class="stat-info"><label>Total Sit-ins</label><div class="stat-value" id="anaTotalSitins"></div></div></div>
+      <div class="stat-card c3"><div class="stat-icon ic-green"><i class="fa-solid fa-circle-check"></i></div><div class="stat-info"><label>Active Now</label><div class="stat-value" id="anaActive"></div></div></div>
     </div>
     <div class="row g-3">
       <div class="col-lg-6">
@@ -618,7 +685,7 @@ $admin = $_SESSION['user'];
     </div>
   </div>
 
-  <!-- ████ ANNOUNCEMENT ████ -->
+  <!--  ANNOUNCEMENT  -->
   <div class="view" id="view-announcement">
     <div class="page-title"><i class="fa-solid fa-bullhorn"></i> Create Announcement</div>
     <div class="row g-4">
@@ -628,11 +695,11 @@ $admin = $_SESSION['user'];
           <div class="a-card-body">
             <div style="margin-bottom:.75rem;">
               <div style="font-size:.78rem;font-weight:600;color:var(--text2);margin-bottom:.35rem;">Title (optional)</div>
-              <input type="text" id="annTitleNew" placeholder="Announcement title…" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:9px;color:var(--text1);padding:.5rem .85rem;font-size:.82rem;outline:none;font-family:'Plus Jakarta Sans',sans-serif;transition:border-color .2s;" onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--border)'"/>
+              <input type="text" id="annTitleNew" placeholder="Announcement title" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:9px;color:var(--text1);padding:.5rem .85rem;font-size:.82rem;outline:none;font-family:'Plus Jakarta Sans',sans-serif;transition:border-color .2s;" onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--border)'"/>
             </div>
             <div style="margin-bottom:.75rem;">
               <div style="font-size:.78rem;font-weight:600;color:var(--text2);margin-bottom:.35rem;">Message</div>
-              <textarea id="annTextNew" class="ann-textarea" placeholder="Write your announcement…" rows="5"></textarea>
+              <textarea id="annTextNew" class="ann-textarea" placeholder="Write your announcement" rows="5"></textarea>
             </div>
             <button class="btn-a-success" onclick="postAnnouncementDB()"><i class="fa-solid fa-paper-plane"></i> Post Announcement</button>
           </div>
@@ -649,7 +716,7 @@ $admin = $_SESSION['user'];
     </div>
   </div>
 
-  <!-- ████ REWARDS ████ -->
+  <!--  REWARDS  -->
   <div class="view" id="view-rewards">
     <div class="page-title"><i class="fa-solid fa-gift"></i> Add Reward / Points</div>
     <div class="row g-4">
@@ -667,7 +734,7 @@ $admin = $_SESSION['user'];
             </div>
             <div style="margin-bottom:.85rem;">
               <div style="font-size:.78rem;font-weight:600;color:var(--text2);margin-bottom:.35rem;">Reason</div>
-              <input type="text" id="rwReason" placeholder="e.g. Perfect attendance…" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:9px;color:var(--text1);padding:.5rem .85rem;font-size:.82rem;outline:none;font-family:'Plus Jakarta Sans',sans-serif;"/>
+              <input type="text" id="rwReason" placeholder="e.g. Perfect attendance" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:9px;color:var(--text1);padding:.5rem .85rem;font-size:.82rem;outline:none;font-family:'Plus Jakarta Sans',sans-serif;"/>
             </div>
             <div style="display:flex;gap:.5rem;flex-wrap:wrap;">
               <button class="btn-a-success" onclick="awardPoints()"><i class="fa-solid fa-star"></i> Award Points</button>
@@ -678,12 +745,104 @@ $admin = $_SESSION['user'];
       </div>
       <div class="col-lg-8">
         <div class="a-card">
-          <div class="a-card-header"><i class="fa-solid fa-ranking-star"></i> Points Leaderboard</div>
+          <div class="a-card-header"><i class="fa-solid fa-ranking-star"></i> Points Leaderboard
+            <span style="margin-left:auto;font-size:.7rem;color:var(--text3);font-weight:500;">Points = Completion + Duration + Bonus</span>
+          </div>
           <div class="table-responsive">
             <table class="a-table">
-              <thead><tr><th>Rank</th><th>Student</th><th>Course</th><th>Sit-ins</th><th>Points</th></tr></thead>
-              <tbody id="rwLbBody"><tr><td colspan="5" class="no-data">Loading…</td></tr></tbody>
+              <thead><tr><th>Rank</th><th>Student</th><th>Course</th><th>Sit-ins</th><th>Total Hours</th><th>Avg Session</th><th>Points</th><th>Action</th></tr></thead>
+              <tbody id="rwLbBody"><tr><td colspan="8" class="no-data">Loading</td></tr></tbody>
             </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!--  SOFTWARE IMPORT  -->
+  <div class="view" id="view-software-import">
+    <div class="page-title"><i class="fa-solid fa-upload"></i> Software App Import / Upload</div>
+    <div class="row g-4">
+      <div class="col-lg-5">
+        <div class="a-card">
+          <div class="a-card-header"><i class="fa-solid fa-cloud-arrow-up"></i> Upload Software / File</div>
+          <div class="a-card-body">
+            <div class="upload-drop-zone" id="uploadDropZone" onclick="document.getElementById('swFileInput').click()" ondragover="onDragOver(event)" ondragleave="onDragLeave(event)" ondrop="onDrop(event)">
+              <input type="file" id="swFileInput" multiple accept=".zip,.exe,.msi,.apk,.dmg,.pkg,.deb,.tar.gz,.pdf,.doc,.docx" onchange="handleFileSelect(event)" style="display:none"/>
+              <i class="fa-solid fa-cloud-arrow-up" style="font-size:2.5rem;color:var(--gold);display:block;margin-bottom:.85rem;opacity:.8;"></i>
+              <div style="font-weight:700;color:var(--text1);margin-bottom:.35rem;">Drag &amp; drop files here</div>
+              <div style="font-size:.78rem;color:var(--text3);">or click to browse  .zip, .exe, .msi, .apk, .pdf, .docx supported</div>
+            </div>
+            <div id="uploadFileList" style="margin-top:.85rem;"></div>
+            <div class="row g-3 mt-1">
+              <div class="col-12">
+                <label class="form-label">Software / File Name</label>
+                <input type="text" class="form-control" id="swName" placeholder="e.g. Visual Studio Code 1.88"/>
+              </div>
+              <div class="col-12">
+                <label class="form-label">Category</label>
+                <select class="form-select" id="swCategory">
+                  <option value="">Select category</option>
+                  <option>Programming IDE</option>
+                  <option>Database Tool</option>
+                  <option>Design Software</option>
+                  <option>Utility / Tool</option>
+                  <option>Reference / Document</option>
+                  <option>Lab Manual</option>
+                  <option>Other</option>
+                </select>
+              </div>
+              <div class="col-12">
+                <label class="form-label">Description</label>
+                <textarea class="ann-textarea" id="swDesc" rows="2" placeholder="Brief description of this software"></textarea>
+              </div>
+              <div class="col-12">
+                <label class="form-label">Available in Labs</label>
+                <div style="display:flex;gap:.75rem;flex-wrap:wrap;margin-top:.3rem;">
+                  <label style="font-size:.82rem;display:flex;align-items:center;gap:.3rem;cursor:pointer;color:var(--text1);"><input type="checkbox" id="swLab524" value="524" style="accent-color:var(--gold);"/> Lab 524</label>
+                  <label style="font-size:.82rem;display:flex;align-items:center;gap:.3rem;cursor:pointer;color:var(--text1);"><input type="checkbox" id="swLab526" value="526" style="accent-color:var(--gold);"/> Lab 526</label>
+                  <label style="font-size:.82rem;display:flex;align-items:center;gap:.3rem;cursor:pointer;color:var(--text1);"><input type="checkbox" id="swLab528" value="528" style="accent-color:var(--gold);"/> Lab 528</label>
+                  <label style="font-size:.82rem;display:flex;align-items:center;gap:.3rem;cursor:pointer;color:var(--text1);"><input type="checkbox" id="swLab530" value="530" style="accent-color:var(--gold);"/> Lab 530</label>
+                </div>
+              </div>
+              <div class="col-12">
+                <button class="btn-a-success" onclick="submitSoftware()" style="width:100%;justify-content:center;padding:.55rem;">
+                  <i class="fa-solid fa-cloud-arrow-up"></i> Upload &amp; Register Software
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-lg-7">
+        <div class="a-card">
+          <div class="a-card-header">
+            <i class="fa-solid fa-list"></i> Registered Software
+            <div class="tbl-search-wrap ms-auto"><i class="fa-solid fa-magnifying-glass"></i><input type="text" id="swSearch" placeholder="Search" oninput="renderSoftwareList()"/></div>
+          </div>
+          <div class="a-card-body">
+            <div id="swList">
+              <div class="empty-state"><i class="fa-solid fa-box-open"></i><p>No software registered yet.</p></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Lab Software Availability Overview -->
+        <div class="a-card mt-3">
+          <div class="a-card-header"><i class="fa-solid fa-desktop"></i> Lab Software Overview</div>
+          <div class="a-card-body">
+            <div class="row g-3" id="adminLabSoftware">
+              <?php foreach (['524','526','528','530'] as $lab): ?>
+              <div class="col-6 col-md-3">
+                <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:.75rem;text-align:center;">
+                  <div style="font-family:'Bebas Neue',cursive;font-size:1.4rem;color:var(--gold2);">Lab <?= $lab ?></div>
+                  <div id="swCountLab<?= $lab ?>" style="font-size:1.6rem;font-weight:800;color:var(--text1);">0</div>
+                  <div style="font-size:.72rem;color:var(--text3);font-weight:600;">SOFTWARE</div>
+                </div>
+              </div>
+              <?php endforeach; ?>
+            </div>
           </div>
         </div>
       </div>
@@ -693,7 +852,7 @@ $admin = $_SESSION['user'];
 </div><!-- /admin-wrap -->
 
 
-<!-- ══ MODAL: SEARCH STUDENT ══ -->
+<!--  MODAL: SEARCH STUDENT  -->
 <div class="modal fade" id="modalSearch" tabindex="-1">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
@@ -705,7 +864,7 @@ $admin = $_SESSION['user'];
         <div class="search-input-wrap">
           <i class="fa-solid fa-magnifying-glass"></i>
           <input type="text" id="searchInput"
-            placeholder="Search by ID or Name…"
+            placeholder="Search by ID or Name"
             oninput="liveSearch()"
             onkeydown="if(event.key==='Enter') liveSearch()"/>
         </div>
@@ -720,7 +879,7 @@ $admin = $_SESSION['user'];
   </div>
 </div>
 
-<!-- ══ MODAL: SIT-IN FORM ══ -->
+<!--  MODAL: SIT-IN FORM  -->
 <div class="modal fade" id="modalSitIn" tabindex="-1">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
@@ -730,12 +889,12 @@ $admin = $_SESSION['user'];
       </div>
       <div class="modal-body">
         <div class="row g-3">
-          <div class="col-12"><label class="form-label">ID Number</label><input type="text" class="form-control" id="siIdNum" placeholder="Enter student ID…" oninput="lookupStudent()"/></div>
-          <div class="col-12"><label class="form-label">Student Name</label><input type="text" class="form-control" id="siName" readonly placeholder="Auto-filled…"/></div>
+          <div class="col-12"><label class="form-label">ID Number</label><input type="text" class="form-control" id="siIdNum" placeholder="Enter student ID" oninput="lookupStudent()"/></div>
+          <div class="col-12"><label class="form-label">Student Name</label><input type="text" class="form-control" id="siName" readonly placeholder="Auto-filled"/></div>
           <div class="col-12">
             <label class="form-label">Purpose / Language</label>
             <select class="form-select" id="siPurpose">
-              <option value="">Select purpose / language…</option>
+              <option value="">Select purpose / language</option>
               <optgroup label="Programming Languages">
                 <option>C Programming</option>
                 <option>C++ Programming</option>
@@ -764,12 +923,12 @@ $admin = $_SESSION['user'];
           </div>
           <div class="col-12">
             <label class="form-label">Laboratory</label>
-            <select class="form-select" id="siLab"><option value="">Select Lab…</option><option>524</option><option>526</option><option>528</option><option>530</option></select>
+            <select class="form-select" id="siLab"><option value="">Select Lab</option><option>524</option><option>526</option><option>528</option><option>530</option></select>
           </div>
           <div class="col-12">
             <label class="form-label">Remaining Sessions</label>
             <select class="form-select" id="siSession">
-              <option value="">Auto-filled…</option>
+              <option value="">Auto-filled</option>
               <option value="30">30</option>
               <option value="29">29</option>
               <option value="28">28</option>
@@ -813,7 +972,7 @@ $admin = $_SESSION['user'];
   </div>
 </div>
 
-<!-- ══ MODAL: ADD STUDENT ══ -->
+<!--  MODAL: ADD STUDENT  -->
 <div class="modal fade" id="modalAddStudent" tabindex="-1">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
@@ -841,7 +1000,7 @@ $admin = $_SESSION['user'];
   </div>
 </div>
 
-<!-- ══ MODAL: EDIT STUDENT ══ -->
+<!--  MODAL: EDIT STUDENT  -->
 <div class="modal fade" id="modalEditStudent" tabindex="-1">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
@@ -867,7 +1026,7 @@ $admin = $_SESSION['user'];
   </div>
 </div>
 
-<!-- ══ MODAL: LOGOUT ══ -->
+<!--  MODAL: LOGOUT  -->
 <div class="modal fade" id="modalLogout" tabindex="-1">
   <div class="modal-dialog modal-dialog-centered modal-sm">
     <div class="modal-content">
@@ -884,7 +1043,7 @@ $admin = $_SESSION['user'];
   </div>
 </div>
 
-<!-- ══ TOAST ══ -->
+<!--  TOAST  -->
 <div class="position-fixed top-0 end-0 p-3" style="z-index:9999;margin-top:62px;">
   <div id="adminToast" class="toast align-items-center text-white border-0" role="alert" style="border-radius:10px;font-size:.82rem;font-weight:600;">
     <div class="d-flex">
@@ -896,7 +1055,7 @@ $admin = $_SESSION['user'];
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-// ── STATE ──────────────────────────────────────────────────
+// -- STATE --
 let students    = [];
 let sitInRecs   = [];
 let stuPage     = 1;
@@ -904,7 +1063,7 @@ let recPage     = 1;
 let curPage     = 1;
 let searchTimer = null;
 
-// ── TOAST ──────────────────────────────────────────────────
+// -- TOAST --
 function toast(msg, type = 'success') {
   const el = document.getElementById('adminToast');
   const colors = { success:'#10b981', danger:'#ef4444', warning:'#f59e0b', info:'#3b82f6' };
@@ -913,7 +1072,7 @@ function toast(msg, type = 'success') {
   bootstrap.Toast.getOrCreateInstance(el, { delay: 2800 }).show();
 }
 
-// ── VIEWS ──────────────────────────────────────────────────
+// -- VIEWS --
 function showView(name) {
   document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
   document.querySelectorAll('.admin-nav .nav-links a').forEach(a => a.classList.remove('active'));
@@ -922,24 +1081,26 @@ function showView(name) {
     'home':'home','students':'students','sitin-records':'records',
     'current-sitin':'sitin','reports':'reports','feedback':'feedback',
     'reservation':'reservation','leaderboard':'leaderboard',
-    'analytics':'analytics','announcement':'announcement','rewards':'rewards'
+    'analytics':'analytics','announcement':'announcement','rewards':'rewards',
+    'software-import':'software'
   };
   const navEl = document.getElementById('nav-' + (navMap[name] || name));
   if (navEl) navEl.classList.add('active');
-  if (name === 'students')      renderStudents();
-  if (name === 'sitin-records') renderRecords();
-  if (name === 'current-sitin') renderCurrentSitIn();
-  if (name === 'home')          loadStats();
-  if (name === 'reservation')   { loadAdminPcMap('524'); loadAdminReservations(); }
-  if (name === 'leaderboard')   loadAdminLeaderboard();
-  if (name === 'analytics')     loadAnalytics();
-  if (name === 'announcement')  loadAnnouncementsDB();
-  if (name === 'rewards')       loadAdminLeaderboard();
-  if (name === 'reports')       loadReportsList();
-  if (name === 'feedback')      loadFeedback();
+  if (name === 'students')        renderStudents();
+  if (name === 'sitin-records')   renderRecords();
+  if (name === 'current-sitin')   renderCurrentSitIn();
+  if (name === 'home')            loadStats();
+  if (name === 'reservation')     { loadAdminPcMap('524'); loadAdminReservations(); }
+  if (name === 'leaderboard')     loadAdminLeaderboard();
+  if (name === 'analytics')       loadAnalytics();
+  if (name === 'announcement')    loadAnnouncementsDB();
+  if (name === 'rewards')         loadAdminLeaderboard();
+  if (name === 'reports')         loadReportsList();
+  if (name === 'feedback')        loadFeedback();
+  if (name === 'software-import') renderSoftwareList();
 }
 
-// ── STATS ──────────────────────────────────────────────────
+// -- STATS --
 function loadStats() {
   fetch('admin_stats.php')
     .then(r => r.json())
@@ -977,7 +1138,7 @@ function renderChart(purposes) {
   });
 }
 
-// ── FETCH STUDENTS ─────────────────────────────────────────
+// -- FETCH STUDENTS --
 function fetchStudents() {
   fetch('admin_students.php')
     .then(r => r.json())
@@ -985,7 +1146,7 @@ function fetchStudents() {
     .catch(() => renderStudents());
 }
 
-// ── RENDER STUDENTS ────────────────────────────────────────
+// -- RENDER STUDENTS --
 function renderStudents() {
   const q   = (document.getElementById('stuSearch').value || '').toLowerCase();
   const pp  = parseInt(document.getElementById('stuEntries').value || 10);
@@ -1014,11 +1175,11 @@ function renderStudents() {
     }).join('');
   }
   document.getElementById('stuInfo').textContent = total
-    ? `Showing ${(stuPage-1)*pp+1}–${Math.min(stuPage*pp,total)} of ${total} entries` : 'Showing 0 entries';
+    ? `Showing ${(stuPage-1)*pp+1}${Math.min(stuPage*pp,total)} of ${total} entries` : 'Showing 0 entries';
   renderPagination('stuPagination', stuPage, pages, p => { stuPage=p; renderStudents(); });
 }
 
-// ── RENDER RECORDS ─────────────────────────────────────────
+// -- RENDER RECORDS --
 function renderRecords() {
   const q   = (document.getElementById('recSearch').value || '').toLowerCase();
   const pp  = parseInt(document.getElementById('recEntries').value || 10);
@@ -1043,12 +1204,12 @@ function renderRecords() {
       </tr>`).join('');
   }
   document.getElementById('recInfo').textContent = total
-    ? `Showing ${(recPage-1)*pp+1}–${Math.min(recPage*pp,total)} of ${total} entries` : 'Showing 0 entries';
+    ? `Showing ${(recPage-1)*pp+1}${Math.min(recPage*pp,total)} of ${total} entries` : 'Showing 0 entries';
   renderPagination('recPagination', recPage, pages, p => { recPage=p; renderRecords(); });
 }
 
 
-// ── RENDER CURRENT SIT-IN (Active only) ────────────────────
+//  RENDER CURRENT SIT-IN (Active only)
 function renderCurrentSitIn() {
   const q   = (document.getElementById('curSearch').value || '').toLowerCase();
   const pp  = parseInt(document.getElementById('curEntries').value || 10);
@@ -1076,7 +1237,7 @@ function renderCurrentSitIn() {
       </tr>`).join('');
   }
   document.getElementById('curInfo').textContent = total
-    ? `Showing ${(curPage-1)*pp+1}–${Math.min(curPage*pp,total)} of ${total} active sessions` : 'No active sessions';
+    ? `Showing ${(curPage-1)*pp+1}${Math.min(curPage*pp,total)} of ${total} active sessions` : 'No active sessions';
   renderPagination('curPagination', curPage, pages, p => { curPage=p; renderCurrentSitIn(); });
 }
 function timeOutAndRefresh(sitId) {
@@ -1101,19 +1262,19 @@ function timeOutAndRefresh(sitId) {
   });
 }
 
-// ── PAGINATION ─────────────────────────────────────────────
+// -- PAGINATION --
 function renderPagination(id, cur, total, cb) {
   const el = document.getElementById(id);
-  let h = `<button class="pg-btn" ${cur===1?'disabled':''} onclick="(${cb})(${cur-1})">‹</button>`;
+  let h = `<button class="pg-btn" ${cur===1?'disabled':''} onclick="(${cb})(${cur-1})"></button>`;
   const start = Math.max(1, cur-2), end = Math.min(total, cur+2);
-  if (start > 1) h += `<button class="pg-btn" onclick="(${cb})(1)">1</button><span style="color:var(--text3);padding:0 2px;">…</span>`;
+  if (start > 1) h += `<button class="pg-btn" onclick="(${cb})(1)">1</button><span style="color:var(--text3);padding:0 2px;"></span>`;
   for (let i=start;i<=end;i++) h += `<button class="pg-btn${i===cur?' active':''}" onclick="(${cb})(${i})">${i}</button>`;
-  if (end < total) h += `<span style="color:var(--text3);padding:0 2px;">…</span><button class="pg-btn" onclick="(${cb})(${total})">${total}</button>`;
-  h += `<button class="pg-btn" ${cur===total?'disabled':''} onclick="(${cb})(${cur+1})">›</button>`;
+  if (end < total) h += `<span style="color:var(--text3);padding:0 2px;"></span><button class="pg-btn" onclick="(${cb})(${total})">${total}</button>`;
+  h += `<button class="pg-btn" ${cur===total?'disabled':''} onclick="(${cb})(${cur+1})"></button>`;
   el.innerHTML = h;
 }
 
-// ── SEARCH — fetches from search_student.php ───────────────
+// -- SEARCH --fetches from search_student.php
 function openSearch() {
   document.getElementById('searchInput').value = '';
   document.getElementById('searchResults').innerHTML = `
@@ -1131,7 +1292,7 @@ function liveSearch() {
   }
   clearTimeout(searchTimer);
   searchTimer = setTimeout(async () => {
-    res.innerHTML = `<div class="loading-row"><div class="spinner"></div> Searching database…</div>`;
+    res.innerHTML = `<div class="loading-row"><div class="spinner"></div> Searching database</div>`;
     try {
       const r    = await fetch(`api/search_student.php?q=${encodeURIComponent(q)}`);
       const data = await r.json();
@@ -1187,7 +1348,7 @@ function liveSearch() {
   }, 300);
 }
 
-// ── FETCH SIT-IN RECORDS FROM DB ───────────────────────────
+// -- FETCH SIT-IN RECORDS FROM DB --
 function fetchSitInRecords() {
   fetch('admin_sitin_fetch.php?filter=all')
     .then(r => r.json())
@@ -1209,7 +1370,7 @@ function fetchSitInRecords() {
     .catch(() => { /* keep existing sitInRecs if offline */ });
 }
 
-// ── SIT-IN ─────────────────────────────────────────────────
+// -- SIT-IN --
 function openSitInModal() {
   ['siIdNum','siName','siSession'].forEach(id => document.getElementById(id).value = '');
   document.getElementById('siPurpose').value = '';
@@ -1266,7 +1427,7 @@ function submitSitIn() {
     fetchStudents();
   })
   .catch(() => {
-    // Offline fallback – save in memory only
+    // Offline fallback  save in memory only
     sitInRecs.push({ sit_id: sitInRecs.length+1, id_number:id, name, purpose, lab,
                      session: document.getElementById('siSession').value, status:'Active' });
     bootstrap.Modal.getInstance(document.getElementById('modalSitIn')).hide();
@@ -1279,7 +1440,7 @@ function timeOut(sitId) {
   timeOutAndRefresh(sitId);
 }
 
-// ── ADD STUDENT ────────────────────────────────────────────
+// -- ADD STUDENT --
 function openAddStudent() {
   ['asId','asFn','asLn','asMn','asEm','asPw'].forEach(id => document.getElementById(id).value = '');
   new bootstrap.Modal(document.getElementById('modalAddStudent')).show();
@@ -1301,7 +1462,7 @@ function submitAddStudent() {
     });
 }
 
-// ── EDIT STUDENT ───────────────────────────────────────────
+// -- EDIT STUDENT --
 function openEditStudent(s) {
   document.getElementById('editId').value  =s.id;   document.getElementById('editFn').value  =s.first_name;
   document.getElementById('editLn').value  =s.last_name; document.getElementById('editCo').value  =s.course;
@@ -1318,7 +1479,7 @@ function submitEditStudent() {
   bootstrap.Modal.getInstance(document.getElementById('modalEditStudent')).hide();
 }
 
-// ── DELETE ─────────────────────────────────────────────────
+// -- DELETE --
 function deleteStudent(id) {
   if (!confirm('Delete this student? This cannot be undone.')) return;
   fetch('admin_delete_student.php',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id})})
@@ -1326,12 +1487,12 @@ function deleteStudent(id) {
     .catch(()=>{students=students.filter(s=>s.id!=id);toast('Student deleted.','danger');renderStudents();});
 }
 
-// ── RESET SESSIONS ─────────────────────────────────────────
+// -- RESET SESSIONS --
 function confirmResetAll() {
   resetAllSessionsDB(); // persists to DB and refreshes student list
 }
 
-// ── ANNOUNCEMENT ───────────────────────────────────────────
+// -- ANNOUNCEMENT --
 async function postAnnouncement() {
   const text = document.getElementById('annText').value.trim();
   if (!text) { alert('Please enter an announcement.'); return; }
@@ -1341,7 +1502,7 @@ async function postAnnouncement() {
       body: JSON.stringify({ title:'', message: text })
     }).then(r => r.json());
     if (!d.success) { toast(d.message || 'Failed.', 'danger'); return; }
-  } catch(e) { /* offline — add visually */ }
+  } catch(e) { /* offline  add visually */ }
   const now = new Date();
   const label = `${now.getFullYear()}-${now.toLocaleString('en',{month:'short'})}-${String(now.getDate()).padStart(2,'0')}`;
   const item = document.createElement('div');
@@ -1367,13 +1528,13 @@ async function loadAnalytics() {
     const rEl = document.getElementById('anaRegistered');
     const tEl = document.getElementById('anaTotalSitins');
     const aEl = document.getElementById('anaActive');
-    if (rEl) rEl.textContent = summary.registered  ?? '—';
-    if (tEl) tEl.textContent = summary.total_sitin  ?? '—';
-    if (aEl) aEl.textContent = summary.active       ?? '—';
+    if (rEl) rEl.textContent = summary.registered  ?? '';
+    if (tEl) tEl.textContent = summary.total_sitin  ?? '';
+    if (aEl) aEl.textContent = summary.active       ?? '';
     drawReportChart(dailyData, 'daily');
     drawPurposeChart2(purposeData);
     drawLabChart(labData);
-  } catch(e) { /* DB not ready yet — charts stay empty */ }
+  } catch(e) { /* DB not ready yet  charts stay empty */ }
 }
 
 async function loadReport(type) {
@@ -1419,9 +1580,9 @@ function drawLabChart(data) {
   });
 }
 
-// ══════════════════════════════════════════════════════════
-// ── ANNOUNCEMENT (saves to DB) ────────────────────────────
-// ══════════════════════════════════════════════════════════
+//
+//  ANNOUNCEMENT (saves to DB)
+//
 async function postAnnouncementDB() {
   const title = document.getElementById('annTitleNew')?.value.trim() || '';
   const text  = document.getElementById('annTextNew')?.value.trim() || '';
@@ -1465,9 +1626,9 @@ async function loadAnnouncementsDB() {
   } catch(e) { /* leave as-is */ }
 }
 
-// ══════════════════════════════════════════════════════════
-// ── REWARDS / POINTS ──────────────────────────────────────
-// ══════════════════════════════════════════════════════════
+//
+// -- REWARDS / POINTS --
+//
 async function awardPoints() {
   const id_number = (document.getElementById('rwIdNum')?.value || '').trim();
   const points    = parseInt(document.getElementById('rwPoints')?.value || 0);
@@ -1502,16 +1663,16 @@ async function resetAllSessionsDB() {
   }
 }
 
-// ══════════════════════════════════════════════════
-// ── REPORTS LIST ─────────────────────────────────
-// ══════════════════════════════════════════════════
+//
+// -- REPORTS LIST --
+//
 async function loadReportsList() {
   const limit     = document.getElementById('rptLimit').value || '10';
   const date_from = document.getElementById('rptFrom').value || '';
   const date_to   = document.getElementById('rptTo').value   || '';
   const tbody     = document.getElementById('rptBody');
   const info      = document.getElementById('rptInfo');
-  tbody.innerHTML = '<tr><td colspan="12" class="no-data"><i class="fa-solid fa-spinner fa-spin"></i> Loading…</td></tr>';
+  tbody.innerHTML = '<tr><td colspan="12" class="no-data"><i class="fa-solid fa-spinner fa-spin"></i> Loading</td></tr>';
   try {
     const params = new URLSearchParams({ type:'sitin_list', limit, date_from, date_to });
     const data   = await fetch(`api/reports.php?${params}`).then(r => r.json());
@@ -1520,24 +1681,24 @@ async function loadReportsList() {
       info.textContent = 'No records found.';
       return;
     }
-    const fmtTime = dt => { if (!dt) return '—'; const d=new Date(dt); return d.toLocaleTimeString('en',{hour:'2-digit',minute:'2-digit'}); };
-    const fmtDate = dt => { if (!dt) return '—'; const d=new Date(dt); return d.toLocaleDateString('en',{month:'short',day:'numeric',year:'numeric'}); };
+    const fmtTime = dt => { if (!dt) return ''; const d=new Date(dt); return d.toLocaleTimeString('en',{hour:'2-digit',minute:'2-digit'}); };
+    const fmtDate = dt => { if (!dt) return ''; const d=new Date(dt); return d.toLocaleDateString('en',{month:'short',day:'numeric',year:'numeric'}); };
     const duration = (s,e) => {
-      if (!s||!e) return '—';
+      if (!s||!e) return '';
       const diff = (new Date(e)-new Date(s))/1000;
-      if (diff<0) return '—';
+      if (diff<0) return '';
       const h=Math.floor(diff/3600), m=Math.floor((diff%3600)/60);
       return (h>0?h+'h ':'')+m+'m';
     };
     tbody.innerHTML = data.map((r,i) => `
       <tr>
         <td style="color:var(--text3);">${i+1}</td>
-        <td><span class="id-badge">${r.id_number||'—'}</span></td>
-        <td style="font-weight:600;">${(r.name||'—').trim()}</td>
-        <td style="color:var(--text2);font-size:.72rem;">${r.course||'—'} ${r.year_level?'Yr'+r.year_level:''}</td>
-        <td>${r.purpose||'—'}</td>
-        <td><span style="background:rgba(201,168,76,.12);color:var(--gold2);padding:2px 8px;border-radius:5px;font-size:.72rem;font-weight:700;">${r.lab||'—'}</span></td>
-        <td>${r.pc_number||'—'}</td>
+        <td><span class="id-badge">${r.id_number||''}</span></td>
+        <td style="font-weight:600;">${(r.name||'').trim()}</td>
+        <td style="color:var(--text2);font-size:.72rem;">${r.course||''} ${r.year_level?'Yr'+r.year_level:''}</td>
+        <td>${r.purpose||''}</td>
+        <td><span style="background:rgba(201,168,76,.12);color:var(--gold2);padding:2px 8px;border-radius:5px;font-size:.72rem;font-weight:700;">${r.lab||''}</span></td>
+        <td>${r.pc_number||''}</td>
         <td>${fmtDate(r.created_at)}</td>
         <td>${fmtTime(r.created_at)}</td>
         <td>${fmtTime(r.timed_out_at)}</td>
@@ -1558,15 +1719,15 @@ function openPrintReport() {
   window.open(`reports_print.php?${params}`, '_blank');
 }
 
-// ══════════════════════════════════════════════════
-// ── FEEDBACK REPORTS ──────────────────────────────
-// ══════════════════════════════════════════════════
+//
+// -- FEEDBACK REPORTS --
+//
 let allFeedback = [];
 
 async function loadFeedback() {
   const tbody = document.getElementById('fbBody');
   if (!tbody) return;
-  tbody.innerHTML = '<tr><td colspan="8" class="no-data"><i class="fa-solid fa-spinner fa-spin"></i> Loading…</td></tr>';
+  tbody.innerHTML = '<tr><td colspan="8" class="no-data"><i class="fa-solid fa-spinner fa-spin"></i> Loading</td></tr>';
   try {
     allFeedback = await fetch('api/reports.php?type=feedback').then(r => r.json());
     filterFeedback();
@@ -1592,7 +1753,7 @@ function filterFeedback() {
     return;
   }
 
-  const stars = n => '★'.repeat(Math.min(5,Math.max(0,n||0)))+'☆'.repeat(5-Math.min(5,Math.max(0,n||0)));
+  const stars = n => ''.repeat(Math.min(5,Math.max(0,n||0)))+''.repeat(5-Math.min(5,Math.max(0,n||0)));
   const starColor = n => n>=4?'#10b981':n>=3?'#f59e0b':'#ef4444';
   tbody.innerHTML = data.map((f,i) => `
     <tr>
@@ -1601,29 +1762,47 @@ function filterFeedback() {
         <div style="font-weight:600;font-size:.8rem;">${(f.name||'Unknown').trim()}</div>
         <div style="font-size:.7rem;color:var(--text3);">${f.id_number||''}</div>
       </td>
-      <td style="font-size:.72rem;color:var(--text2);">${f.course||'—'}</td>
-      <td><span style="background:rgba(201,168,76,.12);color:var(--gold2);padding:2px 7px;border-radius:5px;font-size:.72rem;font-weight:700;">${f.lab||'—'}</span></td>
-      <td style="font-size:.78rem;">${f.purpose||'—'}</td>
+      <td style="font-size:.72rem;color:var(--text2);">${f.course||''}</td>
+      <td><span style="background:rgba(201,168,76,.12);color:var(--gold2);padding:2px 7px;border-radius:5px;font-size:.72rem;font-weight:700;">${f.lab||''}</span></td>
+      <td style="font-size:.78rem;">${f.purpose||''}</td>
       <td style="color:${starColor(f.rating)};font-size:.88rem;letter-spacing:1px;" title="${f.rating}/5 stars">${stars(f.rating)}</td>
-      <td style="font-size:.78rem;max-width:260px;">${f.message ? f.message.substring(0,120)+(f.message.length>120?'…':'') : '<em style="color:var(--text3)">No comment</em>'}</td>
-      <td style="font-size:.72rem;color:var(--text3);">${f.created_at ? new Date(f.created_at).toLocaleDateString('en',{month:'short',day:'numeric',year:'numeric'}) : '—'}</td>
+      <td style="font-size:.78rem;max-width:260px;">${f.message ? f.message.substring(0,120)+(f.message.length>120?'':'') : '<em style="color:var(--text3)">No comment</em>'}</td>
+      <td style="font-size:.72rem;color:var(--text3);">${f.created_at ? new Date(f.created_at).toLocaleDateString('en',{month:'short',day:'numeric',year:'numeric'}) : ''}</td>
     </tr>`).join('');
   if (info) info.textContent = `Showing ${data.length} feedback entr${data.length!==1?'ies':'y'}.`;
 }
 
-// ══════════════════════════════════════════════════
-// ── LEADERBOARD (admin) ───────────────────────────
-// ══════════════════════════════════════════════════
+//
+//  LEADERBOARD (admin)
+//
 async function loadAdminLeaderboard() {
   const lbBody = document.getElementById('adminLbBody');
   const rwBody = document.getElementById('rwLbBody');
-  const loading = '<tr><td colspan="6" class="no-data"><i class="fa-solid fa-spinner fa-spin"></i> Loading…</td></tr>';
+  const loading = '<tr><td colspan="8" class="no-data"><i class="fa-solid fa-spinner fa-spin"></i> Loading</td></tr>';
   if (lbBody) lbBody.innerHTML = loading;
   if (rwBody) rwBody.innerHTML = loading;
+
+  const fmtDur = mins => {
+    if (!mins || mins <= 0) return '—';
+    const h = Math.floor(mins / 60), m = mins % 60;
+    return h > 0 ? `${h}h ${m}m` : `${m}m`;
+  };
+
+  // Points breakdown tooltip: +1 completion, +1/30min (max 3), +1 if >=2h
+  const ptsTip = (s) => {
+    const mins = parseInt(s.total_duration_mins || 0);
+    const sCount = parseInt(s.total_sitins || 0);
+    const compPts = sCount;                               // +1 per sit-in
+    const durPts  = Math.min(3 * sCount, Math.floor(mins / 30)); // +1/30min, max 3/session
+    const bonusPts = parseInt(s.points || 0) - compPts - durPts;
+    return `Completion: +${compPts} | Duration: +${durPts} | Manual/Bonus: +${Math.max(0,bonusPts)}`;
+  };
+
   try {
     const data = await fetch('api/leaderboard.php').then(r => r.json());
     const medals = ['🥇','🥈','🥉'];
-    const rowsHtml = data.length
+
+    const buildRows = (data) => data.length
       ? data.map((s,i) => `
           <tr class="${i<3?'lb-rank-'+(i+1):''}">
             <td><span style="font-size:1rem;">${medals[i]||'#'+(i+1)}</span></td>
@@ -1633,29 +1812,28 @@ async function loadAdminLeaderboard() {
             </td>
             <td><span style="background:rgba(59,130,246,.12);color:#60a5fa;padding:2px 7px;border-radius:5px;font-size:.7rem;font-weight:700;">${s.course}</span></td>
             <td style="font-family:'Bebas Neue',cursive;font-size:1.1rem;color:var(--text1);">${s.total_sitins}</td>
-            <td style="font-family:'Bebas Neue',cursive;font-size:1.1rem;color:var(--gold2);">${s.points}</td>
+            <td style="font-size:.82rem;color:var(--green);">${s.total_hours}h
+              <div style="font-size:.68rem;color:var(--text3);">Longest: ${fmtDur(s.longest_session_mins)}</div>
+            </td>
+            <td style="font-size:.82rem;color:var(--text2);">${fmtDur(Math.round(s.avg_duration_mins))}</td>
+            <td>
+              <span style="font-family:'Bebas Neue',cursive;font-size:1.2rem;color:var(--gold2);" title="${ptsTip(s)}">${s.points} pts</span>
+              <div style="font-size:.65rem;color:var(--text3);margin-top:1px;">hover for breakdown</div>
+            </td>
             <td>
               <button class="btn-a-success" onclick="quickAwardPoints('${s.id_number}')">
                 <i class="fa-solid fa-plus"></i> Points
               </button>
             </td>
           </tr>`).join('')
-      : '<tr><td colspan="6" class="no-data">No student data yet.</td></tr>';
+      : '<tr><td colspan="8" class="no-data">No student data yet.</td></tr>';
 
+    const rowsHtml = buildRows(data);
     if (lbBody) lbBody.innerHTML = rowsHtml;
-    if (rwBody) rwBody.innerHTML = data.length
-      ? data.map((s,i) => `
-          <tr>
-            <td>${medals[i]||'#'+(i+1)}</td>
-            <td style="font-weight:600;">${s.first_name} ${s.last_name}</td>
-            <td style="font-size:.72rem;color:var(--text2);">${s.course}</td>
-            <td>${s.total_sitins}</td>
-            <td style="font-weight:800;color:var(--gold2);">${s.points}</td>
-          </tr>`).join('')
-      : '<tr><td colspan="5" class="no-data">No data yet.</td></tr>';
+    if (rwBody) rwBody.innerHTML = buildRows(data);
   } catch(e) {
-    if (lbBody) lbBody.innerHTML = '<tr><td colspan="6" class="no-data">Could not load leaderboard.</td></tr>';
-    if (rwBody) rwBody.innerHTML = '<tr><td colspan="5" class="no-data">Could not load.</td></tr>';
+    if (lbBody) lbBody.innerHTML = '<tr><td colspan="8" class="no-data">Could not load leaderboard.</td></tr>';
+    if (rwBody) rwBody.innerHTML = '<tr><td colspan="8" class="no-data">Could not load.</td></tr>';
   }
 }
 
@@ -1666,9 +1844,9 @@ function quickAwardPoints(id_number) {
   }
 }
 
-// ══════════════════════════════════════════════════
-// ── RESERVATION (admin) ───────────────────────────
-// ══════════════════════════════════════════════════
+//
+//  RESERVATION (admin)
+//
 let adminReservations  = [];
 let currentAdminLab    = '524';
 
@@ -1699,10 +1877,10 @@ function renderAdminReservations() {
         <div style="font-size:.7rem;color:var(--text3);">${r.id_number}</div>
       </td>
       <td><span style="background:rgba(201,168,76,.12);color:var(--gold2);padding:2px 7px;border-radius:5px;font-size:.72rem;font-weight:700;">${r.lab}</span></td>
-      <td>${r.pc_number||'—'}</td>
-      <td>${r.date||'—'}</td>
-      <td>${r.time_in||'—'}</td>
-      <td style="font-size:.78rem;">${r.purpose||'—'}</td>
+      <td>${r.pc_number||''}</td>
+      <td>${r.date||''}</td>
+      <td>${r.time_in||''}</td>
+      <td style="font-size:.78rem;">${r.purpose||''}</td>
       <td><span style="font-size:.72rem;font-weight:700;padding:2px 8px;border-radius:20px;background:rgba(100,116,139,.12);color:${statusColor[r.status]||'#64748b'}">${r.status}</span></td>
       <td style="display:flex;gap:.3rem;">
         ${r.status==='Pending'
@@ -1730,7 +1908,7 @@ async function adminResAction(id, action) {
           body: JSON.stringify({
             action:'send', target: res.id_number,
             type:  action==='approve'?'success':'danger',
-            title: action==='approve'?'Reservation Approved ✅':'Reservation Rejected ❌',
+            title: action==='approve'?'Reservation Approved ':'Reservation Rejected ',
             message: `Your reservation for Lab ${res.lab} PC ${res.pc_number} on ${res.date} has been ${action==='approve'?'approved':'rejected'}.`
           })
         });
@@ -1803,11 +1981,11 @@ async function loadAdminPcMap(lab, btn) {
   }
 }
 
-// ══════════════════════════════════════════════════
-// ── NOTIFICATIONS (admin badge) ───────────────────
-// ══════════════════════════════════════════════════
+//
+//  NOTIFICATIONS (admin badge)
+//
 async function pollAdminNotifications() {
-  // Admin uses leaderboard/student activity as "notifications" — just a badge of pending reservations
+  // Admin uses leaderboard/student activity as "notifications"  just a badge of pending reservations
   try {
     const data = adminReservations || [];
     const pending = data.filter(r => r.status === 'Pending').length;
@@ -1819,10 +1997,13 @@ async function pollAdminNotifications() {
   } catch(e) {}
 }
 
-// ══════════════════════════════════════════════════
-// ── AUTO INIT ────────────────────────────────────
-// ══════════════════════════════════════════════════
+//
+// -- AUTO INIT --
+//
 document.addEventListener('DOMContentLoaded', () => {
+  // Apply dark/light mode preference
+  applyAdminDarkMode();
+
   // Setup navbar click handlers
   document.querySelectorAll('.nav-link').forEach(link => {
     link.addEventListener('click', (e) => {
@@ -1871,6 +2052,146 @@ function confirmLogout() {
     window.location.href = 'logout.php';
   }
 }
+
+// -- ADMIN DARK / LIGHT MODE --
+function toggleAdminDarkMode() {
+  const isLight = document.body.classList.toggle('admin-light');
+  localStorage.setItem('admin_light_mode', isLight ? '1' : '0');
+  const icon = document.getElementById('adminDmIcon');
+  if (icon) icon.className = isLight ? 'fa-solid fa-moon' : 'fa-solid fa-sun';
+}
+function applyAdminDarkMode() {
+  if (localStorage.getItem('admin_light_mode') === '1') {
+    document.body.classList.add('admin-light');
+    const icon = document.getElementById('adminDmIcon');
+    if (icon) icon.className = 'fa-solid fa-moon';
+  }
+}
+
+// -- SOFTWARE IMPORT --
+let swFiles = [];
+let swRecords = JSON.parse(localStorage.getItem('admin_sw_records') || '[]');
+
+function onDragOver(e) { e.preventDefault(); document.getElementById('uploadDropZone').classList.add('drag-over'); }
+function onDragLeave(e) { document.getElementById('uploadDropZone').classList.remove('drag-over'); }
+function onDrop(e) {
+  e.preventDefault();
+  document.getElementById('uploadDropZone').classList.remove('drag-over');
+  const files = Array.from(e.dataTransfer.files);
+  addFiles(files);
+}
+function handleFileSelect(e) { addFiles(Array.from(e.target.files)); }
+function addFiles(files) {
+  swFiles = [...swFiles, ...files];
+  renderUploadList();
+}
+function renderUploadList() {
+  const el = document.getElementById('uploadFileList');
+  if (!swFiles.length) { el.innerHTML = ''; return; }
+  el.innerHTML = swFiles.map((f, i) => {
+    const size = f.size > 1048576 ? (f.size/1048576).toFixed(1)+' MB' : (f.size/1024).toFixed(0)+' KB';
+    const ext  = f.name.split('.').pop().toUpperCase();
+    return `<div class="upload-file-item">
+      <div class="upload-file-icon"><i class="fa-solid fa-file"></i></div>
+      <div style="flex:1;min-width:0;">
+        <div class="upload-file-name">${f.name}</div>
+        <div class="upload-file-size">${size}  ${ext}</div>
+        <div class="upload-progress"><div class="upload-progress-bar" id="upBar${i}" style="width:0%"></div></div>
+      </div>
+      <button onclick="removeFile(${i})" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:.85rem;padding:.25rem;"><i class="fa-solid fa-xmark"></i></button>
+    </div>`;
+  }).join('');
+}
+function removeFile(i) { swFiles.splice(i, 1); renderUploadList(); }
+
+function submitSoftware() {
+  const name = document.getElementById('swName').value.trim();
+  const cat  = document.getElementById('swCategory').value;
+  const desc = document.getElementById('swDesc').value.trim();
+  const labs = ['524','526','528','530'].filter(l => document.getElementById('swLab'+l)?.checked);
+
+  if (!name) { toast('Please enter a software name.', 'warning'); return; }
+  if (!cat)  { toast('Please select a category.', 'warning'); return; }
+
+  // Simulate upload progress
+  swFiles.forEach((f, i) => {
+    let pct = 0;
+    const bar = document.getElementById('upBar'+i);
+    const timer = setInterval(() => {
+      pct = Math.min(100, pct + Math.random()*25);
+      if (bar) bar.style.width = pct + '%';
+      if (pct >= 100) clearInterval(timer);
+    }, 120);
+  });
+
+  const record = {
+    id: Date.now(),
+    name, category: cat, description: desc,
+    labs: labs.length ? labs : ['All'],
+    files: swFiles.map(f => ({ name: f.name, size: f.size })),
+    uploaded_at: new Date().toISOString(),
+    uploaded_by: 'admin'
+  };
+  swRecords.unshift(record);
+  localStorage.setItem('admin_sw_records', JSON.stringify(swRecords));
+
+  setTimeout(() => {
+    toast(`"${name}" registered successfully!`, 'success');
+    // Reset
+    swFiles = [];
+    renderUploadList();
+    document.getElementById('swName').value = '';
+    document.getElementById('swCategory').value = '';
+    document.getElementById('swDesc').value = '';
+    ['524','526','528','530'].forEach(l => { const el = document.getElementById('swLab'+l); if(el) el.checked = false; });
+    renderSoftwareList();
+  }, 800);
+}
+
+function renderSoftwareList() {
+  const q  = (document.getElementById('swSearch')?.value || '').toLowerCase();
+  const el = document.getElementById('swList');
+  const data = swRecords.filter(s => (s.name+s.category+s.description).toLowerCase().includes(q));
+
+  if (!data.length) {
+    el.innerHTML = '<div class="empty-state"><i class="fa-solid fa-box-open"></i><p>No software registered yet.</p></div>';
+    return;
+  }
+  el.innerHTML = data.map(s => {
+    const date = new Date(s.uploaded_at).toLocaleDateString('en-PH',{month:'short',day:'numeric',year:'numeric'});
+    const catColors = {
+      'Programming IDE':'#3b82f6','Database Tool':'#10b981','Design Software':'#f59e0b',
+      'Utility / Tool':'#8b5cf6','Reference / Document':'#64748b','Lab Manual':'#f97316','Other':'#94a3b8'
+    };
+    const color = catColors[s.category] || '#94a3b8';
+    return `<div style="background:var(--surface2);border:1px solid var(--border);border-radius:9px;padding:.65rem .85rem;margin-bottom:.5rem;display:flex;align-items:flex-start;gap:.75rem;">
+      <div style="width:36px;height:36px;border-radius:8px;background:${color}20;color:${color};display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">
+        <i class="fa-solid fa-box-archive"></i>
+      </div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-weight:700;font-size:.82rem;color:var(--text1);">${s.name}</div>
+        <div style="font-size:.72rem;color:var(--text3);margin:.15rem 0;">${s.category}  Labs: ${s.labs.join(', ')}</div>
+        ${s.description ? `<div style="font-size:.72rem;color:var(--text2);">${s.description}</div>` : ''}
+        <div style="font-size:.68rem;color:var(--text3);margin-top:.25rem;">${s.files?.length||0} file(s)  ${date}</div>
+      </div>
+      <button onclick="deleteSw(${s.id})" style="background:rgba(239,68,68,.12);border:none;color:#ef4444;border-radius:6px;padding:3px 8px;font-size:.7rem;cursor:pointer;"><i class="fa-solid fa-trash"></i></button>
+    </div>`;
+  }).join('');
+
+  // Update lab counts
+  ['524','526','528','530'].forEach(lab => {
+    const el = document.getElementById('swCountLab'+lab);
+    if (el) el.textContent = swRecords.filter(s => s.labs.includes(lab) || s.labs.includes('All')).length;
+  });
+}
+
+function deleteSw(id) {
+  swRecords = swRecords.filter(s => s.id !== id);
+  localStorage.setItem('admin_sw_records', JSON.stringify(swRecords));
+  renderSoftwareList();
+  toast('Software removed.', 'warning');
+}
+
 </script>
 </body>
 </html>

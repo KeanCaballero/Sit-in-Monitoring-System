@@ -73,18 +73,42 @@ try {
     /* ── GET: leaderboard data ────────────────────── */
     $s = $conn->prepare(
         "SELECT u.id_number, u.first_name, u.last_name, u.course, u.year_level, u.points,
-                COUNT(si.id) AS total_sitins
+                COUNT(si.id)                                                                      AS total_sitins,
+                COALESCE(SUM(
+                    CASE WHEN si.timed_out_at IS NOT NULL
+                    THEN TIMESTAMPDIFF(MINUTE, si.created_at, si.timed_out_at)
+                    ELSE 0 END), 0)                                                               AS total_duration_mins,
+                COALESCE(MAX(
+                    CASE WHEN si.timed_out_at IS NOT NULL
+                    THEN TIMESTAMPDIFF(MINUTE, si.created_at, si.timed_out_at)
+                    ELSE 0 END), 0)                                                               AS longest_session_mins,
+                COALESCE(AVG(
+                    CASE WHEN si.timed_out_at IS NOT NULL
+                    THEN TIMESTAMPDIFF(MINUTE, si.created_at, si.timed_out_at)
+                    ELSE NULL END), 0)                                                            AS avg_duration_mins
          FROM users u
-         LEFT JOIN sit_ins si ON si.id_number = u.id_number
+         LEFT JOIN sit_ins si ON si.id_number = u.id_number AND si.status = 'Done'
          WHERE u.role = 'student'
          GROUP BY u.id_number
-         ORDER BY u.points DESC, total_sitins DESC
+         ORDER BY u.points DESC, total_sitins DESC, total_duration_mins DESC
          LIMIT 50"
     );
     $s->execute();
-    $rows = $s->get_result()->fetch_all(MYSQLI_ASSOC);
+    $rawRows = $s->get_result()->fetch_all(MYSQLI_ASSOC);
     $s->close();
     $conn->close();
+
+    // Add computed display fields
+    $rows = array_map(function($r) {
+        $totalMins   = (int)$r['total_duration_mins'];
+        $longestMins = (int)$r['longest_session_mins'];
+        $avgMins     = (float)$r['avg_duration_mins'];
+        $r['total_hours']        = round($totalMins   / 60, 1);
+        $r['longest_session_hr'] = round($longestMins / 60, 1);
+        $r['avg_duration_hr']    = round($avgMins     / 60, 1);
+        $r['total_duration_mins'] = $totalMins;
+        return $r;
+    }, $rawRows);
 
     ob_end_clean();
     echo json_encode($rows);

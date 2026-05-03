@@ -1,5 +1,6 @@
 <?php
-// dashboard.php  (drop-in replacement — put in root of project)
+header('Content-Type: text/html; charset=utf-8');
+// dashboard.php  (drop-in replacement - put in root of project)
 ini_set('display_errors', 0);
 error_reporting(0);
 session_start();
@@ -72,105 +73,95 @@ $sess_pct = min(100, ($sess / 30) * 100);
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>CCS Sit-in Portal – Student Dashboard</title>
+  <title>CCS Sit-in Portal  Student Dashboard</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet"/>
   <link href="style.css" rel="stylesheet"/>
   <style>
-    /* ── PC LAB MAP ─────────────────────────────────────────── */
+    /*  PC LAB MAP  */
     .lab-map-wrap { padding: 1rem; }
     .lab-selector { display: flex; gap: .6rem; flex-wrap: wrap; margin-bottom: 1rem; }
     .lab-btn {
-      border: 2px solid var(--border, #ddd); background: transparent;
+      border: 2px solid var(--border); background: transparent;
       padding: .35rem .9rem; border-radius: 8px; font-size: .82rem; font-weight: 600;
-      cursor: pointer; transition: all .15s; color: var(--text2, #555);
+      cursor: pointer; transition: all .15s; color: var(--text2);
     }
     .lab-btn.active {
-      border-color: #1e3a7a; background: #1e3a7a; color: #fff;
+      border-color: var(--blue); background: var(--blue); color: #fff;
     }
     .lab-legend { display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 1rem; font-size: .78rem; }
-    .leg-item { display: flex; align-items: center; gap: .35rem; }
-    .leg-dot {
-      width: 14px; height: 14px; border-radius: 4px;
-    }
-    .leg-dot.available  { background: #22c55e; }
-    .leg-dot.occupied   { background: #ef4444; }
-    .leg-dot.reserved   { background: #f59e0b; }
-    .leg-dot.pending    { background: #8b5cf6; }
-    .leg-dot.selected   { background: #3b82f6; border: 2px solid #1d4ed8; }
+    .leg-item { display: flex; align-items: center; gap: .35rem; color: var(--text2); }
+    .leg-dot { width: 14px; height: 14px; border-radius: 4px; }
+    .leg-dot.available { background: #22c55e; }
+    .leg-dot.occupied  { background: #ef4444; }
+    .leg-dot.reserved  { background: #f59e0b; }
+    .leg-dot.pending   { background: #8b5cf6; }
+    .leg-dot.selected  { background: #3b82f6; border: 2px solid #1d4ed8; }
 
     .pc-grid {
       display: grid;
       grid-template-columns: repeat(8, 1fr);
-      gap: 6px;
-      padding: .5rem;
-      background: #f8fafc;
+      gap: 6px; padding: .5rem;
+      background: var(--bg2);
       border-radius: 10px;
-      border: 1px solid #e2e8f0;
+      border: 1px solid var(--border);
     }
     .pc-item {
-      aspect-ratio: 1;
-      border-radius: 6px;
+      aspect-ratio: 1; border-radius: 6px;
       display: flex; flex-direction: column;
       align-items: center; justify-content: center;
-      cursor: pointer;
-      font-size: .62rem; font-weight: 700;
-      transition: all .12s;
-      border: 2px solid transparent;
-      position: relative;
+      cursor: pointer; font-size: .62rem; font-weight: 700;
+      transition: all .12s; border: 2px solid transparent; position: relative;
     }
     .pc-item i { font-size: .9rem; margin-bottom: 1px; }
-    .pc-item.available { background: #dcfce7; color: #15803d; border-color: #86efac; }
-    .pc-item.available:hover { background: #bbf7d0; transform: scale(1.08); border-color: #22c55e; }
-    .pc-item.occupied  { background: #fee2e2; color: #991b1b; border-color: #fca5a5; cursor: not-allowed; }
-    .pc-item.reserved  { background: #fef3c7; color: #92400e; border-color: #fcd34d; cursor: not-allowed; }
-    .pc-item.pending   { background: #ede9fe; color: #5b21b6; border-color: #c4b5fd; cursor: not-allowed; }
-    .pc-item.selected  { background: #dbeafe; color: #1e40af; border-color: #3b82f6; transform: scale(1.08); }
+    .pc-item.available { background: var(--green-bg); color: var(--green); border-color: var(--green-border); }
+    .pc-item.available:hover { filter: brightness(1.07); transform: scale(1.08); }
+    .pc-item.occupied  { background: var(--red-bg);   color: var(--red);   border-color: var(--red-bg);   cursor: not-allowed; }
+    .pc-item.reserved  { background: var(--amber-bg); color: var(--amber); border-color: var(--amber-bg); cursor: not-allowed; }
+    .pc-item.pending   { background: var(--blue-bg);  color: var(--blue);  border-color: var(--blue-bg);  cursor: not-allowed; }
+    .pc-item.selected  { background: var(--blue); color: #fff; border-color: var(--blue); transform: scale(1.08); }
     .pc-item .pc-tooltip {
       display: none; position: absolute; bottom: 110%; left: 50%; transform: translateX(-50%);
-      background: #1e293b; color: #fff; font-size: .68rem; padding: 3px 7px;
+      background: var(--card); color: var(--text); border: 1px solid var(--border);
+      font-size: .68rem; padding: 3px 7px;
       border-radius: 4px; white-space: nowrap; z-index: 10; pointer-events: none;
+      box-shadow: var(--shadow);
     }
     .pc-item:hover .pc-tooltip { display: block; }
 
     /* teacher desk */
     .teacher-desk {
       grid-column: 1 / -1;
-      background: #1e3a7a; color: #fff;
+      background: var(--header-bg); color: var(--header-text);
       border-radius: 8px; padding: .4rem;
       text-align: center; font-size: .75rem; font-weight: 700;
       letter-spacing: 1px; margin-bottom: 4px;
     }
-    .lab-stats-row {
-      display: flex; gap: .75rem; flex-wrap: wrap; margin-top: .85rem;
-    }
+    .lab-stats-row { display: flex; gap: .75rem; flex-wrap: wrap; margin-top: .85rem; }
     .lab-stat {
-      background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px;
+      background: var(--bg2); border: 1px solid var(--border); border-radius: 8px;
       padding: .4rem .8rem; font-size: .78rem; display: flex; align-items: center; gap: .4rem;
+      color: var(--text2);
     }
     .lab-stat .count { font-weight: 800; font-size: 1rem; }
-    .lab-stat.green .count { color: #15803d; }
-    .lab-stat.red .count   { color: #991b1b; }
-    .lab-stat.amber .count { color: #92400e; }
+    .lab-stat.green .count { color: var(--green); }
+    .lab-stat.red   .count { color: var(--red);   }
+    .lab-stat.amber .count { color: var(--amber);  }
 
     /* Reservation confirm strip */
     .res-pc-confirm {
-      display: none; background: #eff6ff; border: 1.5px solid #93c5fd;
+      display: none; background: var(--blue-bg); border: 1.5px solid var(--blue);
       border-radius: 9px; padding: .65rem 1rem; margin-top: .75rem;
-      font-size: .83rem; color: #1e40af; font-weight: 600;
+      font-size: .83rem; color: var(--blue); font-weight: 600;
     }
     .res-pc-confirm.show { display: flex; align-items: center; gap: .5rem; }
 
     /* Feedback stars */
     .star-row { display: flex; gap: .3rem; cursor: pointer; }
-    .star-row .star { font-size: 1.4rem; color: #d1d5db; transition: color .1s; }
-    .star-row .star.on { color: #f59e0b; }
+    .star-row .star { font-size: 1.4rem; color: var(--text4); transition: color .1s; }
+    .star-row .star.on { color: var(--gold); }
 
     /* Leaderboard */
-    .lb-rank-1 { background: linear-gradient(90deg,#fef3c7,#fffbeb); }
-    .lb-rank-2 { background: linear-gradient(90deg,#f1f5f9,#f8fafc); }
-    .lb-rank-3 { background: linear-gradient(90deg,#fff7ed,#fffbeb); }
-    .rank-medal { font-size: 1.1rem; }
   </style>
 </head>
 <body>
@@ -208,7 +199,7 @@ $sess_pct = min(100, ($sess / 30) * 100);
             <div id="notifItems">
               <div class="notif-item">
                 <div class="notif-icon green"><i class="fa-solid fa-circle-check"></i></div>
-                <div><div class="notif-title">Reservation Approved</div><div class="notif-time">Lab 524 · Today</div></div>
+                <div><div class="notif-title">Reservation Approved</div><div class="notif-time">Lab 524 * Today</div></div>
               </div>
               <div class="notif-item">
                 <div class="notif-icon blue"><i class="fa-solid fa-envelope"></i></div>
@@ -226,6 +217,13 @@ $sess_pct = min(100, ($sess / 30) * 100);
         <li class="nav-item"><a class="nav-link" data-tab="history" onclick="switchTab('history')"><i class="fa-solid fa-clock-rotate-left"></i> History</a></li>
         <li class="nav-item"><a class="nav-link" data-tab="reservation" onclick="switchTab('reservation')"><i class="fa-solid fa-calendar-plus"></i> Reservation</a></li>
         <li class="nav-item"><a class="nav-link" data-tab="leaderboard" onclick="switchTab('leaderboard')"><i class="fa-solid fa-trophy"></i> Leaderboard</a></li>
+        <li class="nav-item"><a class="nav-link" data-tab="sitin-summary" onclick="switchTab('sitin-summary')"><i class="fa-solid fa-chart-simple"></i> My Summary</a></li>
+        <li class="nav-item"><a class="nav-link" data-tab="lab-availability" onclick="switchTab('lab-availability')"><i class="fa-solid fa-desktop"></i> Lab Status</a></li>
+        <li class="nav-item">
+          <button class="dm-toggle nav-link" onclick="toggleDarkMode()" id="dmBtn" title="Toggle Dark/Light Mode">
+            <i class="fa-solid fa-moon" id="dmIcon"></i>
+          </button>
+        </li>
         <li class="nav-item"><a class="nav-link btn-logout ms-1" onclick="confirmLogout()"><i class="fa-solid fa-right-from-bracket"></i> Log out</a></li>
       </ul>
     </div>
@@ -234,7 +232,7 @@ $sess_pct = min(100, ($sess / 30) * 100);
 
 <div class="page-wrap">
 
-<!-- ██████ HOME ██████ -->
+<!--  HOME  -->
 <div class="view active" id="view-home">
   <div class="row g-4">
     <!-- Student Info -->
@@ -245,13 +243,13 @@ $sess_pct = min(100, ($sess / 30) * 100);
           <img id="mainAvatar" src="<?= $avatar_src ?>" alt="Avatar"
                onerror="this.src='https://api.dicebear.com/8.x/adventurer/svg?seed=Student&backgroundColor=b6e3f4'"/>
           <div class="stu-name" id="dName"><?= htmlspecialchars($fullname ?: 'Student') ?></div>
-          <span class="stu-badge" id="dBadge"><?= htmlspecialchars(trim($su['course'] . ($su['year_level'] ? ' · Year '.$su['year_level'] : ''))) ?></span>
+          <span class="stu-badge" id="dBadge"><?= htmlspecialchars(trim($su['course'] . ($su['year_level'] ? ' * Year '.$su['year_level'] : ''))) ?></span>
         </div>
         <ul class="info-list">
-          <li><span class="info-icon"><i class="fa-solid fa-hashtag"></i></span><div><div class="info-label">ID Number</div><div class="info-value" id="dId"><?= htmlspecialchars($su['id_number'] ?: '—') ?></div></div></li>
-          <li><span class="info-icon"><i class="fa-solid fa-graduation-cap"></i></span><div><div class="info-label">Course</div><div class="info-value" id="dCourse"><?= htmlspecialchars($su['course'] ?: '—') ?></div></div></li>
-          <li><span class="info-icon"><i class="fa-solid fa-layer-group"></i></span><div><div class="info-label">Year Level</div><div class="info-value" id="dYear"><?= htmlspecialchars($su['year_level'] ? $su['year_level'].' Year' : '—') ?></div></div></li>
-          <li><span class="info-icon"><i class="fa-solid fa-envelope"></i></span><div><div class="info-label">Email</div><div class="info-value" id="dEmail"><?= htmlspecialchars($su['email'] ?: '—') ?></div></div></li>
+          <li><span class="info-icon"><i class="fa-solid fa-hashtag"></i></span><div><div class="info-label">ID Number</div><div class="info-value" id="dId"><?= htmlspecialchars($su['id_number'] ?: '-') ?></div></div></li>
+          <li><span class="info-icon"><i class="fa-solid fa-graduation-cap"></i></span><div><div class="info-label">Course</div><div class="info-value" id="dCourse"><?= htmlspecialchars($su['course'] ?: '-') ?></div></div></li>
+          <li><span class="info-icon"><i class="fa-solid fa-layer-group"></i></span><div><div class="info-label">Year Level</div><div class="info-value" id="dYear"><?= htmlspecialchars($su['year_level'] ? $su['year_level'].' Year' : '-') ?></div></div></li>
+          <li><span class="info-icon"><i class="fa-solid fa-envelope"></i></span><div><div class="info-label">Email</div><div class="info-value" id="dEmail"><?= htmlspecialchars($su['email'] ?: '-') ?></div></div></li>
           <li><span class="info-icon"><i class="fa-solid fa-star"></i></span><div><div class="info-label">Points</div><div class="info-value" id="dPoints" style="color:#f59e0b;font-weight:700;"><?= (int)$su['points'] ?> pts</div></div></li>
         </ul>
         <div class="session-block">
@@ -269,7 +267,7 @@ $sess_pct = min(100, ($sess / 30) * 100);
         <span class="pulse-dot <?= $active_sitin ? 'on' : 'off' ?>" id="pulseD"></span>
         <span id="statusMsg">
           <?php if ($active_sitin): ?>
-            You are <strong>currently sitting in</strong> — Lab <?= htmlspecialchars($active_sitin['lab']) ?>.
+            You are <strong>currently sitting in</strong> - Lab <?= htmlspecialchars($active_sitin['lab']) ?>.
           <?php else: ?>
             You are <strong>not currently sitting in.</strong> Use <strong>Reservation</strong> to book a lab session.
           <?php endif; ?>
@@ -314,10 +312,10 @@ $sess_pct = min(100, ($sess / 30) * 100);
               <?php if (!empty($history)): ?>
                 <?php foreach (array_slice($history,0,3) as $h): ?>
                   <tr>
-                    <td><?= htmlspecialchars($h['purpose'] ?? '—') ?></td>
-                    <td><?= htmlspecialchars($h['lab'] ?? '—') ?></td>
-                    <td><?= htmlspecialchars($h['pc_number'] ?? '—') ?></td>
-                    <td><?= !empty($h['created_at']) ? date('M d h:i A', strtotime($h['created_at'])) : '—' ?></td>
+                    <td><?= htmlspecialchars($h['purpose'] ?? '-') ?></td>
+                    <td><?= htmlspecialchars($h['lab'] ?? '-') ?></td>
+                    <td><?= htmlspecialchars($h['pc_number'] ?? '-') ?></td>
+                    <td><?= !empty($h['created_at']) ? date('M d h:i A', strtotime($h['created_at'])) : '-' ?></td>
                     <td><span style="font-size:.72rem;font-weight:700;padding:2px 8px;border-radius:20px;background:<?= $h['status']==='Active'?'rgba(16,185,129,.12)':'rgba(100,116,139,.12)' ?>;color:<?= $h['status']==='Active'?'#10b981':'#64748b' ?>"><?= htmlspecialchars($h['status']) ?></span></td>
                   </tr>
                 <?php endforeach; ?>
@@ -349,7 +347,7 @@ $sess_pct = min(100, ($sess / 30) * 100);
             <li style="margin-bottom:.45rem;">Chewing gum, eating, drinking, and smoking are prohibited inside the lab.</li>
           </ol>
           <div class="rules-sec">Disciplinary Action</div>
-          <p style="font-size:.78rem;line-height:1.55;"><strong>First Offense</strong> — Suspension recommended by the Head or Dean.<br><strong>Second Offense</strong> — A heavier sanction endorsed to the Guidance Center.</p>
+          <p style="font-size:.78rem;line-height:1.55;"><strong>First Offense</strong> - Suspension recommended by the Head or Dean.<br><strong>Second Offense</strong> - A heavier sanction endorsed to the Guidance Center.</p>
         </div>
       </div>
     </div>
@@ -357,7 +355,7 @@ $sess_pct = min(100, ($sess / 30) * 100);
 </div><!-- /home -->
 
 
-<!-- ██████ HISTORY ██████ -->
+<!--  HISTORY  -->
 <div class="view" id="view-history">
   <div class="view-header">
     <div class="view-title"><i class="fa-solid fa-clock-rotate-left"></i> Sit-in History &amp; Feedback</div>
@@ -369,7 +367,7 @@ $sess_pct = min(100, ($sess / 30) * 100);
         <div class="tbl-entries d-flex align-items-center gap-2" style="font-size:.82rem">
           Show <select id="histEntries" onchange="renderHistory()"><option value="5">5</option><option value="10" selected>10</option><option value="25">25</option></select> entries
         </div>
-        <div class="tbl-search"><i class="fa-solid fa-magnifying-glass"></i><input type="text" id="histSearch" placeholder="Search…" oninput="renderHistory()"/></div>
+        <div class="tbl-search"><i class="fa-solid fa-magnifying-glass"></i><input type="text" id="histSearch" placeholder="Search" oninput="renderHistory()"/></div>
       </div>
       <div class="table-responsive">
         <table class="ccs-table">
@@ -383,7 +381,7 @@ $sess_pct = min(100, ($sess / 30) * 100);
 </div>
 
 
-<!-- ██████ RESERVATION ██████ -->
+<!--  RESERVATION  -->
 <div class="view" id="view-reservation">
   <div class="view-header">
     <div class="view-title"><i class="fa-solid fa-calendar-plus"></i> Lab Reservation</div>
@@ -405,12 +403,12 @@ $sess_pct = min(100, ($sess / 30) * 100);
             </div>
             <div class="col-12">
               <label class="form-label-ccs">Purpose <span style="color:var(--red)">*</span></label>
-              <input class="form-control-ccs" type="text" id="rPurpose" placeholder="e.g. C Programming, Thesis, Research…"/>
+              <input class="form-control-ccs" type="text" id="rPurpose" placeholder="e.g. C Programming, Thesis, Research"/>
             </div>
             <div class="col-md-4">
               <label class="form-label-ccs">Laboratory <span style="color:var(--red)">*</span></label>
               <select class="form-select-ccs" id="rLab" onchange="loadLabMap()">
-                <option value="">Select lab…</option>
+                <option value="">Select lab</option>
                 <option>524</option><option>526</option><option>528</option><option>530</option>
               </select>
             </div>
@@ -427,7 +425,7 @@ $sess_pct = min(100, ($sess / 30) * 100);
           <!-- PC MAP -->
           <div id="pcMapSection" style="display:none;margin-top:1.2rem;">
             <hr style="margin-bottom:1rem;"/>
-            <div style="font-weight:700;font-size:.9rem;margin-bottom:.6rem;"><i class="fa-solid fa-desktop" style="color:#1e3a7a;margin-right:.4rem;"></i>Select a PC — click an available (green) PC</div>
+            <div style="font-weight:700;font-size:.9rem;margin-bottom:.6rem;"><i class="fa-solid fa-desktop" style="color:#1e3a7a;margin-right:.4rem;"></i>Select a PC - click an available (green) PC</div>
 
             <div class="lab-legend">
               <div class="leg-item"><div class="leg-dot available"></div> Available</div>
@@ -445,13 +443,13 @@ $sess_pct = min(100, ($sess / 30) * 100);
 
             <div class="res-pc-confirm" id="pcConfirmStrip">
               <i class="fa-solid fa-desktop"></i>
-              PC <strong id="selectedPcNum">—</strong> selected for Lab <strong id="selectedLab">—</strong>
-              <button onclick="clearPcSelection()" style="margin-left:auto;background:none;border:none;cursor:pointer;color:#1e40af;font-size:.8rem;">✕ Clear</button>
+              PC <strong id="selectedPcNum">-</strong> selected for Lab <strong id="selectedLab">-</strong>
+              <button onclick="clearPcSelection()" style="margin-left:auto;background:none;border:none;cursor:pointer;color:#1e40af;font-size:.8rem;"> Clear</button>
             </div>
           </div>
 
           <div id="pcMapLoading" style="display:none;text-align:center;padding:2rem;color:#64748b;">
-            <i class="fa-solid fa-spinner fa-spin fa-lg"></i> Loading PC availability…
+            <i class="fa-solid fa-spinner fa-spin fa-lg"></i> Loading PC availability
           </div>
 
           <div class="col-12 mt-3">
@@ -477,7 +475,7 @@ $sess_pct = min(100, ($sess / 30) * 100);
       <div class="ccs-card">
         <div class="ccs-card-header"><i class="fa-solid fa-list-check"></i> My Reservations</div>
         <div class="ccs-card-body" id="myResList">
-          <p style="text-align:center;font-size:.82rem;color:var(--text3);font-style:italic;">Loading…</p>
+          <p style="text-align:center;font-size:.82rem;color:var(--text3);font-style:italic;">Loading</p>
         </div>
       </div>
     </div>
@@ -485,7 +483,7 @@ $sess_pct = min(100, ($sess / 30) * 100);
 </div><!-- /reservation -->
 
 
-<!-- ██████ EDIT PROFILE ██████ -->
+<!--  EDIT PROFILE  -->
 <div class="view" id="view-profile">
   <div class="view-header"><div class="view-title"><i class="fa-solid fa-user-pen"></i> Edit Profile</div></div>
   <div class="row g-4">
@@ -494,7 +492,7 @@ $sess_pct = min(100, ($sess / 30) * 100);
         <div class="profile-av-card">
           <img id="profAvatar" src="<?= $avatar_src ?>" alt="Avatar" onerror="this.src='https://api.dicebear.com/8.x/adventurer/svg?seed=Student&backgroundColor=b6e3f4'"/>
           <div class="profile-name" id="profName"><?= htmlspecialchars($fullname) ?></div>
-          <div class="profile-role" id="profRole"><?= htmlspecialchars(trim($su['course'] . ($su['year_level'] ? ' · '.$su['year_level'].' Year' : ''))) ?></div>
+          <div class="profile-role" id="profRole"><?= htmlspecialchars(trim($su['course'] . ($su['year_level'] ? ' * '.$su['year_level'].' Year' : ''))) ?></div>
           <button class="btn-photo" onclick="triggerPhotoInput()"><i class="fa-solid fa-camera"></i> Change Photo</button>
           <input type="file" id="photoInput" accept="image/*" style="display:none" onchange="previewPhoto(event)"/>
           <div class="profile-sess-stat">
@@ -540,7 +538,7 @@ $sess_pct = min(100, ($sess / 30) * 100);
 </div><!-- /profile -->
 
 
-<!-- ██████ LEADERBOARD ██████ -->
+<!--  LEADERBOARD  -->
 <div class="view" id="view-leaderboard">
   <div class="view-header"><div class="view-title"><i class="fa-solid fa-trophy"></i> Leaderboard</div></div>
   <div class="row g-4">
@@ -550,7 +548,7 @@ $sess_pct = min(100, ($sess / 30) * 100);
         <div class="table-responsive">
           <table class="ccs-table" id="lbTable">
             <thead><tr><th>Rank</th><th>Student</th><th>Course</th><th>Sit-ins</th><th>Points</th></tr></thead>
-            <tbody id="lbBody"><tr class="no-data-row"><td colspan="5">Loading…</td></tr></tbody>
+            <tbody id="lbBody"><tr class="no-data-row"><td colspan="5">Loading</td></tr></tbody>
           </table>
         </div>
       </div>
@@ -559,8 +557,8 @@ $sess_pct = min(100, ($sess / 30) * 100);
       <div class="ccs-card">
         <div class="ccs-card-header"><i class="fa-solid fa-medal"></i> Your Ranking</div>
         <div class="ccs-card-body" id="myRankCard" style="text-align:center;padding:2rem 1rem;">
-          <div style="font-size:3rem;">🏅</div>
-          <div id="myRankNum" style="font-size:2rem;font-weight:800;color:var(--navy,#1e3a7a)">—</div>
+          <div style="font-size:3rem;"></div>
+          <div id="myRankNum" style="font-size:2rem;font-weight:800;color:var(--navy,#1e3a7a)">-</div>
           <div style="font-size:.85rem;color:var(--text2,#555)">Your current rank</div>
           <div style="margin-top:1rem;">
             <div style="font-size:1.5rem;font-weight:800;color:#f59e0b;" id="myPtsNum"><?= (int)$su['points'] ?></div>
@@ -572,13 +570,141 @@ $sess_pct = min(100, ($sess / 30) * 100);
   </div>
 </div><!-- /leaderboard -->
 
+
+<!--  SIT-IN SUMMARY  -->
+<div class="view" id="view-sitin-summary">
+  <div class="view-header">
+    <div class="view-title"><i class="fa-solid fa-chart-simple"></i> My Sit-in Summary</div>
+    <button class="btn-ccs-export" onclick="exportSummaryCSV()"><i class="fa-solid fa-download"></i> Export CSV</button>
+  </div>
+
+  <!-- Stats row -->
+  <div class="sitin-summary-stats" id="summaryStatsRow">
+    <div class="ss-card c1">
+      <span class="ss-icon"></span>
+      <div class="ss-val" id="sumTotalHrs">-</div>
+      <div class="ss-lbl">Total Sit-in Hours</div>
+    </div>
+    <div class="ss-card c2">
+      <span class="ss-icon"></span>
+      <div class="ss-val" id="sumTotalSessions">-</div>
+      <div class="ss-lbl">Total Sessions</div>
+    </div>
+    <div class="ss-card c3">
+      <span class="ss-icon"></span>
+      <div class="ss-val" id="sumAvgDuration">-</div>
+      <div class="ss-lbl">Avg Session Duration</div>
+    </div>
+    <div class="ss-card c4">
+      <span class="ss-icon"></span>
+      <div class="ss-val" id="sumLongest">-</div>
+      <div class="ss-lbl">Longest Session</div>
+    </div>
+  </div>
+
+  <!-- Session Table -->
+  <div class="ccs-card">
+    <div class="ccs-card-header"><i class="fa-solid fa-table-list"></i> Session History</div>
+    <div class="ccs-card-body p-4">
+      <div class="d-flex justify-content-between flex-wrap gap-2 mb-3">
+        <div class="tbl-entries d-flex align-items-center gap-2" style="font-size:.82rem;">
+          Show <select id="sumEntries" onchange="renderSummaryTable()"><option value="5">5</option><option value="10" selected>10</option><option value="25">25</option><option value="0">All</option></select> entries
+        </div>
+        <div class="tbl-search"><i class="fa-solid fa-magnifying-glass"></i><input type="text" id="sumSearch" placeholder="Search" oninput="renderSummaryTable()"/></div>
+      </div>
+      <div class="table-responsive">
+        <table class="ccs-table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Time In</th>
+              <th>Time Out</th>
+              <th>Duration</th>
+              <th>Lab</th>
+              <th>PC #</th>
+              <th>Purpose</th>
+              <th>Status</th>
+              <th>PC Reservation</th>
+            </tr>
+          </thead>
+          <tbody id="sumBody"></tbody>
+        </table>
+      </div>
+      <div class="tbl-footer mt-3">
+        <span id="sumInfo">Showing 0 entries</span>
+        <div class="d-flex gap-1" id="sumPagination"></div>
+      </div>
+    </div>
+  </div>
+</div><!-- /sitin-summary -->
+
+
+<!--  LAB AVAILABILITY  -->
+<div class="view" id="view-lab-availability">
+  <div class="view-header">
+    <div class="view-title"><i class="fa-solid fa-desktop"></i> Software &amp; Lab Availability</div>
+    <button class="btn-ccs-export" onclick="loadLabAvailability()" style="background:var(--blue,#2563eb);color:#fff;border:none;border-radius:8px;padding:.4rem 1rem;font-size:.8rem;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:.4rem;">
+      <i class="fa-solid fa-arrows-rotate"></i> Refresh
+    </button>
+  </div>
+
+  <!-- Lab cards -->
+  <div class="ccs-card mb-3">
+    <div class="ccs-card-header"><i class="fa-solid fa-flask"></i> Laboratory Status</div>
+    <div class="ccs-card-body p-3">
+      <div class="sw-lab-grid" id="labAvailGrid">
+        <div style="color:#64748b;font-size:.83rem;padding:1rem;">Loading lab status</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Software list -->
+  <div class="ccs-card">
+    <div class="ccs-card-header"><i class="fa-solid fa-laptop-code"></i> Available Software</div>
+    <div class="ccs-card-body p-3">
+      <div class="row g-3" id="softwareGrid">
+        <?php
+        $softwareList = [
+          ['name'=>'Microsoft Office 365','icon'=>'fa-file-word','color'=>'#2563eb','desc'=>'Word, Excel, PowerPoint'],
+          ['name'=>'Visual Studio Code','icon'=>'fa-code','color'=>'#007acc','desc'=>'Code editor'],
+          ['name'=>'NetBeans IDE','icon'=>'fa-java','color'=>'#f39200','desc'=>'Java development'],
+          ['name'=>'XAMPP','icon'=>'fa-server','color'=>'#fb7200','desc'=>'Local PHP server'],
+          ['name'=>'Python 3.x','icon'=>'fa-python','color'=>'#3b82f6','desc'=>'Interpreter + IDLE'],
+          ['name'=>'Android Studio','icon'=>'fa-android','color'=>'#3ddc84','desc'=>'Mobile development'],
+          ['name'=>'MySQL Workbench','icon'=>'fa-database','color'=>'#00758f','desc'=>'Database management'],
+          ['name'=>'Figma (Browser)','icon'=>'fa-figma','color'=>'#f24e1e','desc'=>'UI/UX design'],
+          ['name'=>'Google Chrome','icon'=>'fa-chrome','color'=>'#4285f4','desc'=>'Web browser'],
+          ['name'=>'Cisco Packet Tracer','icon'=>'fa-network-wired','color'=>'#049fd9','desc'=>'Network simulation'],
+          ['name'=>'Adobe Photoshop','icon'=>'fa-image','color'=>'#31a8ff','desc'=>'Photo editing'],
+          ['name'=>'VMware Workstation','icon'=>'fa-laptop','color'=>'#607078','desc'=>'Virtual machines'],
+        ];
+        foreach ($softwareList as $sw): ?>
+        <div class="col-md-4 col-lg-3">
+          <div class="sw-lab-card">
+            <div class="sw-lab-icon open" style="background:<?= $sw['color'] ?>20;color:<?= $sw['color'] ?>;">
+              <i class="fa-brands <?= $sw['icon'] ?>" onerror="this.className='fa-solid fa-circle-check'"></i>
+            </div>
+            <div>
+              <div class="sw-lab-name" style="font-size:.8rem;"><?= htmlspecialchars($sw['name']) ?></div>
+              <div class="sw-lab-avail"><?= htmlspecialchars($sw['desc']) ?></div>
+              <span class="sw-pc-badge ok"><i class="fa-solid fa-circle-check" style="font-size:.55rem;"></i> Installed</span>
+            </div>
+          </div>
+        </div>
+        <?php endforeach; ?>
+      </div>
+    </div>
+  </div>
+</div><!-- /lab-availability -->
+
+
 </div><!-- /page-wrap -->
 
 
 <!-- MODALS -->
 <div class="modal fade ccs-modal" id="modalLogin" tabindex="-1" data-bs-backdrop="static">
   <div class="modal-dialog modal-dialog-centered"><div class="modal-content">
-    <div class="modal-body"><div class="m-icon"><i class="fa-solid fa-check"></i></div><div class="m-title">Successful Login!</div><p class="m-sub">Welcome back, <strong><?= htmlspecialchars($fullname) ?></strong>! 👋</p></div>
+    <div class="modal-body"><div class="m-icon"><i class="fa-solid fa-check"></i></div><div class="m-title">Successful Login!</div><p class="m-sub">Welcome back, <strong><?= htmlspecialchars($fullname) ?></strong>! </p></div>
     <div class="modal-footer"><button class="btn-m-ok" data-bs-dismiss="modal">OK</button></div>
   </div></div>
 </div>
@@ -605,13 +731,13 @@ $sess_pct = min(100, ($sess / 30) * 100);
       <div class="m-title">Leave Feedback</div>
       <p class="m-sub">How was your sit-in experience?</p>
       <div class="star-row" id="starRow" style="justify-content:center;margin:1rem 0;">
-        <span class="star on" data-v="1" onclick="setRating(1)">★</span>
-        <span class="star on" data-v="2" onclick="setRating(2)">★</span>
-        <span class="star on" data-v="3" onclick="setRating(3)">★</span>
-        <span class="star" data-v="4" onclick="setRating(4)">★</span>
-        <span class="star" data-v="5" onclick="setRating(5)">★</span>
+        <span class="star on" data-v="1" onclick="setRating(1)"></span>
+        <span class="star on" data-v="2" onclick="setRating(2)"></span>
+        <span class="star on" data-v="3" onclick="setRating(3)"></span>
+        <span class="star" data-v="4" onclick="setRating(4)"></span>
+        <span class="star" data-v="5" onclick="setRating(5)"></span>
       </div>
-      <textarea id="fbMsg" rows="3" style="width:100%;border-radius:8px;border:1px solid #ddd;padding:.5rem;font-size:.83rem;resize:none;" placeholder="Optional message…"></textarea>
+      <textarea id="fbMsg" rows="3" style="width:100%;border-radius:8px;border:1px solid #ddd;padding:.5rem;font-size:.83rem;resize:none;" placeholder="Optional message"></textarea>
       <input type="hidden" id="fbSitInId"/>
     </div>
     <div class="modal-footer"><button class="btn-m-cancel" data-bs-dismiss="modal">Skip</button><button class="btn-m-ok" onclick="submitFeedback()">Submit</button></div>
@@ -635,18 +761,20 @@ const SESSION_USER = <?= json_encode([
     'points'             => (int)$su['points'],
 ]) ?>;
 
-// ── TABS ────────────────────────────────────────────────────
+// -- TABS --
 function switchTab(tab) {
   document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
   document.querySelectorAll('.nav-link[data-tab]').forEach(a => a.classList.remove('active'));
   document.getElementById('view-' + tab).classList.add('active');
   document.querySelector(`.nav-link[data-tab="${tab}"]`)?.classList.add('active');
-  if (tab === 'history')     { loadHistory(); }
-  if (tab === 'reservation') { loadMyReservations(); }
-  if (tab === 'leaderboard') { loadLeaderboard(); }
+  if (tab === 'history')          { loadHistory(); }
+  if (tab === 'reservation')      { loadMyReservations(); }
+  if (tab === 'leaderboard')      { loadLeaderboard(); }
+  if (tab === 'sitin-summary')    { loadSitinSummary(); }
+  if (tab === 'lab-availability') { loadLabAvailability(); }
 }
 
-// ── TOAST ───────────────────────────────────────────────────
+// -- TOAST --
 function showToast(msg, type = 'success') {
   const colors = { success:'#10b981', danger:'#ef4444', warning:'#f59e0b', info:'#3b82f6' };
   document.getElementById('toastIcon').style.color = colors[type] || colors.success;
@@ -654,7 +782,7 @@ function showToast(msg, type = 'success') {
   bootstrap.Toast.getOrCreateInstance(document.getElementById('liveToast'), { delay: 2800 }).show();
 }
 
-// ── HISTORY ─────────────────────────────────────────────────
+// -- HISTORY --
 let histData = [], histPage = 1;
 async function loadHistory() {
   try {
@@ -663,12 +791,12 @@ async function loadHistory() {
   } catch(e) {}
   // Use embedded PHP data
   histData = <?= json_encode(array_map(fn($h) => [
-    'purpose'    => $h['purpose']    ?? '—',
-    'lab'        => $h['lab']        ?? '—',
-    'pc_number'  => $h['pc_number']  ?? '—',
-    'login'      => !empty($h['created_at'])    ? date('h:i A', strtotime($h['created_at']))    : '—',
-    'logout'     => !empty($h['timed_out_at'])  ? date('h:i A', strtotime($h['timed_out_at']))  : '—',
-    'date'       => !empty($h['created_at'])    ? date('Y-m-d', strtotime($h['created_at']))    : '—',
+    'purpose'    => $h['purpose']    ?? '-',
+    'lab'        => $h['lab']        ?? '-',
+    'pc_number'  => $h['pc_number']  ?? '-',
+    'login'      => !empty($h['created_at'])    ? date('h:i A', strtotime($h['created_at']))    : '-',
+    'logout'     => !empty($h['timed_out_at'])  ? date('h:i A', strtotime($h['timed_out_at']))  : '-',
+    'date'       => !empty($h['created_at'])    ? date('Y-m-d', strtotime($h['created_at']))    : '-',
     'status'     => $h['status']     ?? 'Done',
     'id'         => $h['id']         ?? 0,
   ], $history)) ?>;
@@ -694,10 +822,10 @@ function renderHistory() {
       </tr>`).join('');
   }
   document.getElementById('histInfo').textContent = data.length
-    ? `Showing ${(histPage-1)*pp+1}–${Math.min(histPage*pp,data.length)} of ${data.length}` : 'No entries';
+    ? `Showing ${(histPage-1)*pp+1}${Math.min(histPage*pp,data.length)} of ${data.length}` : 'No entries';
 }
 
-// ── FEEDBACK ────────────────────────────────────────────────
+// -- FEEDBACK --
 let curRating = 3;
 function setRating(v) {
   curRating = v;
@@ -715,10 +843,10 @@ function submitFeedback() {
   fetch('api/feedback_submit.php', { method:'POST', headers:{'Content-Type':'application/json'},
     body: JSON.stringify({ sit_in_id:id, rating:curRating, message:msg }) });
   bootstrap.Modal.getInstance(document.getElementById('modalFeedback')).hide();
-  showToast('Thank you for your feedback! 🌟');
+  showToast('Thank you for your feedback! ');
 }
 
-// ── PC MAP ──────────────────────────────────────────────────
+// -- PC MAP --
 let selectedPc = null;
 let pcMapData  = null;
 
@@ -816,10 +944,10 @@ async function submitReservation() {
   }
 }
 
-// ── MY RESERVATIONS ─────────────────────────────────────────
+// -- MY RESERVATIONS --
 async function loadMyReservations() {
   const el = document.getElementById('myResList');
-  el.innerHTML = '<p style="font-size:.82rem;color:#888;text-align:center;">Loading…</p>';
+  el.innerHTML = '<p style="font-size:.82rem;color:#888;text-align:center;">Loading</p>';
   try {
     const r = await fetch('api/reservation_fetch.php');
     const data = await r.json();
@@ -828,11 +956,11 @@ async function loadMyReservations() {
     el.innerHTML = data.map(r => `
       <div style="background:#f8fafc;border-radius:9px;padding:.6rem .85rem;margin-bottom:.5rem;border:1px solid #e2e8f0;">
         <div style="display:flex;justify-content:space-between;align-items:center;">
-          <span style="font-weight:700;font-size:.82rem;">Lab ${r.lab} — PC ${r.pc_number}</span>
+          <span style="font-weight:700;font-size:.82rem;">Lab ${r.lab} - PC ${r.pc_number}</span>
           <span style="font-size:.7rem;font-weight:700;padding:2px 8px;border-radius:20px;background:rgba(100,116,139,.1);color:${statusColors[r.status]||'#64748b'}">${r.status}</span>
         </div>
         <div style="font-size:.75rem;color:#64748b;margin-top:.2rem;"><i class="fa-regular fa-calendar"></i> ${r.date} ${r.time_in} &nbsp;|&nbsp; ${r.purpose}</div>
-        ${r.status === 'Pending' ? `<button onclick="cancelReservation(${r.id})" style="margin-top:.4rem;background:none;border:none;color:#ef4444;font-size:.72rem;cursor:pointer;font-weight:700;padding:0;">✕ Cancel</button>` : ''}
+        ${r.status === 'Pending' ? `<button onclick="cancelReservation(${r.id})" style="margin-top:.4rem;background:none;border:none;color:#ef4444;font-size:.72rem;cursor:pointer;font-weight:700;padding:0;"> Cancel</button>` : ''}
       </div>`).join('');
   } catch(e) {
     el.innerHTML = '<p style="font-size:.82rem;color:#888;text-align:center;font-style:italic;">No reservations yet.</p>';
@@ -847,14 +975,14 @@ async function cancelReservation(id) {
   } catch(e) { showToast('Could not cancel.', 'danger'); }
 }
 
-// ── LEADERBOARD ─────────────────────────────────────────────
+// -- LEADERBOARD --
 async function loadLeaderboard() {
   const tbody = document.getElementById('lbBody');
-  tbody.innerHTML = '<tr class="no-data-row"><td colspan="5">Loading…</td></tr>';
+  tbody.innerHTML = '<tr class="no-data-row"><td colspan="5">Loading</td></tr>';
   try {
     const r    = await fetch('api/leaderboard.php');
     const data = await r.json();
-    const medals = ['🥇','🥈','🥉'];
+    const medals = ['','',''];
     tbody.innerHTML = data.map((s, i) => `
       <tr class="${i<3?'lb-rank-'+(i+1):''}">
         <td><span class="rank-medal">${medals[i] || '#'+(i+1)}</span></td>
@@ -871,7 +999,7 @@ async function loadLeaderboard() {
   }
 }
 
-// ── PROFILE SAVE ─────────────────────────────────────────────
+// -- PROFILE SAVE --
 function saveProfile() {
   const data = {
     first_name:  document.getElementById('pFn').value.trim(),
@@ -907,7 +1035,7 @@ function previewPhoto(e) {
   document.getElementById('mainAvatar').src  = url;
 }
 
-// ── EXPORT CSV ───────────────────────────────────────────────
+// -- EXPORT CSV --
 function exportCSV() {
   const h = ['Purpose','Lab','PC','Login','Logout','Date','Status'];
   const rows = histData.map(r => [r.purpose,r.lab,r.pc_number,r.login,r.logout,r.date,r.status]);
@@ -918,7 +1046,7 @@ function exportCSV() {
   a.click();
 }
 
-// ── NOTIFS ───────────────────────────────────────────────────
+// -- NOTIFS --
 async function loadNotifications() {
   try {
     const d = await fetch('api/notifications.php').then(r => r.json());
@@ -957,7 +1085,7 @@ async function loadNotifications() {
             <div class="notif-icon ${typeColor[n.type]||'blue'}"><i class="fa-solid ${typeIcon[n.type]||'fa-bell'}"></i></div>
             <div>
               <div class="notif-title">${n.title||'Notification'}${!n.is_read?'<span style="width:6px;height:6px;background:#3b82f6;border-radius:50%;display:inline-block;margin-left:5px;vertical-align:middle;"></span>':''}</div>
-              <div class="notif-time">${(n.message||'').substring(0,80)}${(n.message||'').length>80?'…':''}</div>
+              <div class="notif-time">${(n.message||'').substring(0,80)}${(n.message||'').length>80?'':''}</div>
               <div class="notif-time" style="color:#aaa;">${relTime(n.created_at)}</div>
             </div>
           </div>`).join('')
@@ -996,12 +1124,207 @@ async function clearNotifs() {
   if (badge) badge.style.display = 'none';
 }
 
-// ── LOGOUT ───────────────────────────────────────────────────
+// -- DARK MODE --
+function toggleDarkMode() {
+  const isDark = document.body.classList.toggle('dark-mode');
+  localStorage.setItem('ccs_dark_mode', isDark ? '1' : '0');
+  const icon = document.getElementById('dmIcon');
+  if (icon) { icon.className = isDark ? 'fa-solid fa-sun' : 'fa-solid fa-moon'; }
+}
+function applyDarkMode() {
+  if (localStorage.getItem('ccs_dark_mode') === '1') {
+    document.body.classList.add('dark-mode');
+    const icon = document.getElementById('dmIcon');
+    if (icon) icon.className = 'fa-solid fa-sun';
+  }
+}
+
+// -- SIT-IN SUMMARY --
+let summaryData = [];
+let sumPage = 1;
+
+function calcDuration(t1, t2) {
+  if (!t1 || !t2) return null;
+  const ms = new Date(t2) - new Date(t1);
+  if (ms <= 0) return null;
+  return ms / 60000; // minutes
+}
+function fmtDur(mins) {
+  if (mins === null || mins === undefined) return '-';
+  const h = Math.floor(mins / 60);
+  const m = Math.round(mins % 60);
+  return h > 0 ? `${h}h ${m}m` : `${m}m`;
+}
+
+// PC toggle state (in-memory per session)
+const pcDisabled = {};
+
+async function loadSitinSummary() {
+  try {
+    const r = await fetch('api/reports.php?type=sitin_list');
+    const all = await r.json();
+    // filter by current student
+    summaryData = (Array.isArray(all) ? all : []).filter(s => s.id_number === SESSION_USER.id_number);
+  } catch(e) {
+    // Use embedded history as fallback
+    summaryData = <?= json_encode(array_map(fn($h) => [
+      'id'          => $h['id'] ?? 0,
+      'id_number'   => $h['id_number'] ?? '',
+      'purpose'     => $h['purpose'] ?? '-',
+      'lab'         => $h['lab'] ?? '-',
+      'pc_number'   => $h['pc_number'] ?? null,
+      'created_at'  => $h['created_at'] ?? null,
+      'timed_out_at'=> $h['timed_out_at'] ?? null,
+      'status'      => $h['status'] ?? 'Done',
+    ], $history)) ?>;
+  }
+  computeAndRenderSummary();
+}
+
+function computeAndRenderSummary() {
+  let totalMins = 0, count = 0, longest = 0;
+  summaryData.forEach(s => {
+    const d = calcDuration(s.created_at, s.timed_out_at);
+    if (d !== null) { totalMins += d; count++; if (d > longest) longest = d; }
+  });
+  const avg = count > 0 ? totalMins / count : 0;
+  const totalHrs = (totalMins / 60).toFixed(1);
+
+  document.getElementById('sumTotalHrs').textContent     = totalHrs + 'h';
+  document.getElementById('sumTotalSessions').textContent = summaryData.length;
+  document.getElementById('sumAvgDuration').textContent   = fmtDur(avg);
+  document.getElementById('sumLongest').textContent       = fmtDur(longest);
+
+  sumPage = 1;
+  renderSummaryTable();
+}
+
+function renderSummaryTable() {
+  const q   = (document.getElementById('sumSearch').value || '').toLowerCase();
+  const pp  = parseInt(document.getElementById('sumEntries').value || 10);
+  let data = summaryData.filter(s => (s.purpose + s.lab + s.status).toLowerCase().includes(q));
+  const pages = Math.max(1, pp === 0 ? 1 : Math.ceil(data.length / pp));
+  if (sumPage > pages) sumPage = pages;
+  const slice = pp === 0 ? data : data.slice((sumPage-1)*pp, sumPage*pp);
+
+  const tbody = document.getElementById('sumBody');
+  if (!slice.length) {
+    tbody.innerHTML = `<tr class="no-data-row"><td colspan="9">No sessions found.</td></tr>`; 
+  } else {
+    tbody.innerHTML = slice.map(s => {
+      const dur   = calcDuration(s.created_at, s.timed_out_at);
+      const date  = s.created_at ? new Date(s.created_at).toLocaleDateString('en-PH',{month:'short',day:'numeric',year:'numeric'}) : '-';
+      const tIn   = s.created_at  ? new Date(s.created_at).toLocaleTimeString('en-PH',{hour:'2-digit',minute:'2-digit'}) : '-';
+      const tOut  = s.timed_out_at ? new Date(s.timed_out_at).toLocaleTimeString('en-PH',{hour:'2-digit',minute:'2-digit'}) : '-';
+      const pcNum = s.pc_number || '-';
+      const isDisabled = pcDisabled[`${s.lab}_${s.pc_number}`];
+      const toggleLabel = isDisabled ? 'Disabled' : 'Enabled';
+      const toggleClass = isDisabled ? 'disabled' : 'enabled';
+      const statusColor = s.status === 'Active' ? '#10b981' : '#64748b';
+      const statusBg    = s.status === 'Active' ? 'rgba(16,185,129,.12)' : 'rgba(100,116,139,.12)';
+      return `<tr>
+        <td>${date}</td>
+        <td>${tIn}</td>
+        <td>${tOut}</td>
+        <td>${fmtDur(dur)}</td>
+        <td>${s.lab}</td>
+        <td>${pcNum}</td>
+        <td style="max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${s.purpose}</td>
+        <td><span style="font-size:.72rem;font-weight:700;padding:2px 8px;border-radius:20px;background:${statusBg};color:${statusColor}">${s.status}</span></td>
+        <td>${s.pc_number ? `<button class="pc-toggle-btn ${toggleClass}" onclick="togglePc('${s.lab}',${s.pc_number},this)">${toggleLabel}</button>` : '-'}</td>
+      </tr>`;
+    }).join('');
+  }
+
+  const total = data.length;
+  const from  = pp === 0 ? 1 : (sumPage-1)*pp + 1;
+  const to    = pp === 0 ? total : Math.min(sumPage*pp, total);
+  document.getElementById('sumInfo').textContent = total ? `Showing ${from}${to} of ${total}` : 'No entries';
+
+  // Pagination
+  const pgEl = document.getElementById('sumPagination');
+  if (pp === 0 || pages <= 1) { pgEl.innerHTML = ''; return; }
+  let pg = '';
+  for (let i=1; i<=pages; i++) pg += `<button class="btn-sm btn ${i===sumPage?'btn-primary':'btn-outline-secondary'}" style="font-size:.72rem;padding:2px 8px;" onclick="sumPage=${i};renderSummaryTable()">${i}</button>`;
+  pgEl.innerHTML = pg;
+}
+
+function togglePc(lab, pcNum, btn) {
+  const key = `${lab}_${pcNum}`;
+  pcDisabled[key] = !pcDisabled[key];
+  btn.textContent = pcDisabled[key] ? 'Disabled' : 'Enabled';
+  btn.className = `pc-toggle-btn ${pcDisabled[key] ? 'disabled' : 'enabled'}`;
+  showToast(`PC ${pcNum} in Lab ${lab} ${pcDisabled[key] ? 'disabled' : 'enabled'} for reservation.`, pcDisabled[key] ? 'warning' : 'success');
+}
+
+function exportSummaryCSV() {
+  const h = ['Date','Time In','Time Out','Duration','Lab','PC #','Purpose','Status'];
+  const rows = summaryData.map(s => {
+    const dur  = calcDuration(s.created_at, s.timed_out_at);
+    const date = s.created_at ? new Date(s.created_at).toLocaleDateString() : '';
+    const tIn  = s.created_at ? new Date(s.created_at).toLocaleTimeString() : '';
+    const tOut = s.timed_out_at ? new Date(s.timed_out_at).toLocaleTimeString() : '';
+    return [date, tIn, tOut, fmtDur(dur), s.lab, s.pc_number || '', s.purpose, s.status];
+  });
+  const csv = [h, ...rows].map(r => r.map(c => `"${c}"`).join(',')).join('\n');
+  const a = document.createElement('a');
+  a.href = 'data:text/csv,' + encodeURIComponent(csv);
+  a.download = 'my_sitin_summary.csv';
+  a.click();
+}
+
+// -- LAB AVAILABILITY --
+async function loadLabAvailability() {
+  const grid = document.getElementById('labAvailGrid');
+  if (!grid) return;
+  grid.innerHTML = '<div style="color:#64748b;font-size:.83rem;padding:1rem;"><i class="fa-solid fa-spinner fa-spin"></i> Loading</div>';
+
+  const labs = ['524','526','528','530'];
+  const today = new Date().toISOString().slice(0,10);
+  const results = await Promise.all(labs.map(async lab => {
+    try {
+      const d = await fetch(`api/lab_pc_status.php?lab=${lab}&date=${today}`).then(r => r.json());
+      return { lab, ...d };
+    } catch(e) {
+      return { lab, available_count: '?', occupied_count: '?', reserved_count: '?', total_pcs: 40 };
+    }
+  }));
+
+  grid.innerHTML = results.map(r => {
+    const avail = typeof r.available_count === 'number' ? r.available_count : 0;
+    const total = r.total_pcs || 40;
+    const pct   = Math.round((avail / total) * 100);
+    const cls   = avail === 0 ? 'full' : avail < 5 ? 'low' : 'ok';
+    const icCls = avail === 0 ? 'busy' : 'open';
+    return `<div class="sw-lab-card">
+      <div class="sw-lab-icon ${icCls}">
+        <i class="fa-solid fa-desktop"></i>
+      </div>
+      <div style="flex:1;min-width:0;">
+        <div class="sw-lab-name">Laboratory ${r.lab}</div>
+        <div class="sw-lab-avail">${r.available_count} / ${total} PCs available</div>
+        <div style="margin-top:.35rem;height:5px;background:#e2e8f0;border-radius:3px;">
+          <div style="height:100%;width:${pct}%;border-radius:3px;background:${cls==='ok'?'#10b981':cls==='low'?'#f59e0b':'#ef4444'};transition:width .4s;"></div>
+        </div>
+        <div style="display:flex;gap:.35rem;margin-top:.35rem;flex-wrap:wrap;">
+          <span class="sw-pc-badge ${cls}">${avail} free</span>
+          ${r.occupied_count ? `<span class="sw-pc-badge" style="background:rgba(239,68,68,.1);color:#dc2626;">${r.occupied_count} in-use</span>` : ''}
+          ${r.reserved_count ? `<span class="sw-pc-badge" style="background:rgba(245,158,11,.1);color:#d97706;">${r.reserved_count} reserved</span>` : ''}
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// -- LOGOUT --
 function confirmLogout() { new bootstrap.Modal(document.getElementById('modalLogout')).show(); }
 function doLogout() { window.location.href = 'logout.php'; }
 
-// ── INIT ─────────────────────────────────────────────────────
+// -- INIT --
 document.addEventListener('DOMContentLoaded', () => {
+  // Apply dark mode preference
+  applyDarkMode();
+
   // Set today's date as default
   document.getElementById('rDate').valueAsDate = new Date();
 
