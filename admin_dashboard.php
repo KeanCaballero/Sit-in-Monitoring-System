@@ -391,10 +391,58 @@ $admin = $_SESSION['user'];
   <button class="dm-admin-btn" onclick="toggleAdminDarkMode()" id="adminDmBtn" title="Toggle Dark/Light Mode">
     <i class="fa-solid fa-sun" id="adminDmIcon"></i>
   </button>
-  <button class="btn-logout" id="logoutBtn" onclick="confirmLogout()">
+  <button class="btn-logout" id="logoutBtn">
     <i class="fa-solid fa-right-from-bracket"></i> Log out
   </button>
 </nav>
+
+<!-- LOGOUT CONFIRMATION MODAL -->
+<div id="modalLogoutAdmin" style="
+  display:none; position:fixed; inset:0; z-index:9999;
+  background:rgba(6,14,31,0.82); backdrop-filter:blur(6px);
+  align-items:center; justify-content:center;
+">
+  <div style="
+    background:var(--surface); border:1px solid var(--border2);
+    border-radius:20px; padding:2rem 2.2rem; width:100%; max-width:360px;
+    box-shadow:0 24px 64px rgba(0,0,0,.7); text-align:center;
+    animation:fadeUp .2s ease;
+  ">
+    <div style="
+      width:58px; height:58px; border-radius:50%;
+      background:rgba(239,68,68,.12); border:2px solid rgba(239,68,68,.3);
+      display:flex; align-items:center; justify-content:center;
+      margin:0 auto 1rem; font-size:1.4rem; color:#ef4444;
+    ">
+      <i class="fa-solid fa-right-from-bracket"></i>
+    </div>
+    <div style="font-size:1.1rem;font-weight:800;color:var(--text1);margin-bottom:.4rem;">Log Out?</div>
+    <div style="font-size:.83rem;color:var(--text2);margin-bottom:1.6rem;line-height:1.5;">
+      Are you sure you want to end your admin session?
+    </div>
+    <div style="display:flex;gap:.75rem;justify-content:center;">
+      <button onclick="closeLogoutModal()" style="
+        flex:1; padding:.6rem 1rem; border-radius:10px;
+        background:var(--surface3); border:1px solid var(--border);
+        color:var(--text2); font-size:.85rem; font-weight:600;
+        cursor:pointer; transition:all .15s; font-family:inherit;
+      " onmouseover="this.style.borderColor='var(--gold)';this.style.color='var(--text1)'"
+         onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text2)'">
+        <i class="fa-solid fa-xmark"></i> Cancel
+      </button>
+      <button onclick="doLogoutAdmin()" style="
+        flex:1; padding:.6rem 1rem; border-radius:10px;
+        background:linear-gradient(135deg,#dc2626,#ef4444);
+        border:none; color:#fff; font-size:.85rem; font-weight:700;
+        cursor:pointer; transition:all .15s; font-family:inherit;
+        box-shadow:0 4px 16px rgba(239,68,68,.35);
+      " onmouseover="this.style.filter='brightness(1.1)'"
+         onmouseout="this.style.filter='brightness(1)'">
+        <i class="fa-solid fa-right-from-bracket"></i> Yes, Log Out
+      </button>
+    </div>
+  </div>
+</div>
 
 <div class="admin-wrap">
 
@@ -1753,8 +1801,17 @@ function filterFeedback() {
     return;
   }
 
-  const stars = n => ''.repeat(Math.min(5,Math.max(0,n||0)))+''.repeat(5-Math.min(5,Math.max(0,n||0)));
-  const starColor = n => n>=4?'#10b981':n>=3?'#f59e0b':'#ef4444';
+  const stars = n => {
+    const count = Math.min(5, Math.max(0, n || 0));
+    const color = count >= 4 ? '#f59e0b' : count >= 3 ? '#fbbf24' : count >= 2 ? '#fb923c' : '#ef4444';
+    let html = `<div style="display:flex;align-items:center;gap:3px;">`;
+    for (let i = 1; i <= 5; i++) {
+      html += `<i class="fa-${i<=count?'solid':'regular'} fa-star" style="font-size:.75rem;color:${i<=count?color:'#374151'};"></i>`;
+    }
+    html += `<span style="margin-left:5px;font-size:.7rem;font-weight:800;background:rgba(245,158,11,.12);color:${color};padding:1px 6px;border-radius:10px;">${count}/5</span></div>`;
+    return html;
+  };
+  const starColor = n => n>=4?'#f59e0b':n>=3?'#fbbf24':'#ef4444';
   tbody.innerHTML = data.map((f,i) => `
     <tr>
       <td style="color:var(--text3);">${i+1}</td>
@@ -1765,7 +1822,7 @@ function filterFeedback() {
       <td style="font-size:.72rem;color:var(--text2);">${f.course||''}</td>
       <td><span style="background:rgba(201,168,76,.12);color:var(--gold2);padding:2px 7px;border-radius:5px;font-size:.72rem;font-weight:700;">${f.lab||''}</span></td>
       <td style="font-size:.78rem;">${f.purpose||''}</td>
-      <td style="color:${starColor(f.rating)};font-size:.88rem;letter-spacing:1px;" title="${f.rating}/5 stars">${stars(f.rating)}</td>
+      <td title="${f.rating}/5 stars">${stars(f.rating)}</td>
       <td style="font-size:.78rem;max-width:260px;">${f.message ? f.message.substring(0,120)+(f.message.length>120?'':'') : '<em style="color:var(--text3)">No comment</em>'}</td>
       <td style="font-size:.72rem;color:var(--text3);">${f.created_at ? new Date(f.created_at).toLocaleDateString('en',{month:'short',day:'numeric',year:'numeric'}) : ''}</td>
     </tr>`).join('');
@@ -2017,12 +2074,12 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  // Setup logout button
+  // Setup logout button — single click handler only
   const logoutBtn = document.getElementById('logoutBtn');
   if (logoutBtn) {
     logoutBtn.addEventListener('click', (e) => {
       e.preventDefault();
-      confirmLogout();
+      openLogoutModal();
     });
   }
 
@@ -2047,11 +2104,23 @@ document.addEventListener('DOMContentLoaded', () => {
   }, 30000);
 });
 
-function confirmLogout() {
-  if (confirm('Are you sure you want to log out?')) {
-    window.location.href = 'logout.php';
-  }
+function openLogoutModal() {
+  const m = document.getElementById('modalLogoutAdmin');
+  if (m) { m.style.display = 'flex'; }
 }
+function closeLogoutModal() {
+  const m = document.getElementById('modalLogoutAdmin');
+  if (m) { m.style.display = 'none'; }
+}
+function doLogoutAdmin() {
+  window.location.href = 'logout.php';
+}
+// Close modal when clicking backdrop
+document.getElementById('modalLogoutAdmin')?.addEventListener('click', function(e) {
+  if (e.target === this) closeLogoutModal();
+});
+// Keep old name as alias so nothing else breaks
+function confirmLogout() { openLogoutModal(); }
 
 // -- ADMIN DARK / LIGHT MODE --
 function toggleAdminDarkMode() {

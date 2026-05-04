@@ -162,6 +162,17 @@ $sess_pct = min(100, ($sess / 30) * 100);
     .star-row .star.on { color: var(--gold); }
 
     /* Leaderboard */
+    /* PC Toggle Button inside PC # column */
+    .pc-toggle-btn {
+      font-size: .68rem; font-weight: 700; border: none; border-radius: 12px;
+      padding: 2px 9px; cursor: pointer; transition: all .15s;
+      display: inline-flex; align-items: center; gap: 3px;
+      white-space: nowrap;
+    }
+    .pc-toggle-btn.enabled  { background: rgba(16,185,129,.15); color: #065f46; }
+    .pc-toggle-btn.enabled:hover  { background: rgba(16,185,129,.3); }
+    .pc-toggle-btn.disabled { background: rgba(239,68,68,.15);  color: #991b1b; }
+    .pc-toggle-btn.disabled:hover { background: rgba(239,68,68,.3); }
   </style>
 </head>
 <body>
@@ -621,10 +632,9 @@ $sess_pct = min(100, ($sess / 30) * 100);
               <th>Time Out</th>
               <th>Duration</th>
               <th>Lab</th>
-              <th>PC #</th>
+              <th>PC # / Reservation</th>
               <th>Purpose</th>
               <th>Status</th>
-              <th>PC Reservation</th>
             </tr>
           </thead>
           <tbody id="sumBody"></tbody>
@@ -726,17 +736,21 @@ $sess_pct = min(100, ($sess / 30) * 100);
 <!-- Feedback Modal -->
 <div class="modal fade ccs-modal" id="modalFeedback" tabindex="-1">
   <div class="modal-dialog modal-dialog-centered"><div class="modal-content">
-    <div class="modal-body">
+    <div class="modal-body" style="padding:1.8rem 1.5rem 1rem;">
       <div class="m-icon" style="background:rgba(245,158,11,.1)"><i class="fa-solid fa-star" style="color:#f59e0b"></i></div>
       <div class="m-title">Leave Feedback</div>
       <p class="m-sub">How was your sit-in experience?</p>
-      <div class="star-row" id="starRow" style="justify-content:center;margin:1rem 0;">
-        <span class="star on" data-v="1" onclick="setRating(1)"></span>
-        <span class="star on" data-v="2" onclick="setRating(2)"></span>
-        <span class="star on" data-v="3" onclick="setRating(3)"></span>
-        <span class="star" data-v="4" onclick="setRating(4)"></span>
-        <span class="star" data-v="5" onclick="setRating(5)"></span>
+
+      <!-- Star Rating -->
+      <div id="starRow" style="display:flex;justify-content:center;gap:.4rem;margin:1rem 0 .4rem;">
+        <i class="fa-solid fa-star fb-star" data-v="1" onclick="setRating(1)" style="font-size:2rem;cursor:pointer;transition:transform .12s,color .1s;color:#d1d5db;"></i>
+        <i class="fa-solid fa-star fb-star" data-v="2" onclick="setRating(2)" style="font-size:2rem;cursor:pointer;transition:transform .12s,color .1s;color:#d1d5db;"></i>
+        <i class="fa-solid fa-star fb-star" data-v="3" onclick="setRating(3)" style="font-size:2rem;cursor:pointer;transition:transform .12s,color .1s;color:#d1d5db;"></i>
+        <i class="fa-solid fa-star fb-star" data-v="4" onclick="setRating(4)" style="font-size:2rem;cursor:pointer;transition:transform .12s,color .1s;color:#d1d5db;"></i>
+        <i class="fa-solid fa-star fb-star" data-v="5" onclick="setRating(5)" style="font-size:2rem;cursor:pointer;transition:transform .12s,color .1s;color:#d1d5db;"></i>
       </div>
+      <div id="fbRatingLabel" style="text-align:center;font-size:.78rem;font-weight:700;margin-bottom:.85rem;color:#f59e0b;letter-spacing:.3px;">⭐ Good (3/5)</div>
+
       <textarea id="fbMsg" rows="3" style="width:100%;border-radius:8px;border:1px solid #ddd;padding:.5rem;font-size:.83rem;resize:none;" placeholder="Optional message"></textarea>
       <input type="hidden" id="fbSitInId"/>
     </div>
@@ -827,10 +841,29 @@ function renderHistory() {
 
 // -- FEEDBACK --
 let curRating = 3;
+const ratingLabels = {1:'😞 Poor (1/5)', 2:'😐 Fair (2/5)', 3:'⭐ Good (3/5)', 4:'😊 Great (4/5)', 5:'🌟 Excellent (5/5)'};
 function setRating(v) {
   curRating = v;
-  document.querySelectorAll('#starRow .star').forEach(s => s.classList.toggle('on', +s.dataset.v <= v));
+  document.querySelectorAll('#starRow .fb-star').forEach(s => {
+    const sv = +s.dataset.v;
+    s.style.color = sv <= v ? '#f59e0b' : '#d1d5db';
+    s.style.transform = sv <= v ? 'scale(1.15)' : 'scale(1)';
+  });
+  const lbl = document.getElementById('fbRatingLabel');
+  if (lbl) lbl.textContent = ratingLabels[v] || '';
 }
+// hover preview
+document.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('#starRow .fb-star').forEach(s => {
+    s.addEventListener('mouseover', () => {
+      const hv = +s.dataset.v;
+      document.querySelectorAll('#starRow .fb-star').forEach(st => {
+        st.style.color = +st.dataset.v <= hv ? '#fbbf24' : '#d1d5db';
+      });
+    });
+    s.addEventListener('mouseout', () => setRating(curRating));
+  });
+});
 function openFeedback(id) {
   document.getElementById('fbSitInId').value = id;
   document.getElementById('fbMsg').value = '';
@@ -1157,7 +1190,10 @@ function fmtDur(mins) {
 }
 
 // PC toggle state (in-memory per session)
-const pcDisabled = {};
+// Load persisted PC disabled state from localStorage
+const pcDisabled = (() => {
+  try { return JSON.parse(localStorage.getItem('pcDisabled') || '{}'); } catch(e) { return {}; }
+})();
 
 async function loadSitinSummary() {
   try {
@@ -1209,7 +1245,7 @@ function renderSummaryTable() {
 
   const tbody = document.getElementById('sumBody');
   if (!slice.length) {
-    tbody.innerHTML = `<tr class="no-data-row"><td colspan="9">No sessions found.</td></tr>`; 
+    tbody.innerHTML = `<tr class="no-data-row"><td colspan="8">No sessions found.</td></tr>`; 
   } else {
     tbody.innerHTML = slice.map(s => {
       const dur   = calcDuration(s.created_at, s.timed_out_at);
@@ -1222,16 +1258,18 @@ function renderSummaryTable() {
       const toggleClass = isDisabled ? 'disabled' : 'enabled';
       const statusColor = s.status === 'Active' ? '#10b981' : '#64748b';
       const statusBg    = s.status === 'Active' ? 'rgba(16,185,129,.12)' : 'rgba(100,116,139,.12)';
+      const pcCell = s.pc_number
+        ? `<div style="display:flex;flex-direction:column;align-items:center;gap:4px;"><span style="font-weight:700;font-size:.9rem;">${s.pc_number}</span><button class="pc-toggle-btn ${toggleClass}" onclick="togglePc('${s.lab}',${s.pc_number},this)"><i class="fa-solid fa-${isDisabled ? 'ban' : 'circle-check'}" style="font-size:.6rem;"></i> ${toggleLabel}</button></div>`
+        : '-';
       return `<tr>
         <td>${date}</td>
         <td>${tIn}</td>
         <td>${tOut}</td>
         <td>${fmtDur(dur)}</td>
         <td>${s.lab}</td>
-        <td>${pcNum}</td>
+        <td style="text-align:center;">${pcCell}</td>
         <td style="max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${s.purpose}</td>
         <td><span style="font-size:.72rem;font-weight:700;padding:2px 8px;border-radius:20px;background:${statusBg};color:${statusColor}">${s.status}</span></td>
-        <td>${s.pc_number ? `<button class="pc-toggle-btn ${toggleClass}" onclick="togglePc('${s.lab}',${s.pc_number},this)">${toggleLabel}</button>` : '-'}</td>
       </tr>`;
     }).join('');
   }
@@ -1252,9 +1290,13 @@ function renderSummaryTable() {
 function togglePc(lab, pcNum, btn) {
   const key = `${lab}_${pcNum}`;
   pcDisabled[key] = !pcDisabled[key];
-  btn.textContent = pcDisabled[key] ? 'Disabled' : 'Enabled';
-  btn.className = `pc-toggle-btn ${pcDisabled[key] ? 'disabled' : 'enabled'}`;
-  showToast(`PC ${pcNum} in Lab ${lab} ${pcDisabled[key] ? 'disabled' : 'enabled'} for reservation.`, pcDisabled[key] ? 'warning' : 'success');
+  // Persist to localStorage
+  try { localStorage.setItem('pcDisabled', JSON.stringify(pcDisabled)); } catch(e) {}
+  // Update button text and icon
+  const isNowDisabled = pcDisabled[key];
+  btn.innerHTML = `<i class="fa-solid fa-${isNowDisabled ? 'ban' : 'circle-check'}" style="font-size:.6rem;"></i> ${isNowDisabled ? 'Disabled' : 'Enabled'}`;
+  btn.className = `pc-toggle-btn ${isNowDisabled ? 'disabled' : 'enabled'}`;
+  showToast(`PC ${pcNum} in Lab ${lab} is now ${isNowDisabled ? 'DISABLED' : 'ENABLED'} for reservation.`, isNowDisabled ? 'warning' : 'success');
 }
 
 function exportSummaryCSV() {
