@@ -33,7 +33,8 @@ try {
     $tc = $conn->query("SHOW TABLES LIKE 'sit_ins'");
     if ($tc && $tc->num_rows > 0) {
         $id_num = $conn->real_escape_string($user['id_number'] ?? '');
-        $hr = $conn->query("SELECT * FROM `sit_ins` WHERE id_number='$id_num' ORDER BY id DESC LIMIT 10");
+        // Fetch ALL sit-ins (no LIMIT) so My Summary stats are accurate
+        $hr = $conn->query("SELECT * FROM `sit_ins` WHERE id_number='$id_num' ORDER BY id DESC");
         if ($hr) {
             $history = $hr->fetch_all(MYSQLI_ASSOC);
             foreach ($history as $h) {
@@ -670,38 +671,12 @@ $sess_pct = min(100, ($sess / 30) * 100);
 
   <!-- Software list -->
   <div class="ccs-card">
-    <div class="ccs-card-header"><i class="fa-solid fa-laptop-code"></i> Available Software</div>
+    <div class="ccs-card-header"><i class="fa-solid fa-laptop-code"></i> Available Software
+      <span id="swLoadingSpinner" style="margin-left:.5rem;font-size:.72rem;color:var(--text3);"><i class="fa-solid fa-spinner fa-spin"></i> Loading...</span>
+    </div>
     <div class="ccs-card-body p-3">
       <div class="row g-3" id="softwareGrid">
-        <?php
-        $softwareList = [
-          ['name'=>'Microsoft Office 365','icon'=>'fa-file-word','color'=>'#2563eb','desc'=>'Word, Excel, PowerPoint'],
-          ['name'=>'Visual Studio Code','icon'=>'fa-code','color'=>'#007acc','desc'=>'Code editor'],
-          ['name'=>'NetBeans IDE','icon'=>'fa-java','color'=>'#f39200','desc'=>'Java development'],
-          ['name'=>'XAMPP','icon'=>'fa-server','color'=>'#fb7200','desc'=>'Local PHP server'],
-          ['name'=>'Python 3.x','icon'=>'fa-python','color'=>'#3b82f6','desc'=>'Interpreter + IDLE'],
-          ['name'=>'Android Studio','icon'=>'fa-android','color'=>'#3ddc84','desc'=>'Mobile development'],
-          ['name'=>'MySQL Workbench','icon'=>'fa-database','color'=>'#00758f','desc'=>'Database management'],
-          ['name'=>'Figma (Browser)','icon'=>'fa-figma','color'=>'#f24e1e','desc'=>'UI/UX design'],
-          ['name'=>'Google Chrome','icon'=>'fa-chrome','color'=>'#4285f4','desc'=>'Web browser'],
-          ['name'=>'Cisco Packet Tracer','icon'=>'fa-network-wired','color'=>'#049fd9','desc'=>'Network simulation'],
-          ['name'=>'Adobe Photoshop','icon'=>'fa-image','color'=>'#31a8ff','desc'=>'Photo editing'],
-          ['name'=>'VMware Workstation','icon'=>'fa-laptop','color'=>'#607078','desc'=>'Virtual machines'],
-        ];
-        foreach ($softwareList as $sw): ?>
-        <div class="col-md-4 col-lg-3">
-          <div class="sw-lab-card">
-            <div class="sw-lab-icon open" style="background:<?= $sw['color'] ?>20;color:<?= $sw['color'] ?>;">
-              <i class="fa-brands <?= $sw['icon'] ?>" onerror="this.className='fa-solid fa-circle-check'"></i>
-            </div>
-            <div>
-              <div class="sw-lab-name" style="font-size:.8rem;"><?= htmlspecialchars($sw['name']) ?></div>
-              <div class="sw-lab-avail"><?= htmlspecialchars($sw['desc']) ?></div>
-              <span class="sw-pc-badge ok"><i class="fa-solid fa-circle-check" style="font-size:.55rem;"></i> Installed</span>
-            </div>
-          </div>
-        </div>
-        <?php endforeach; ?>
+        <!-- loaded dynamically from api/software.php -->
       </div>
     </div>
   </div>
@@ -1196,24 +1171,18 @@ const pcDisabled = (() => {
 })();
 
 async function loadSitinSummary() {
-  try {
-    const r = await fetch('api/reports.php?type=sitin_list');
-    const all = await r.json();
-    // filter by current student
-    summaryData = (Array.isArray(all) ? all : []).filter(s => s.id_number === SESSION_USER.id_number);
-  } catch(e) {
-    // Use embedded history as fallback
-    summaryData = <?= json_encode(array_map(fn($h) => [
-      'id'          => $h['id'] ?? 0,
-      'id_number'   => $h['id_number'] ?? '',
-      'purpose'     => $h['purpose'] ?? '-',
-      'lab'         => $h['lab'] ?? '-',
-      'pc_number'   => $h['pc_number'] ?? null,
-      'created_at'  => $h['created_at'] ?? null,
-      'timed_out_at'=> $h['timed_out_at'] ?? null,
-      'status'      => $h['status'] ?? 'Done',
-    ], $history)) ?>;
-  }
+  // Always use PHP-injected data — api/reports.php is admin-only
+  // so fetching it from student dashboard returns empty array
+  summaryData = <?= json_encode(array_map(fn($h) => [
+    'id'           => $h['id'] ?? 0,
+    'id_number'    => $h['id_number'] ?? '',
+    'purpose'      => $h['purpose'] ?? '-',
+    'lab'          => $h['lab'] ?? '-',
+    'pc_number'    => $h['pc_number'] ?? null,
+    'created_at'   => $h['created_at'] ?? null,
+    'timed_out_at' => $h['timed_out_at'] ?? null,
+    'status'       => $h['status'] ?? 'Done',
+  ], $history)) ?>;
   computeAndRenderSummary();
 }
 
@@ -1356,6 +1325,79 @@ async function loadLabAvailability() {
       </div>
     </div>`;
   }).join('');
+
+  // Also reload software list every time lab tab opens
+  loadSoftwareGrid();
+}
+
+// -- SOFTWARE GRID (fetched from DB via api/software.php) --
+// Hardcoded default software — always shown for a lively look
+const DEFAULT_SOFTWARE = [
+  { name:'MS Office 365',       category:'Office / Productivity', description:'Word, Excel, PowerPoint',  icon:'fa-file-word',     color:'#2563eb', labs:'All' },
+  { name:'Visual Studio Code',  category:'Programming IDE',       description:'Code editor & debugger',   icon:'fa-code',          color:'#0078d4', labs:'All' },
+  { name:'XAMPP',               category:'Utility / Tool',        description:'Apache + MySQL + PHP',     icon:'fa-server',        color:'#fb7a24', labs:'All' },
+  { name:'MySQL Workbench',     category:'Database Tool',         description:'Database management tool', icon:'fa-database',      color:'#00758f', labs:'524,530' },
+  { name:'NetBeans IDE',        category:'Programming IDE',       description:'Java development',         icon:'fa-mug-hot',       color:'#1b6ac6', labs:'524,526' },
+  { name:'IntelliJ IDEA',       category:'Programming IDE',       description:'JetBrains Java IDE',       icon:'fa-bolt',          color:'#f0006d', labs:'526,528' },
+  { name:'Android Studio',      category:'Programming IDE',       description:'Android app development',  icon:'fa-mobile-screen', color:'#3ddc84', labs:'526,528' },
+  { name:'Python 3.x',          category:'Programming IDE',       description:'Python interpreter & pip', icon:'fa-python',        color:'#3776ab', labs:'All' },
+  { name:'Git',                 category:'Utility / Tool',        description:'Version control',          icon:'fa-code-branch',   color:'#f05032', labs:'All' },
+  { name:'Adobe Photoshop',     category:'Design Software',       description:'Image editing',            icon:'fa-image',         color:'#31a8ff', labs:'528,530' },
+  { name:'Figma (Browser)',     category:'Design Software',       description:'UI/UX design tool',        icon:'fa-pen-nib',       color:'#a259ff', labs:'All' },
+  { name:'Cisco Packet Tracer', category:'Utility / Tool',        description:'Network simulation',       icon:'fa-network-wired', color:'#1ba0d7', labs:'528' },
+];
+
+async function loadSoftwareGrid() {
+  const grid    = document.getElementById('softwareGrid');
+  const spinner = document.getElementById('swLoadingSpinner');
+  if (!grid) return;
+
+  const catColors = {
+    'Programming IDE':    '#3b82f6',
+    'Database Tool':      '#10b981',
+    'Design Software':    '#f59e0b',
+    'Utility / Tool':     '#8b5cf6',
+    'Reference / Document':'#64748b',
+    'Lab Manual':         '#f97316',
+    'Office / Productivity':'#2563eb',
+    'Other':              '#94a3b8'
+  };
+
+  // Helper to render a single software card
+  function renderCard(sw) {
+    const color = sw.color || catColors[sw.category] || '#64748b';
+    const icon  = sw.icon  || 'fa-box-archive';
+    const labs  = sw.labs === 'All' ? 'All Labs' : 'Lab ' + sw.labs.split(',').join(', ');
+    return `<div class="col-md-4 col-lg-3">
+      <div class="sw-lab-card">
+        <div class="sw-lab-icon open" style="background:${color}20;color:${color};">
+          <i class="fa-solid ${icon}"></i>
+        </div>
+        <div>
+          <div class="sw-lab-name" style="font-size:.8rem;">${sw.name}</div>
+          <div class="sw-lab-avail">${sw.description || sw.category}</div>
+          <div style="display:flex;gap:.35rem;flex-wrap:wrap;margin-top:.3rem;">
+            <span class="sw-pc-badge ok"><i class="fa-solid fa-circle-check" style="font-size:.55rem;"></i> Installed</span>
+            <span class="sw-pc-badge" style="background:rgba(99,102,241,.1);color:#6366f1;font-size:.62rem;">${labs}</span>
+          </div>
+        </div>
+      </div>
+    </div>`;
+  }
+
+  // 1) Render hardcoded defaults immediately
+  if (spinner) spinner.style.display = 'none';
+  grid.innerHTML = DEFAULT_SOFTWARE.map(renderCard).join('');
+
+  // 2) Append any custom software from the API (admin-added)
+  try {
+    const data = await fetch('api/software.php').then(r => r.json());
+    if (Array.isArray(data) && data.length > 0) {
+      grid.innerHTML += data.map(renderCard).join('');
+    }
+  } catch(e) {
+    // API failed — defaults are already showing, no error needed
+  }
 }
 
 // -- LOGOUT --

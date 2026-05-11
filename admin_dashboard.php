@@ -2139,7 +2139,7 @@ function applyAdminDarkMode() {
 
 // -- SOFTWARE IMPORT --
 let swFiles = [];
-let swRecords = JSON.parse(localStorage.getItem('admin_sw_records') || '[]');
+let swRecords = []; // loaded from DB via api/software.php
 
 function onDragOver(e) { e.preventDefault(); document.getElementById('uploadDropZone').classList.add('drag-over'); }
 function onDragLeave(e) { document.getElementById('uploadDropZone').classList.remove('drag-over'); }
@@ -2173,92 +2173,135 @@ function renderUploadList() {
 }
 function removeFile(i) { swFiles.splice(i, 1); renderUploadList(); }
 
-function submitSoftware() {
+async function submitSoftware() {
   const name = document.getElementById('swName').value.trim();
   const cat  = document.getElementById('swCategory').value;
   const desc = document.getElementById('swDesc').value.trim();
-  const labs = ['524','526','528','530'].filter(l => document.getElementById('swLab'+l)?.checked);
+  const labsArr = ['524','526','528','530'].filter(l => document.getElementById('swLab'+l)?.checked);
+  const labs = labsArr.length ? labsArr.join(',') : 'All';
 
   if (!name) { toast('Please enter a software name.', 'warning'); return; }
   if (!cat)  { toast('Please select a category.', 'warning'); return; }
 
-  // Simulate upload progress
-  swFiles.forEach((f, i) => {
-    let pct = 0;
-    const bar = document.getElementById('upBar'+i);
-    const timer = setInterval(() => {
-      pct = Math.min(100, pct + Math.random()*25);
-      if (bar) bar.style.width = pct + '%';
-      if (pct >= 100) clearInterval(timer);
-    }, 120);
-  });
-
-  const record = {
-    id: Date.now(),
-    name, category: cat, description: desc,
-    labs: labs.length ? labs : ['All'],
-    files: swFiles.map(f => ({ name: f.name, size: f.size })),
-    uploaded_at: new Date().toISOString(),
-    uploaded_by: 'admin'
+  // Pick icon + color by category
+  const catMeta = {
+    'Programming IDE':     { icon:'fa-code',          color:'#3b82f6' },
+    'Database Tool':       { icon:'fa-database',       color:'#10b981' },
+    'Design Software':     { icon:'fa-pen-nib',        color:'#f59e0b' },
+    'Utility / Tool':      { icon:'fa-screwdriver-wrench', color:'#8b5cf6' },
+    'Reference / Document':{ icon:'fa-book',           color:'#64748b' },
+    'Lab Manual':          { icon:'fa-file-lines',     color:'#f97316' },
+    'Office / Productivity':{ icon:'fa-file-word',     color:'#2563eb' },
+    'Other':               { icon:'fa-box-archive',    color:'#94a3b8' },
   };
-  swRecords.unshift(record);
-  localStorage.setItem('admin_sw_records', JSON.stringify(swRecords));
+  const meta  = catMeta[cat] || catMeta['Other'];
 
-  setTimeout(() => {
-    toast(`"${name}" registered successfully!`, 'success');
-    // Reset
-    swFiles = [];
-    renderUploadList();
-    document.getElementById('swName').value = '';
-    document.getElementById('swCategory').value = '';
-    document.getElementById('swDesc').value = '';
-    ['524','526','528','530'].forEach(l => { const el = document.getElementById('swLab'+l); if(el) el.checked = false; });
-    renderSoftwareList();
-  }, 800);
+  try {
+    const res = await fetch('api/software.php', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'add', name, category: cat, description: desc,
+        icon: meta.icon, color: meta.color, labs
+      })
+    });
+    const json = await res.json();
+    if (json.success) {
+      toast(`"${name}" registered successfully!`, 'success');
+      document.getElementById('swName').value = '';
+      document.getElementById('swCategory').value = '';
+      document.getElementById('swDesc').value = '';
+      ['524','526','528','530'].forEach(l => { const el = document.getElementById('swLab'+l); if(el) el.checked = false; });
+      renderSoftwareList();
+    } else {
+      toast(json.message || 'Failed to save software.', 'danger');
+    }
+  } catch(e) {
+    toast('Server error. Could not save software.', 'danger');
+  }
 }
 
-function renderSoftwareList() {
+// Hardcoded default software (always shown — admin can't delete these)
+const ADMIN_DEFAULT_SOFTWARE = [
+  { id:'d1',  name:'MS Office 365',       category:'Office / Productivity', description:'Word, Excel, PowerPoint',  icon:'fa-file-word',     color:'#2563eb', labs:'All',     isDefault:true },
+  { id:'d2',  name:'Visual Studio Code',  category:'Programming IDE',       description:'Code editor & debugger',   icon:'fa-code',          color:'#0078d4', labs:'All',     isDefault:true },
+  { id:'d3',  name:'XAMPP',               category:'Utility / Tool',        description:'Apache + MySQL + PHP',     icon:'fa-server',        color:'#fb7a24', labs:'All',     isDefault:true },
+  { id:'d4',  name:'MySQL Workbench',     category:'Database Tool',         description:'Database management tool', icon:'fa-database',      color:'#00758f', labs:'524,530', isDefault:true },
+  { id:'d5',  name:'NetBeans IDE',        category:'Programming IDE',       description:'Java development',         icon:'fa-mug-hot',       color:'#1b6ac6', labs:'524,526', isDefault:true },
+  { id:'d6',  name:'IntelliJ IDEA',       category:'Programming IDE',       description:'JetBrains Java IDE',       icon:'fa-bolt',          color:'#f0006d', labs:'526,528', isDefault:true },
+  { id:'d7',  name:'Android Studio',      category:'Programming IDE',       description:'Android app development',  icon:'fa-mobile-screen', color:'#3ddc84', labs:'526,528', isDefault:true },
+  { id:'d8',  name:'Python 3.x',          category:'Programming IDE',       description:'Python interpreter & pip', icon:'fa-python',        color:'#3776ab', labs:'All',     isDefault:true },
+  { id:'d9',  name:'Git',                 category:'Utility / Tool',        description:'Version control',          icon:'fa-code-branch',   color:'#f05032', labs:'All',     isDefault:true },
+  { id:'d10', name:'Adobe Photoshop',     category:'Design Software',       description:'Image editing',            icon:'fa-image',         color:'#31a8ff', labs:'528,530', isDefault:true },
+  { id:'d11', name:'Figma (Browser)',     category:'Design Software',       description:'UI/UX design tool',        icon:'fa-pen-nib',       color:'#a259ff', labs:'All',     isDefault:true },
+  { id:'d12', name:'Cisco Packet Tracer', category:'Utility / Tool',        description:'Network simulation',       icon:'fa-network-wired', color:'#1ba0d7', labs:'528',     isDefault:true },
+];
+
+async function renderSoftwareList() {
   const q  = (document.getElementById('swSearch')?.value || '').toLowerCase();
   const el = document.getElementById('swList');
-  const data = swRecords.filter(s => (s.name+s.category+s.description).toLowerCase().includes(q));
+
+  try {
+    const all  = await fetch('api/software.php').then(r => r.json());
+    swRecords  = Array.isArray(all) ? all : [];
+  } catch(e) {
+    swRecords = [];
+  }
+
+  // Combine hardcoded defaults + DB records
+  const combined = [...ADMIN_DEFAULT_SOFTWARE, ...swRecords];
+  const data = combined.filter(s => (s.name+s.category+(s.description||'')).toLowerCase().includes(q));
 
   if (!data.length) {
-    el.innerHTML = '<div class="empty-state"><i class="fa-solid fa-box-open"></i><p>No software registered yet.</p></div>';
+    el.innerHTML = '<div class="empty-state"><i class="fa-solid fa-box-open"></i><p>No software matches your search.</p></div>';
+    ['524','526','528','530'].forEach(lab => {
+      const c = document.getElementById('swCountLab'+lab);
+      if (c) c.textContent = 0;
+    });
     return;
   }
+
   el.innerHTML = data.map(s => {
-    const date = new Date(s.uploaded_at).toLocaleDateString('en-PH',{month:'short',day:'numeric',year:'numeric'});
-    const catColors = {
-      'Programming IDE':'#3b82f6','Database Tool':'#10b981','Design Software':'#f59e0b',
-      'Utility / Tool':'#8b5cf6','Reference / Document':'#64748b','Lab Manual':'#f97316','Other':'#94a3b8'
-    };
-    const color = catColors[s.category] || '#94a3b8';
+    const color  = s.color || '#64748b';
+    const date   = s.created_at ? new Date(s.created_at).toLocaleDateString('en-PH',{month:'short',day:'numeric',year:'numeric'}) : '';
+    const labs   = s.labs === 'All' ? 'All Labs' : 'Lab ' + s.labs.split(',').join(', ');
+    const isDef  = s.isDefault;
+    const action = isDef
+      ? `<span style="background:rgba(201,168,76,.15);color:#b45309;border:1px solid rgba(201,168,76,.3);border-radius:6px;padding:3px 8px;font-size:.62rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;">Default</span>`
+      : `<button onclick="deleteSw(${s.id})" style="background:rgba(239,68,68,.12);border:none;color:#ef4444;border-radius:6px;padding:3px 8px;font-size:.7rem;cursor:pointer;"><i class="fa-solid fa-trash"></i></button>`;
     return `<div style="background:var(--surface2);border:1px solid var(--border);border-radius:9px;padding:.65rem .85rem;margin-bottom:.5rem;display:flex;align-items:flex-start;gap:.75rem;">
       <div style="width:36px;height:36px;border-radius:8px;background:${color}20;color:${color};display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">
-        <i class="fa-solid fa-box-archive"></i>
+        <i class="fa-solid ${s.icon || 'fa-box-archive'}"></i>
       </div>
       <div style="flex:1;min-width:0;">
         <div style="font-weight:700;font-size:.82rem;color:var(--text1);">${s.name}</div>
-        <div style="font-size:.72rem;color:var(--text3);margin:.15rem 0;">${s.category}  Labs: ${s.labs.join(', ')}</div>
+        <div style="font-size:.72rem;color:var(--text3);margin:.15rem 0;">${s.category} &bull; ${labs}</div>
         ${s.description ? `<div style="font-size:.72rem;color:var(--text2);">${s.description}</div>` : ''}
-        <div style="font-size:.68rem;color:var(--text3);margin-top:.25rem;">${s.files?.length||0} file(s)  ${date}</div>
+        ${date ? `<div style="font-size:.68rem;color:var(--text3);margin-top:.25rem;">${date}</div>` : ''}
       </div>
-      <button onclick="deleteSw(${s.id})" style="background:rgba(239,68,68,.12);border:none;color:#ef4444;border-radius:6px;padding:3px 8px;font-size:.7rem;cursor:pointer;"><i class="fa-solid fa-trash"></i></button>
+      ${action}
     </div>`;
   }).join('');
 
-  // Update lab counts
+  // Update lab counts (defaults + custom)
   ['524','526','528','530'].forEach(lab => {
-    const el = document.getElementById('swCountLab'+lab);
-    if (el) el.textContent = swRecords.filter(s => s.labs.includes(lab) || s.labs.includes('All')).length;
+    const c = document.getElementById('swCountLab'+lab);
+    if (c) c.textContent = combined.filter(s => s.labs === 'All' || s.labs.split(',').includes(lab)).length;
   });
 }
 
-function deleteSw(id) {
-  swRecords = swRecords.filter(s => s.id !== id);
-  localStorage.setItem('admin_sw_records', JSON.stringify(swRecords));
-  renderSoftwareList();
-  toast('Software removed.', 'warning');
+async function deleteSw(id) {
+  if (!confirm('Remove this software?')) return;
+  try {
+    const res  = await fetch('api/software.php', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'delete', id })
+    });
+    const json = await res.json();
+    if (json.success) { toast('Software removed.', 'warning'); renderSoftwareList(); }
+    else toast('Could not remove software.', 'danger');
+  } catch(e) { toast('Server error.', 'danger'); }
 }
 
 </script>
