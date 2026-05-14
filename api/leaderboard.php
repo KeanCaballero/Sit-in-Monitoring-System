@@ -38,6 +38,14 @@ try {
             }
 
             // Log in points_log
+            $conn->query("CREATE TABLE IF NOT EXISTS `points_log` (
+                `id`         INT AUTO_INCREMENT PRIMARY KEY,
+                `id_number`  VARCHAR(20) NOT NULL,
+                `points`     INT NOT NULL DEFAULT 0,
+                `reason`     TEXT DEFAULT NULL,
+                `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
+                KEY `idx_id_number` (`id_number`)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
             $s2 = $conn->prepare("INSERT INTO points_log (id_number, points, reason) VALUES (?, ?, ?)");
             $s2->bind_param('sis', $id_number, $points, $reason);
             $s2->execute();

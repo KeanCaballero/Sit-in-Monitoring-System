@@ -77,6 +77,14 @@ try {
                 $up->close();
 
                 // Log in points_log
+                $conn->query("CREATE TABLE IF NOT EXISTS `points_log` (
+                    `id`         INT AUTO_INCREMENT PRIMARY KEY,
+                    `id_number`  VARCHAR(20) NOT NULL,
+                    `points`     INT NOT NULL DEFAULT 0,
+                    `reason`     TEXT DEFAULT NULL,
+                    `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    KEY `idx_id_number` (`id_number`)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
                 $pl = $conn->prepare("INSERT INTO points_log (id_number, points, reason) VALUES (?, ?, ?)");
                 $pl->bind_param('sis', $id_number, $total_pts, $reason);
                 $pl->execute();

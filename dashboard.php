@@ -1021,7 +1021,8 @@ function saveProfile() {
     password2:   document.getElementById('pPw2').value,
   };
   if (data.password && data.password !== data.password2) { alert('Passwords do not match.'); return; }
-  fetch('edit_profile.php', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(data) })
+  // FIX: post to update_profile.php (the API), NOT edit_profile.php (which is a full page)
+  fetch('update_profile.php', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(data) })
     .then(r => r.json())
     .then(d => {
       if (d.success) {
@@ -1030,6 +1031,9 @@ function saveProfile() {
         document.getElementById('profName').textContent = data.first_name + ' ' + data.last_name;
         document.getElementById('dCourse').textContent  = data.course;
         document.getElementById('dYear').textContent    = data.year_level + ' Year';
+        // Clear password fields so user doesn't accidentally re-submit
+        document.getElementById('pPw').value  = '';
+        document.getElementById('pPw2').value = '';
       } else { alert(d.message || 'Could not save profile.'); }
     })
     .catch(() => showToast('Profile saved locally.', 'warning'));
@@ -1363,7 +1367,6 @@ async function loadSoftwareGrid() {
     'Other':              '#94a3b8'
   };
 
-  // Helper to render a single software card
   function renderCard(sw) {
     const color = sw.color || catColors[sw.category] || '#64748b';
     const icon  = sw.icon  || 'fa-box-archive';
@@ -1396,7 +1399,7 @@ async function loadSoftwareGrid() {
       grid.innerHTML += data.map(renderCard).join('');
     }
   } catch(e) {
-    // API failed — defaults are already showing, no error needed
+    // API failed — defaults are already showing
   }
 }
 

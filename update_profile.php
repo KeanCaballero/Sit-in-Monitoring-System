@@ -1,5 +1,7 @@
 <?php
 // update_profile.php
+// Accepts BOTH snake_case (first_name) AND camelCase (firstname) field names
+// so it works regardless of which page submits to it.
 ini_set('display_errors', 0);
 error_reporting(0);
 ob_start();
@@ -20,16 +22,19 @@ try {
     $data = json_decode($raw, true);
     if (empty($data)) $data = $_POST;
 
-    $user_id    = (int) $_SESSION['user_id'];
-    $first_name  = trim($data['firstname']   ?? '');
-    $last_name   = trim($data['lastname']    ?? '');
-    $middle_name = trim($data['middlename']  ?? '');
+    $user_id = (int) $_SESSION['user_id'];
+
+    // ── ACCEPT BOTH NAMING CONVENTIONS ──
+    // snake_case from dashboard.php  OR  camelCase from edit_profile.php
+    $first_name  = trim($data['first_name']  ?? $data['firstname']  ?? '');
+    $last_name   = trim($data['last_name']   ?? $data['lastname']   ?? '');
+    $middle_name = trim($data['middle_name'] ?? $data['middlename'] ?? '');
     $email       = trim($data['email']       ?? '');
     $address     = trim($data['address']     ?? '');
     $course      = trim($data['course']      ?? '');
     $year_level  = trim($data['year_level']  ?? '');
-    $new_pw      = trim($data['new_password']      ?? '');
-    $confirm_pw  = trim($data['confirm_password']  ?? '');
+    $new_pw      = trim($data['new_password'] ?? $data['password']  ?? '');
+    $confirm_pw  = trim($data['confirm_password'] ?? $data['password2'] ?? $new_pw);
 
     if (!$first_name || !$last_name || !$email || !$course || !$year_level) {
         ob_end_clean();
@@ -42,7 +47,7 @@ try {
         exit();
     }
 
-    // Check email not taken by another user
+    // Email uniqueness check
     $chk = $conn->prepare("SELECT id FROM `users` WHERE email = ? AND id != ? LIMIT 1");
     $chk->bind_param('si', $email, $user_id);
     $chk->execute();
@@ -53,7 +58,7 @@ try {
     }
     $chk->close();
 
-    // Password change
+    // Password change (only if user typed one)
     if ($new_pw !== '') {
         if ($new_pw !== $confirm_pw) {
             ob_end_clean();
@@ -68,9 +73,9 @@ try {
         $hashed = password_hash($new_pw, PASSWORD_DEFAULT);
         $stmt = $conn->prepare(
             "UPDATE `users` SET
-                first_name  = ?, last_name   = ?, middle_name = ?,
-                email       = ?, address     = ?, course      = ?,
-                year_level  = ?, password    = ?
+                first_name  = ?, last_name  = ?, middle_name = ?,
+                email       = ?, address    = ?, course      = ?,
+                year_level  = ?, password   = ?
              WHERE id = ? LIMIT 1"
         );
         $stmt->bind_param('ssssssssi',
@@ -81,8 +86,8 @@ try {
     } else {
         $stmt = $conn->prepare(
             "UPDATE `users` SET
-                first_name  = ?, last_name   = ?, middle_name = ?,
-                email       = ?, address     = ?, course      = ?,
+                first_name  = ?, last_name  = ?, middle_name = ?,
+                email       = ?, address    = ?, course      = ?,
                 year_level  = ?
              WHERE id = ? LIMIT 1"
         );
@@ -94,7 +99,7 @@ try {
     }
 
     if ($stmt->execute()) {
-        // Sync session
+        // Sync session so refresh shows new info
         $_SESSION['user']['first_name']  = $first_name;
         $_SESSION['user']['last_name']   = $last_name;
         $_SESSION['user']['middle_name'] = $middle_name;
@@ -105,12 +110,18 @@ try {
 
         ob_end_clean();
         echo json_encode([
-            'success'    => true,
-            'message'    => 'Profile updated successfully!',
-            'firstname'  => $first_name,
-            'lastname'   => $last_name,
-            'course'     => $course,
-            'year_level' => $year_level,
+            'success'     => true,
+            'message'     => 'Profile updated successfully!',
+            // Return BOTH naming conventions so any caller works
+            'first_name'  => $first_name,
+            'last_name'   => $last_name,
+            'firstname'   => $first_name,
+            'lastname'    => $last_name,
+            'middle_name' => $middle_name,
+            'middlename'  => $middle_name,
+            'email'       => $email,
+            'course'      => $course,
+            'year_level'  => $year_level,
         ]);
     } else {
         ob_end_clean();
@@ -122,6 +133,5 @@ try {
 } catch (Throwable $e) {
     ob_end_clean();
     http_response_code(200);
-    echo json_encode(['success' => false,
-        'message' => 'PHP error: ' . $e->getMessage()]);
+    echo json_encode(['success' => false, 'message' => 'PHP error: ' . $e->getMessage()]);
 }

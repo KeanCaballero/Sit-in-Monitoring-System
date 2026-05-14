@@ -251,7 +251,7 @@ $photo       = !empty($user['profile_photo'])
             <label class="f-label">Year Level</label>
             <select class="form-select" id="year_level">
               <?php foreach (['1','2','3','4'] as $y): ?>
-                <option value="<?= $y ?>" <?= $year_level==$y?'selected':'' ?><?= $year_level==="$y"?'selected':'' ?>><?= $y ?>st/nd/rd/th Year</option>
+                <option value="<?= $y ?>" <?= $year_level==$y?'selected':'' ?>><?= $y==='1'?'1st':($y==='2'?'2nd':($y==='3'?'3rd':'4th')) ?> Year</option>
               <?php endforeach; ?>
             </select>
           </div>
