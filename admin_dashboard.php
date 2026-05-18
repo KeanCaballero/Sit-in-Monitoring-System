@@ -974,6 +974,10 @@ $admin = $_SESSION['user'];
             <select class="form-select" id="siLab"><option value="">Select Lab</option><option>524</option><option>526</option><option>528</option><option>530</option></select>
           </div>
           <div class="col-12">
+            <label class="form-label">PC Number <span style="font-weight:400;font-style:italic;color:var(--text3,#94a3b8);font-size:.78rem;">(1–40)</span></label>
+            <input type="number" class="form-control" id="siPc" min="1" max="40" placeholder="e.g. 12"/>
+          </div>
+          <div class="col-12">
             <label class="form-label">Remaining Sessions</label>
             <select class="form-select" id="siSession">
               <option value="">Auto-filled</option>
@@ -1420,7 +1424,7 @@ function fetchSitInRecords() {
 
 // -- SIT-IN --
 function openSitInModal() {
-  ['siIdNum','siName','siSession'].forEach(id => document.getElementById(id).value = '');
+  ['siIdNum','siName','siSession','siPc'].forEach(id => document.getElementById(id).value = '');
   document.getElementById('siPurpose').value = '';
   document.getElementById('siLab').value = '';
   new bootstrap.Modal(document.getElementById('modalSitIn')).show();
@@ -1438,6 +1442,7 @@ function selectStudentForSitIn(s) {
     document.getElementById('siSession').value = s.remaining_sessions ?? 30;
     document.getElementById('siPurpose').value = '';
     document.getElementById('siLab').value     = '';
+    document.getElementById('siPc').value      = '';
     new bootstrap.Modal(document.getElementById('modalSitIn')).show();
   });
 }
@@ -1457,26 +1462,35 @@ function submitSitIn() {
   const name    = document.getElementById('siName').value;
   const purpose = document.getElementById('siPurpose').value.trim();
   const lab     = document.getElementById('siLab').value;
+  const pcNum   = document.getElementById('siPc').value.trim();
   if (!id||!name||!purpose||!lab) { alert('Please fill in all fields.'); return; }
+  if (pcNum && (isNaN(pcNum) || +pcNum < 1 || +pcNum > 40)) {
+    alert('PC Number must be between 1 and 40.'); return;
+  }
 
   fetch('admin_sitin_submit.php', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ id_number: id, purpose, lab, override_sessions: document.getElementById('siSession').value })
+    body: JSON.stringify({
+      id_number: id,
+      purpose,
+      lab,
+      pc_number: pcNum ? parseInt(pcNum) : null,
+      override_sessions: document.getElementById('siSession').value
+    })
   })
   .then(r => r.json())
   .then(d => {
     if (!d.success) { alert(d.message || 'Could not save sit-in.'); return; }
     bootstrap.Modal.getInstance(document.getElementById('modalSitIn')).hide();
     toast('Student sat in successfully!');
-    fetchSitInRecords();   // reload from DB so data is fresh
+    fetchSitInRecords();
     showView('current-sitin');
-    // Refresh student session count
     fetchStudents();
   })
   .catch(() => {
-    // Offline fallback  save in memory only
     sitInRecs.push({ sit_id: sitInRecs.length+1, id_number:id, name, purpose, lab,
+                     pc_number: pcNum || null,
                      session: document.getElementById('siSession').value, status:'Active' });
     bootstrap.Modal.getInstance(document.getElementById('modalSitIn')).hide();
     toast('Saved locally (DB unavailable).', 'warning');

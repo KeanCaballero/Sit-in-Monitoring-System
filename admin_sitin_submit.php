@@ -1,5 +1,6 @@
 <?php
 // admin_sitin_submit.php
+// Records a sit-in for a student. NOW accepts and saves pc_number.
 ini_set('display_errors', 0);
 error_reporting(0);
 ob_start();
@@ -16,11 +17,22 @@ try {
     require_once 'config.php';
     $conn = db_connect();
 
-    $data      = json_decode(file_get_contents('php://input'), true);
+    $data              = json_decode(file_get_contents('php://input'), true);
     $id_number         = trim($data['id_number']         ?? '');
     $purpose           = trim($data['purpose']           ?? '');
     $lab               = trim($data['lab']               ?? '');
     $override_sessions = isset($data['override_sessions']) && $data['override_sessions'] !== '' ? (int)$data['override_sessions'] : null;
+
+    // ── NEW: read pc_number, allow null/empty (some legacy admins may skip it) ──
+    $pc_number = null;
+    if (isset($data['pc_number']) && $data['pc_number'] !== '' && $data['pc_number'] !== null) {
+        $pc_number = (int)$data['pc_number'];
+        if ($pc_number < 1 || $pc_number > 40) {
+            ob_end_clean();
+            echo json_encode(['success' => false, 'message' => 'PC Number must be between 1 and 40.']);
+            exit();
+        }
+    }
 
     if (!$id_number || !$purpose || !$lab) {
         ob_end_clean();
@@ -59,13 +71,36 @@ try {
         exit();
     }
 
-    // Insert sit-in record
-    $stmt = $conn->prepare(
-        "INSERT INTO sit_ins (id_number, purpose, lab, session_at_entry, status, created_at)
-         VALUES (?, ?, ?, ?, 'Active', NOW())"
-    );
-    $session_to_store = ($override_sessions !== null) ? $override_sessions : $row['remaining_sessions'];
-    $stmt->bind_param('sssi', $id_number, $purpose, $lab, $session_to_store);
+    // ── NEW: Check that this PC isn't already in use right now ──
+    if ($pc_number !== null) {
+        $stmt = $conn->prepare("SELECT id FROM sit_ins WHERE lab = ? AND pc_number = ? AND status = 'Active' LIMIT 1");
+        $stmt->bind_param('si', $lab, $pc_number);
+        $stmt->execute();
+        $pcInUse = $stmt->get_result()->fetch_assoc();
+        $stmt->close();
+        if ($pcInUse) {
+            ob_end_clean();
+            echo json_encode(['success' => false, 'message' => "Lab $lab PC $pc_number is already in use."]);
+            exit();
+        }
+    }
+
+    $session_to_store = ($override_sessions !== null) ? $override_sessions : (int)$row['remaining_sessions'];
+
+    // ── NEW: Insert WITH pc_number (NULL-safe) ──
+    if ($pc_number === null) {
+        $stmt = $conn->prepare(
+            "INSERT INTO sit_ins (id_number, purpose, lab, pc_number, session_at_entry, status, created_at)
+             VALUES (?, ?, ?, NULL, ?, 'Active', NOW())"
+        );
+        $stmt->bind_param('sssi', $id_number, $purpose, $lab, $session_to_store);
+    } else {
+        $stmt = $conn->prepare(
+            "INSERT INTO sit_ins (id_number, purpose, lab, pc_number, session_at_entry, status, created_at)
+             VALUES (?, ?, ?, ?, ?, 'Active', NOW())"
+        );
+        $stmt->bind_param('sssii', $id_number, $purpose, $lab, $pc_number, $session_to_store);
+    }
     $stmt->execute();
     $new_sit_id = $conn->insert_id;
     $stmt->close();
@@ -79,7 +114,11 @@ try {
     $conn->close();
 
     ob_end_clean();
-    echo json_encode(['success' => true, 'sit_id' => $new_sit_id]);
+    echo json_encode([
+        'success'   => true,
+        'sit_id'    => $new_sit_id,
+        'pc_number' => $pc_number,
+    ]);
 
 } catch (Throwable $e) {
     ob_end_clean();

@@ -305,6 +305,9 @@ $sess_pct = min(100, ($sess / 30) * 100);
             <?php foreach ($announcements as $ann): ?>
               <div class="ann-item">
                 <div class="ann-meta"><span class="ann-tag">CCS Admin</span><span class="ann-date"><i class="fa-regular fa-calendar"></i> <?= htmlspecialchars(date('Y M d', strtotime($ann['created_at'] ?? 'now'))) ?></span></div>
+                <?php if (!empty($ann['title'])): ?>
+                  <div style="font-family:'Cinzel',serif;font-size:1rem;font-weight:700;color:var(--pur-900,#160837);margin-bottom:6px;letter-spacing:.01em"><?= htmlspecialchars($ann['title']) ?></div>
+                <?php endif; ?>
                 <div class="ann-text"><?= empty($ann['message']) ? '<em style="color:#999">No message content.</em>' : nl2br(htmlspecialchars($ann['message'])) ?></div>
               </div>
             <?php endforeach; ?>
@@ -1092,15 +1095,31 @@ async function loadNotifications() {
     };
 
     el.innerHTML = items.length
-      ? items.map(n => `
+      ? items.map(n => {
+          // Handle both old format ("Title: Message" in message field) and new format (title + message separate)
+          let displayTitle = n.title || 'Notification';
+          let displayMsg   = n.message || '';
+          // If notification is announcement-type AND title is still the generic "New Announcement" AND message contains ": "
+          // assume it's old-format data and split it: "Real Title: Real Message"
+          if (n.type === 'announcement' && (displayTitle === 'New Announcement' || displayTitle === 'Notification') && displayMsg.includes(': ')) {
+            const colonIdx = displayMsg.indexOf(': ');
+            const beforeColon = displayMsg.substring(0, colonIdx).trim();
+            const afterColon  = displayMsg.substring(colonIdx + 2).trim();
+            if (beforeColon.length > 0 && beforeColon.length < 80 && !beforeColon.match(/[.!?]$/)) {
+              displayTitle = beforeColon;
+              displayMsg   = afterColon;
+            }
+          }
+          return `
           <div class="notif-item${n.is_read?'':' unread'}" onclick="markRead(${n.id}, this)" style="${!n.is_read?'background:rgba(59,130,246,.06);':''};cursor:pointer;">
             <div class="notif-icon ${typeColor[n.type]||'blue'}"><i class="fa-solid ${typeIcon[n.type]||'fa-bell'}"></i></div>
-            <div>
-              <div class="notif-title">${n.title||'Notification'}${!n.is_read?'<span style="width:6px;height:6px;background:#3b82f6;border-radius:50%;display:inline-block;margin-left:5px;vertical-align:middle;"></span>':''}</div>
-              <div class="notif-time">${(n.message||'').substring(0,80)}${(n.message||'').length>80?'':''}</div>
-              <div class="notif-time" style="color:#aaa;">${relTime(n.created_at)}</div>
+            <div style="flex:1;min-width:0">
+              <div class="notif-title">${displayTitle}${!n.is_read?'<span style="width:6px;height:6px;background:#3b82f6;border-radius:50%;display:inline-block;margin-left:5px;vertical-align:middle;"></span>':''}</div>
+              <div style="color:var(--text-2,#4b5563);font-size:.78rem;line-height:1.45;margin-top:2px;font-weight:400;text-transform:none;letter-spacing:0;">${displayMsg.substring(0,120)}${displayMsg.length>120?'…':''}</div>
+              <div class="notif-time" style="color:#aaa;margin-top:4px;">${relTime(n.created_at)}</div>
             </div>
-          </div>`).join('')
+          </div>`;
+        }).join('')
       : '<div style="padding:1.4rem;text-align:center;color:#999;font-size:.82rem;">No notifications yet</div>';
   } catch(e) {
     const el = document.getElementById('notifItems');

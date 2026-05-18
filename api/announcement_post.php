@@ -2,6 +2,9 @@
 // api/announcement_post.php
 // GET  → all announcements (latest first)
 // POST { title, message } → admin creates announcement + notifies all students
+//
+// FIX: Notification title now uses the announcement title (instead of generic "New Announcement"),
+//      and the notification message contains ONLY the message (not "Title: Message" combined).
 ini_set('display_errors', 0); error_reporting(0); ob_start();
 session_start();
 header('Content-Type: application/json');
@@ -34,6 +37,7 @@ try {
         $s = $conn->prepare("INSERT INTO announcements (title, message, created_by) VALUES (?, ?, 'admin')");
         $s->bind_param('ss', $title, $message);
         $s->execute();
+        $s->close();
 
         // Ensure notifications table exists
         $conn->query("CREATE TABLE IF NOT EXISTS `notifications` (
@@ -47,11 +51,15 @@ try {
             KEY `idx_user` (`user_id_number`)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
 
-        // Notify all students
-        $notifTitle = 'New Announcement';
-        $notifMsg   = ($title ? "$title: " : '') . $message;
-        if (strlen($notifMsg) > 200) $notifMsg = substr($notifMsg, 0, 197) . '…';
+        // ── FIX: Use the announcement title as the notification title.
+        //         Keep the message separate so notifications display cleanly:
+        //         [TITLE] (bold) — [MESSAGE]
+        $notifTitle = $title !== '' ? $title : 'New Announcement';
+        $notifMsg   = $message;
+        // Trim very long messages so notification panel doesn't get huge
+        if (strlen($notifMsg) > 250) $notifMsg = substr($notifMsg, 0, 247) . '…';
 
+        // Notify all students
         $res = $conn->query("SELECT id_number FROM users WHERE role='student'");
         if ($res) {
             while ($row = $res->fetch_assoc()) {
@@ -59,6 +67,7 @@ try {
                 $s2  = $conn->prepare("INSERT INTO notifications (user_id_number, type, title, message) VALUES (?, 'announcement', ?, ?)");
                 $s2->bind_param('sss', $uid, $notifTitle, $notifMsg);
                 $s2->execute();
+                $s2->close();
             }
         }
 
