@@ -657,6 +657,7 @@ try {
           <span><span class="dot" style="background:rgba(239,68,68,.5);border:1px solid #991b1b"></span>Occupied (Sit-in)</span>
           <span><span class="dot" style="background:rgba(245,158,11,.5);border:1px solid #92400e"></span>Reserved (Approved)</span>
           <span><span class="dot" style="background:rgba(139,92,246,.5);border:1px solid #5b21b6"></span>Pending Approval</span>
+          <span><span class="dot" style="background:rgba(107,114,128,.5);border:1px solid #6b7280"></span>Unavailable / Broken</span>
         </div>
         <div id="adminPcMapLoading" style="text-align:center;padding:2.5rem;color:var(--text3);">
           <i class="fa-solid fa-spinner fa-spin fa-2x"></i><br><br>Loading PC map
@@ -2124,21 +2125,24 @@ async function loadAdminPcMap(lab, btn) {
     const total   = d.total_pcs || 40;
     const colors  = {
       available:'rgba(34,197,94,.35)',  occupied:'rgba(239,68,68,.45)',
-      reserved:'rgba(245,158,11,.45)',  pending:'rgba(139,92,246,.45)'
+      reserved:'rgba(245,158,11,.45)',  pending:'rgba(139,92,246,.45)',
+      unavailable:'rgba(107,114,128,.25)'
     };
     const borders = {
       available:'rgba(34,197,94,.8)',  occupied:'rgba(239,68,68,.9)',
-      reserved:'rgba(245,158,11,.9)',  pending:'rgba(139,92,246,.9)'
+      reserved:'rgba(245,158,11,.9)',  pending:'rgba(139,92,246,.9)',
+      unavailable:'rgba(107,114,128,.8)'
     };
     const texts = {
-      available:'#4ade80', occupied:'#fca5a5', reserved:'#fcd34d', pending:'#c4b5fd'
+      available:'#4ade80', occupied:'#fca5a5', reserved:'#fcd34d', pending:'#c4b5fd', unavailable:'#9ca3af'
     };
 
     let html = `<div style="grid-column:1/-1;background:rgba(59,130,246,.2);border:1px solid rgba(59,130,246,.5);display:flex;align-items:center;justify-content:center;gap:.5rem;font-size:.78rem;font-weight:700;color:#93c5fd;padding:.5rem;border-radius:8px;margin-bottom:4px;">
       <i class="fa-solid fa-chalkboard-user"></i> INSTRUCTOR'S DESK</div>`;
     for (let i=1; i<=total; i++) {
       const st = pcMap[i] || 'available';
-      html += `<div style="background:${colors[st]};border:2px solid ${borders[st]};border-radius:8px;padding:.5rem .2rem;text-align:center;cursor:default;min-height:52px;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;" title="${st}">
+      // include data attributes and make clickable for admin toggling
+      html += `<div class="admin-pc-item" data-pc="${i}" data-status="${st}" style="background:${colors[st]};border:2px solid ${borders[st]};border-radius:8px;padding:.5rem .2rem;text-align:center;cursor:pointer;min-height:52px;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;" title="${st}">
         <i class="fa-solid fa-desktop" style="font-size:.9rem;color:${texts[st]};display:block;margin-bottom:2px;"></i>
         <div style="font-size:.6rem;font-weight:800;color:${texts[st]};">PC${i}</div>
         <div class="pc-tip">${st.charAt(0).toUpperCase()+st.slice(1)}</div>
@@ -2151,6 +2155,37 @@ async function loadAdminPcMap(lab, btn) {
       <span style="background:rgba(34,197,94,.1);color:#22c55e;padding:3px 10px;border-radius:6px;font-size:.75rem;font-weight:700;"><i class="fa-solid fa-circle" style="font-size:.45rem;margin-right:4px;"></i>${d.available_count} Available</span>
       <span style="background:rgba(239,68,68,.1);color:#ef4444;padding:3px 10px;border-radius:6px;font-size:.75rem;font-weight:700;"><i class="fa-solid fa-circle" style="font-size:.45rem;margin-right:4px;"></i>${d.occupied_count} Occupied</span>
       <span style="background:rgba(245,158,11,.1);color:#f59e0b;padding:3px 10px;border-radius:6px;font-size:.75rem;font-weight:700;"><i class="fa-solid fa-circle" style="font-size:.45rem;margin-right:4px;"></i>${d.reserved_count} Reserved</span>`;
+    // Attach click handlers to allow admin to mark PC unavailable / available
+    setTimeout(() => {
+      document.querySelectorAll('#adminPcGrid .admin-pc-item').forEach(el => {
+        el.addEventListener('click', async (ev) => {
+          const pc = el.getAttribute('data-pc');
+          const status = el.getAttribute('data-status') || 'available';
+          // Only allow toggling when not occupied (can't mark occupied as broken)
+          if (status === 'occupied') {
+            toast('Cannot change status of an occupied PC.','warning');
+            return;
+          }
+          const isCurrentlyUnavailable = status === 'unavailable';
+          const confirmMsg = isCurrentlyUnavailable
+            ? `Clear Unavailable flag for Lab ${currentAdminLab} PC ${pc}?`
+            : `Mark Lab ${currentAdminLab} PC ${pc} as Unavailable / Broken?`;
+          if (!confirm(confirmMsg)) return;
+          try {
+            const resp = await fetch('api/pc_toggle_unavailable.php', {
+              method:'POST', headers:{'Content-Type':'application/json'},
+              body: JSON.stringify({ lab: currentAdminLab, pc: parseInt(pc,10), action: isCurrentlyUnavailable ? 'clear' : 'set' })
+            }).then(r => r.json());
+            if (resp && resp.success) {
+              toast(resp.message || 'Updated PC status','success');
+              loadAdminPcMap(currentAdminLab);
+            } else {
+              toast(resp.message || 'Failed to update PC','danger');
+            }
+          } catch(e) { toast('Request failed.','danger'); }
+        });
+      });
+    }, 40);
   } catch(e) {
     if (loading) loading.style.display = 'none';
     grid.style.display = 'grid';

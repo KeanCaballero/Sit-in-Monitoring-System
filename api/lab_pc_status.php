@@ -68,6 +68,22 @@ try {
         $stmt2->close();
     }
 
+    // Unavailable / broken PCs (optional table)
+    $unavailable = [];
+    $tbl_check2 = $conn->query("SHOW TABLES LIKE 'pc_unavailable'");
+    if ($tbl_check2 && $tbl_check2->num_rows > 0) {
+        $stmt3 = $conn->prepare(
+            "SELECT pc_number FROM pc_unavailable WHERE lab = ? AND start_date <= ? AND (end_date IS NULL OR end_date >= ?)"
+        );
+        $stmt3->bind_param('sss', $lab, $date, $date);
+        $stmt3->execute();
+        $u_rows = $stmt3->get_result()->fetch_all(MYSQLI_ASSOC);
+        foreach ($u_rows as $r) {
+            $unavailable[] = (int)$r['pc_number'];
+        }
+        $stmt3->close();
+    }
+
     $conn->close();
 
     // Build pc_map: pc_number => status
@@ -84,6 +100,11 @@ try {
         }
     }
 
+    // Apply unavailable status last so it overrides available/reserved states
+    foreach ($unavailable as $pnum) {
+        if (isset($pc_map[$pnum])) $pc_map[$pnum] = 'unavailable';
+    }
+
     ob_end_clean();
     echo json_encode([
         'lab'       => $lab,
@@ -93,6 +114,7 @@ try {
         'occupied_count'  => count($occupied_sitin),
         'reserved_count'  => count($reserved),
         'available_count' => count(array_filter($pc_map, fn($s) => $s === 'available')),
+        'unavailable_count'=> count(array_filter($pc_map, fn($s) => $s === 'unavailable')),
     ]);
 
 } catch (Throwable $e) {

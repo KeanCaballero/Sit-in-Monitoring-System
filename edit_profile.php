@@ -9,6 +9,26 @@ if (!isset($_SESSION['user_id'])) {
     exit();
 }
 
+// Upload selected file (used when user clicks Save to ensure photo is saved before profile update)
+async function uploadPendingPhotoIfAny() {
+  const input = document.getElementById('photoInput');
+  if (!input || !input.files || !input.files[0]) return { success: true, path: null };
+  const file = input.files[0];
+  const fd = new FormData();
+  fd.append('profile_photo', file);
+  try {
+    const raw = await fetch('upload_photo.php', { method: 'POST', body: fd }).then(r => r.text());
+    let d;
+    try { d = JSON.parse(raw); } catch (_) { d = { success: false, message: 'Server error' }; }
+    if (d.success) return { success: true, path: d.path || null };
+    showAlert('\u2715 ' + (d.message || 'Photo upload failed.'), 'error');
+    return { success: false };
+  } catch (e) {
+    showAlert('\u2715 Could not upload photo.', 'error');
+    return { success: false };
+  }
+}
+
 require_once 'config.php';
 $conn = db_connect();
 $uid  = (int) $_SESSION['user_id'];
@@ -329,6 +349,17 @@ async function saveProfile() {
   icon.style.display = 'none';
   btnText.textContent = 'Saving…';
 
+  // If user selected a new photo but upload is not finished, upload it now
+  const uploadResult = await uploadPendingPhotoIfAny();
+  if (!uploadResult.success) {
+    // upload failed or was cancelled
+    btn.disabled = false;
+    spinner.style.display = 'none';
+    icon.style.display = 'inline';
+    btnText.textContent = 'Save Changes';
+    return;
+  }
+
   try {
     const res  = await fetch('update_profile.php', {
       method: 'POST',
@@ -351,12 +382,18 @@ async function saveProfile() {
 
     if (data.success) {
       showAlert('\u2713 ' + data.message, 'success');
+      // If server returned profile_photo, update avatar immediately
+      if (data.profile_photo) {
+        try { document.getElementById('avatarPreview').src = data.profile_photo; } catch (e) {}
+      }
       // Update sidebar instantly
       document.getElementById('sidebarName').textContent = (data.firstname || firstname) + ' ' + (data.lastname || lastname);
       document.getElementById('sidebarSub').textContent  = (data.course || course) + ' \u00b7 Year ' + (data.year_level || year_level);
       // Clear password fields
       document.getElementById('new_password').value    = '';
       document.getElementById('confirm_password').value = '';
+      // Reload the page shortly to ensure all session-backed UI (nav, initials, etc.) reflect changes
+      setTimeout(() => location.reload(), 700);
     } else {
       showAlert('\u2715 ' + (data.message || 'Update failed.'), 'error');
     }

@@ -108,6 +108,22 @@ try {
         $_SESSION['user']['course']      = $course;
         $_SESSION['user']['year_level']  = $year_level;
 
+        // Also fetch current profile_photo from DB and sync into session/response
+        $pf = '';
+        try {
+            $s2 = $conn->prepare("SELECT profile_photo FROM `users` WHERE id = ? LIMIT 1");
+            $s2->bind_param('i', $user_id);
+            $s2->execute();
+            $r2 = $s2->get_result()->fetch_assoc();
+            $s2->close();
+            if ($r2 && !empty($r2['profile_photo'])) {
+                $pf = $r2['profile_photo'];
+                $_SESSION['user']['profile_photo'] = $pf;
+            }
+        } catch (Throwable $ee) {
+            // ignore
+        }
+
         ob_end_clean();
         echo json_encode([
             'success'     => true,
@@ -122,6 +138,7 @@ try {
             'email'       => $email,
             'course'      => $course,
             'year_level'  => $year_level,
+            'profile_photo' => $pf,
         ]);
     } else {
         ob_end_clean();
