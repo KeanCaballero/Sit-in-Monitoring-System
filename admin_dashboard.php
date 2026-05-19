@@ -13,6 +13,16 @@ if (!$isAdmin) {
 }
 
 $admin = $_SESSION['user'];
+
+// Pre-load all reservations (used to backfill PC# in JS for old sit_in records)
+$ALL_RESERVATIONS = [];
+try {
+    require_once 'config.php';
+    $c = db_connect();
+    $r = $c->query("SELECT id_number, lab, pc_number, date, status FROM reservations WHERE status IN ('Approved','Done')");
+    if ($r) $ALL_RESERVATIONS = $r->fetch_all(MYSQLI_ASSOC);
+    $c->close();
+} catch (Throwable $e) { /* silent — fall back to no backfill */ }
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -370,7 +380,8 @@ $admin = $_SESSION['user'];
 <!--  NAVBAR  -->
 <nav class="admin-nav">
   <a class="brand" href="#">
-    <div class="brand-icon">CCS</div>
+    <img src="images/UC_LOGO.png" alt="UC Logo" class="brand-icon" style="object-fit:contain;background:#fff;border-radius:50%;padding:2px;"
+         onerror="this.onerror=null; this.src='images/UC_LOGO.jpg';"/>
     College of Computer Studies Sit-in Monitoring System Admin
   </a>
   <div class="nav-links">
@@ -476,6 +487,7 @@ $admin = $_SESSION['user'];
           <div class="a-card-header"><i class="fa-solid fa-bullhorn"></i> Announcement</div>
           <div class="a-card-body d-flex flex-column gap-3">
             <div>
+              <input type="text" id="annTitle" placeholder="Title (optional)" class="form-control mb-2" style="background:var(--surface2);border:1px solid var(--border);border-radius:9px;color:var(--text1);padding:.5rem .85rem;font-size:.82rem;font-family:'Plus Jakarta Sans',sans-serif;"/>
               <textarea class="ann-textarea" id="annText" placeholder="Write a new announcement"></textarea>
               <button class="btn-a-success mt-2" onclick="postAnnouncement()">
                 <i class="fa-solid fa-paper-plane"></i> Post Announcement
@@ -483,15 +495,8 @@ $admin = $_SESSION['user'];
             </div>
             <div>
               <div style="font-size:.75rem;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.7px;margin-bottom:.65rem;">Posted Announcements</div>
-              <div id="annList">
-                <div class="ann-item">
-                  <div class="ann-meta"><span class="ann-badge">CCS Admin</span> 2026-Feb-11</div>
-                  <div class="ann-text ann-empty">No message content for this announcement.</div>
-                </div>
-                <div class="ann-item">
-                  <div class="ann-meta"><span class="ann-badge">CCS Admin</span> 2024-May-08</div>
-                  <div class="ann-text"> <strong>Important Announcement</strong>  We are excited to announce the launch of our new website! Explore our latest products and services now!</div>
-                </div>
+              <div id="annList" style="max-height:280px;overflow-y:auto;">
+                <div class="ann-item"><div class="ann-text ann-empty">Loading announcements...</div></div>
               </div>
             </div>
           </div>
@@ -978,41 +983,8 @@ $admin = $_SESSION['user'];
             <input type="number" class="form-control" id="siPc" min="1" max="40" placeholder="e.g. 12"/>
           </div>
           <div class="col-12">
-            <label class="form-label">Remaining Sessions</label>
-            <select class="form-select" id="siSession">
-              <option value="">Auto-filled</option>
-              <option value="30">30</option>
-              <option value="29">29</option>
-              <option value="28">28</option>
-              <option value="27">27</option>
-              <option value="26">26</option>
-              <option value="25">25</option>
-              <option value="24">24</option>
-              <option value="23">23</option>
-              <option value="22">22</option>
-              <option value="21">21</option>
-              <option value="20">20</option>
-              <option value="19">19</option>
-              <option value="18">18</option>
-              <option value="17">17</option>
-              <option value="16">16</option>
-              <option value="15">15</option>
-              <option value="14">14</option>
-              <option value="13">13</option>
-              <option value="12">12</option>
-              <option value="11">11</option>
-              <option value="10">10</option>
-              <option value="9">9</option>
-              <option value="8">8</option>
-              <option value="7">7</option>
-              <option value="6">6</option>
-              <option value="5">5</option>
-              <option value="4">4</option>
-              <option value="3">3</option>
-              <option value="2">2</option>
-              <option value="1">1</option>
-              <option value="0">0</option>
-            </select>
+            <label class="form-label">Remaining Sessions <span style="font-weight:400;font-style:italic;color:var(--text3,#94a3b8);font-size:.78rem;">(type to override, blank = auto)</span></label>
+            <input type="number" class="form-control" id="siSession" min="0" max="30" placeholder="Auto-filled from student profile"/>
           </div>
         </div>
       </div>
@@ -1401,25 +1373,43 @@ function liveSearch() {
 }
 
 // -- FETCH SIT-IN RECORDS FROM DB --
-function fetchSitInRecords() {
-  fetch('admin_sitin_fetch.php?filter=all')
-    .then(r => r.json())
-    .then(d => {
-      sitInRecs = d.map(r => ({
-        sit_id:    r.sit_id,
-        id_number: r.id_number,
-        name:      r.name,
-        purpose:   r.purpose,
-        lab:       r.lab,
-        session:   r.session,
-        status:    r.status,
+// Reservations preloaded from PHP at page load — used to backfill PC# on sit_ins
+const ALL_RESERVATIONS = <?= json_encode($ALL_RESERVATIONS) ?>;
+
+// Returns PC# from a matching approved reservation, or null
+function findReservedPc(sitIn) {
+  if (!sitIn || !sitIn.created_at) return null;
+  const sitDate = (sitIn.created_at || '').substring(0, 10);  // YYYY-MM-DD
+  const match = ALL_RESERVATIONS.find(rv =>
+    rv.id_number === sitIn.id_number &&
+    String(rv.lab) === String(sitIn.lab) &&
+    rv.date === sitDate
+  );
+  return match ? match.pc_number : null;
+}
+
+async function fetchSitInRecords() {
+  try {
+    const sitData = await fetch('admin_sitin_fetch.php?filter=all').then(r => r.json()).catch(() => []);
+    sitInRecs = (Array.isArray(sitData) ? sitData : []).map(r => {
+      // Backfill PC# from reservations table if sit_in.pc_number is NULL
+      const pcNum = r.pc_number || findReservedPc(r) || null;
+      return {
+        sit_id:     r.sit_id,
+        id_number:  r.id_number,
+        name:       r.name,
+        purpose:    r.purpose,
+        lab:        r.lab,
+        pc_number:  pcNum,
+        session:    r.session,
+        status:     r.status,
         created_at: r.created_at
-      }));
-      renderRecords();
-      renderCurrentSitIn();
-      loadStats();
-    })
-    .catch(() => { /* keep existing sitInRecs if offline */ });
+      };
+    });
+    renderRecords();
+    renderCurrentSitIn();
+    loadStats();
+  } catch(e) { /* keep existing sitInRecs if offline */ }
 }
 
 // -- SIT-IN --
@@ -1556,24 +1546,53 @@ function confirmResetAll() {
 
 // -- ANNOUNCEMENT --
 async function postAnnouncement() {
-  const text = document.getElementById('annText').value.trim();
-  if (!text) { alert('Please enter an announcement.'); return; }
+  const title = (document.getElementById('annTitle')?.value || '').trim();
+  const text  = document.getElementById('annText').value.trim();
+  if (!text) { alert('Please enter an announcement message.'); return; }
   try {
     const d = await fetch('api/announcement_post.php', {
       method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ title:'', message: text })
+      body: JSON.stringify({ title, message: text })
     }).then(r => r.json());
     if (!d.success) { toast(d.message || 'Failed.', 'danger'); return; }
-  } catch(e) { /* offline  add visually */ }
-  const now = new Date();
-  const label = `${now.getFullYear()}-${now.toLocaleString('en',{month:'short'})}-${String(now.getDate()).padStart(2,'0')}`;
-  const item = document.createElement('div');
-  item.className = 'ann-item';
-  item.innerHTML = `<div class="ann-meta"><span class="ann-badge">CCS Admin</span> ${label}</div><div class="ann-text">${text}</div>`;
-  document.getElementById('annList').prepend(item);
+  } catch(e) { /* offline — keep going so the user sees feedback */ }
+  document.getElementById('annTitle').value = '';
   document.getElementById('annText').value = '';
   toast('Announcement posted!');
-  loadAnnouncementsDB();  // refresh the dedicated announcement view too
+  loadAnnouncementsHome();        // refresh home-view list
+  loadAnnouncementsDB();          // refresh dedicated announcement view
+}
+
+// Load posted announcements from DB onto the HOME view's annList
+async function loadAnnouncementsHome() {
+  const el = document.getElementById('annList');
+  if (!el) return;
+  try {
+    const data = await fetch('api/announcement_post.php').then(r => r.json());
+    if (!Array.isArray(data) || data.length === 0) {
+      el.innerHTML = '<div class="ann-item"><div class="ann-text ann-empty">No announcements yet.</div></div>';
+      return;
+    }
+    el.innerHTML = data.map(a => {
+      const d = a.created_at
+        ? new Date(a.created_at).toLocaleDateString('en-US', { year:'numeric', month:'short', day:'2-digit' })
+        : '';
+      const titleHtml = a.title && a.title.trim() !== ''
+        ? `<div style="font-family:'Plus Jakarta Sans',sans-serif;font-size:.88rem;font-weight:700;color:var(--gold);margin-bottom:.3rem;">${a.title}</div>`
+        : '';
+      const msgHtml = a.message && a.message.trim() !== ''
+        ? `<div class="ann-text">${a.message}</div>`
+        : '<div class="ann-text ann-empty">No message content.</div>';
+      return `
+        <div class="ann-item">
+          <div class="ann-meta"><span class="ann-badge">CCS Admin</span> ${d}</div>
+          ${titleHtml}
+          ${msgHtml}
+        </div>`;
+    }).join('');
+  } catch(e) {
+    el.innerHTML = '<div class="ann-item"><div class="ann-text ann-empty">Could not load announcements.</div></div>';
+  }
 }
 
 
@@ -1659,6 +1678,7 @@ async function postAnnouncementDB() {
       if (document.getElementById('annTitleNew')) document.getElementById('annTitleNew').value = '';
       if (document.getElementById('annTextNew'))  document.getElementById('annTextNew').value  = '';
       loadAnnouncementsDB();
+      loadAnnouncementsHome();
     } else { toast(d.message || 'Failed to post.', 'danger'); }
   } catch(e) {
     // Offline fallback: add visually
@@ -1677,14 +1697,27 @@ async function loadAnnouncementsDB() {
   if (!el) return;
   try {
     const data = await fetch('api/announcement_post.php').then(r => r.json());
-    el.innerHTML = data.length
-      ? data.map(a => `
-          <div class="ann-item">
-            <div class="ann-meta"><span class="ann-badge">CCS Admin</span> ${(a.created_at||'').slice(0,10)}</div>
-            ${a.title ? `<div style="font-size:.8rem;font-weight:700;color:var(--text1);margin-bottom:.2rem;">${a.title}</div>` : ''}
-            <div class="ann-text">${a.message}</div>
-          </div>`).join('')
-      : '<div class="ann-item"><div class="ann-text ann-empty">No announcements yet.</div></div>';
+    if (!Array.isArray(data) || data.length === 0) {
+      el.innerHTML = '<div class="ann-item"><div class="ann-text ann-empty">No announcements yet.</div></div>';
+      return;
+    }
+    el.innerHTML = data.map(a => {
+      const d = a.created_at
+        ? new Date(a.created_at).toLocaleDateString('en-US', { year:'numeric', month:'short', day:'2-digit' })
+        : '';
+      const titleHtml = a.title && a.title.trim() !== ''
+        ? `<div style="font-family:'Plus Jakarta Sans',sans-serif;font-size:.95rem;font-weight:700;color:var(--gold);margin-bottom:.35rem;">${a.title}</div>`
+        : '';
+      const msgHtml = a.message && a.message.trim() !== ''
+        ? `<div class="ann-text">${a.message}</div>`
+        : '<div class="ann-text ann-empty">No message content.</div>';
+      return `
+        <div class="ann-item">
+          <div class="ann-meta"><span class="ann-badge">CCS Admin</span> ${d}</div>
+          ${titleHtml}
+          ${msgHtml}
+        </div>`;
+    }).join('');
   } catch(e) { /* leave as-is */ }
 }
 
@@ -1738,6 +1771,15 @@ async function loadReportsList() {
   try {
     const params = new URLSearchParams({ type:'sitin_list', limit, date_from, date_to });
     const data   = await fetch(`api/reports.php?${params}`).then(r => r.json());
+
+    // Backfill pc_number from PHP-loaded reservations
+    data.forEach(r => {
+      if (!r.pc_number) {
+        const pc = findReservedPc(r);
+        if (pc) r.pc_number = pc;
+      }
+    });
+
     if (!data.length) {
       tbody.innerHTML = '<tr><td colspan="12" class="no-data">No records found for the selected filter.</td></tr>';
       info.textContent = 'No records found.';
@@ -1760,7 +1802,7 @@ async function loadReportsList() {
         <td style="color:var(--text2);font-size:.72rem;">${r.course||''} ${r.year_level?'Yr'+r.year_level:''}</td>
         <td>${r.purpose||''}</td>
         <td><span style="background:rgba(201,168,76,.12);color:var(--gold2);padding:2px 8px;border-radius:5px;font-size:.72rem;font-weight:700;">${r.lab||''}</span></td>
-        <td>${r.pc_number||''}</td>
+        <td>${r.pc_number ? `<span style="background:rgba(201,168,76,.18);color:var(--gold2);padding:3px 9px;border-radius:5px;font-size:.74rem;font-weight:700;display:inline-flex;align-items:center;gap:4px;"><i class="fa-solid fa-desktop" style="font-size:.62rem;"></i> ${r.pc_number}</span>` : '<span style="color:var(--text3);">—</span>'}</td>
         <td>${fmtDate(r.created_at)}</td>
         <td>${fmtTime(r.created_at)}</td>
         <td>${fmtTime(r.timed_out_at)}</td>
@@ -1774,11 +1816,75 @@ async function loadReportsList() {
 }
 
 function openPrintReport() {
-  const limit     = document.getElementById('rptLimit').value || '10';
-  const date_from = document.getElementById('rptFrom').value || '';
-  const date_to   = document.getElementById('rptTo').value   || '';
-  const params    = new URLSearchParams({ limit, date_from, date_to });
-  window.open(`reports_print.php?${params}`, '_blank');
+  const rows = document.querySelectorAll('#rptBody tr');
+  if (!rows.length || rows[0].querySelector('.no-data')) {
+    alert('Please click "Apply" to load the report first.');
+    return;
+  }
+  const today    = new Date().toLocaleString('en-PH', { dateStyle:'long', timeStyle:'short' });
+  const dateFrom = document.getElementById('rptFrom').value;
+  const dateTo   = document.getElementById('rptTo').value;
+  const filter   = (dateFrom || dateTo) ? `${dateFrom || '∞'} → ${dateTo || '∞'}` : 'All Dates';
+
+  let bodyHtml = '', total = 0, active = 0, done = 0;
+  rows.forEach(tr => {
+    if (tr.classList.contains('no-data') || tr.querySelector('.no-data')) return;
+    const tds = tr.querySelectorAll('td');
+    if (!tds.length) return;
+    total++;
+    const cells = Array.from(tds).map(td => td.textContent.trim());
+    if ((cells[11] || '').toLowerCase() === 'active') active++; else done++;
+    bodyHtml += `<tr><td>${cells[0]||''}</td><td>${cells[1]||''}</td><td>${cells[2]||''}</td><td>${cells[3]||''}</td><td>${cells[4]||''}</td><td>${cells[5]||''}</td><td>${cells[6]||''}</td><td>${cells[7]||''}</td><td>${cells[8]||''}</td><td>${cells[9]||''}</td><td>${cells[10]||''}</td><td>${cells[11]||''}</td></tr>`;
+  });
+
+  const w = window.open('', '_blank', 'width=1200,height=800');
+  if (!w) { alert('Please allow pop-ups to print.'); return; }
+  w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"/><title>Sit-in Activity Report</title>
+    <style>
+      *{box-sizing:border-box;margin:0;padding:0}
+      body{font-family:Arial,Helvetica,sans-serif;color:#1a2238;padding:30px;background:#fff;font-size:11px;line-height:1.4}
+      .header{text-align:center;border-bottom:3px double #1a2238;padding-bottom:14px;margin-bottom:18px}
+      .header h1{font-size:18px;letter-spacing:2px;font-weight:800}
+      .header .sub{font-size:11px;color:#475569;margin-top:4px}
+      .header .meta{font-size:10px;color:#64748b;margin-top:6px}
+      .stats{display:flex;justify-content:center;gap:20px;margin-bottom:14px}
+      .stat{padding:6px 14px;background:#f1f5f9;border:1px solid #cbd5e1;border-radius:6px;font-size:10px;font-weight:600}
+      table{width:100%;border-collapse:collapse;font-size:10px}
+      thead{background:#1a2238;color:#fff}
+      th{padding:8px 6px;text-align:left;font-weight:600;letter-spacing:.4px}
+      td{padding:7px 6px;border-bottom:1px solid #e2e8f0;color:#334155}
+      tr:nth-child(even) td{background:#f8fafc}
+      .footer{margin-top:28px;display:flex;justify-content:space-between;font-size:10px;color:#64748b;padding-top:8px;border-top:1px solid #e2e8f0}
+      .sign-row{margin-top:60px;display:flex;justify-content:space-around;text-align:center;font-size:11px}
+      .sign{border-top:1px solid #1a2238;padding-top:4px;min-width:220px;font-weight:600}
+      .sign .role{font-size:9px;font-weight:400;color:#64748b;text-transform:uppercase;letter-spacing:1px;margin-top:2px}
+      @media print { body{padding:18px} }
+    </style></head><body>
+    <div class="header">
+      <h1>SIT-IN MONITORING SYSTEM</h1>
+      <div class="sub">College of Computer Studies — University of Cebu</div>
+      <div class="meta">Sit-in Activity Report &nbsp;|&nbsp; ${filter} &nbsp;|&nbsp; Generated: ${today}</div>
+    </div>
+    <div class="stats">
+      <div class="stat">Total Records: <strong>${total}</strong></div>
+      <div class="stat">Active: <strong>${active}</strong></div>
+      <div class="stat">Completed: <strong>${done}</strong></div>
+    </div>
+    <table>
+      <thead><tr><th>#</th><th>ID Number</th><th>Student Name</th><th>Course / Yr</th><th>Purpose</th><th>Lab</th><th>PC #</th><th>Date</th><th>Time In</th><th>Time Out</th><th>Duration</th><th>Status</th></tr></thead>
+      <tbody>${bodyHtml}</tbody>
+    </table>
+    <div class="sign-row">
+      <div class="sign">Prepared by<div class="role">Lab-in-charge</div></div>
+      <div class="sign">Noted by<div class="role">CCS Dean / Department Head</div></div>
+    </div>
+    <div class="footer">
+      <span>CCS Sit-in Monitoring System | UC – College of Computer Studies</span>
+      <span>Printed: ${today}</span>
+    </div>
+    <script>setTimeout(()=>window.print(),300);</` + `script>
+    </body></html>`);
+  w.document.close();
 }
 
 //
@@ -2106,6 +2212,7 @@ document.addEventListener('DOMContentLoaded', () => {
   fetchSitInRecords();
   loadStats();
   loadAnnouncementsDB();
+  loadAnnouncementsHome();
 
   // Auto-refresh every 30 seconds
   setInterval(() => {

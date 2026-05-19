@@ -34,7 +34,20 @@ try {
     if ($tc && $tc->num_rows > 0) {
         $id_num = $conn->real_escape_string($user['id_number'] ?? '');
         // Fetch ALL sit-ins (no LIMIT) so My Summary stats are accurate
-        $hr = $conn->query("SELECT * FROM `sit_ins` WHERE id_number='$id_num' ORDER BY id DESC");
+        // JOIN with reservations on same date/lab/student to backfill PC# when sit_ins.pc_number is NULL
+        $hr = $conn->query("
+            SELECT
+                s.*,
+                COALESCE(s.pc_number, r.pc_number) AS effective_pc
+            FROM `sit_ins` s
+            LEFT JOIN `reservations` r
+                ON r.id_number = s.id_number
+               AND r.lab       = s.lab
+               AND r.date      = DATE(s.created_at)
+               AND r.status    IN ('Approved','Done')
+            WHERE s.id_number = '$id_num'
+            ORDER BY s.id DESC
+        ");
         if ($hr) {
             $history = $hr->fetch_all(MYSQLI_ASSOC);
             foreach ($history as $h) {
@@ -163,17 +176,6 @@ $sess_pct = min(100, ($sess / 30) * 100);
     .star-row .star.on { color: var(--gold); }
 
     /* Leaderboard */
-    /* PC Toggle Button inside PC # column */
-    .pc-toggle-btn {
-      font-size: .68rem; font-weight: 700; border: none; border-radius: 12px;
-      padding: 2px 9px; cursor: pointer; transition: all .15s;
-      display: inline-flex; align-items: center; gap: 3px;
-      white-space: nowrap;
-    }
-    .pc-toggle-btn.enabled  { background: rgba(16,185,129,.15); color: #065f46; }
-    .pc-toggle-btn.enabled:hover  { background: rgba(16,185,129,.3); }
-    .pc-toggle-btn.disabled { background: rgba(239,68,68,.15);  color: #991b1b; }
-    .pc-toggle-btn.disabled:hover { background: rgba(239,68,68,.3); }
   </style>
 </head>
 <body>
@@ -329,7 +331,7 @@ $sess_pct = min(100, ($sess / 30) * 100);
                   <tr>
                     <td><?= htmlspecialchars($h['purpose'] ?? '-') ?></td>
                     <td><?= htmlspecialchars($h['lab'] ?? '-') ?></td>
-                    <td><?= htmlspecialchars($h['pc_number'] ?? '-') ?></td>
+                    <td><?= htmlspecialchars($h['effective_pc'] ?? $h['pc_number'] ?? '-') ?></td>
                     <td><?= !empty($h['created_at']) ? date('M d h:i A', strtotime($h['created_at'])) : '-' ?></td>
                     <td><span style="font-size:.72rem;font-weight:700;padding:2px 8px;border-radius:20px;background:<?= $h['status']==='Active'?'rgba(16,185,129,.12)':'rgba(100,116,139,.12)' ?>;color:<?= $h['status']==='Active'?'#10b981':'#64748b' ?>"><?= htmlspecialchars($h['status']) ?></span></td>
                   </tr>
@@ -374,7 +376,10 @@ $sess_pct = min(100, ($sess / 30) * 100);
 <div class="view" id="view-history">
   <div class="view-header">
     <div class="view-title"><i class="fa-solid fa-clock-rotate-left"></i> Sit-in History &amp; Feedback</div>
-    <button class="btn-ccs-export" onclick="exportCSV()"><i class="fa-solid fa-download"></i> Export CSV</button>
+    <div class="d-flex gap-2 flex-wrap">
+      <button class="btn-ccs-export" onclick="exportCSV()"><i class="fa-solid fa-file-csv"></i> Export CSV</button>
+      <button class="btn-ccs-export" onclick="printMySummary()"><i class="fa-solid fa-print"></i> Print</button>
+    </div>
   </div>
   <div class="ccs-card">
     <div class="ccs-card-body p-4">
@@ -418,7 +423,25 @@ $sess_pct = min(100, ($sess / 30) * 100);
             </div>
             <div class="col-12">
               <label class="form-label-ccs">Purpose <span style="color:var(--red)">*</span></label>
-              <input class="form-control-ccs" type="text" id="rPurpose" placeholder="e.g. C Programming, Thesis, Research"/>
+              <select class="form-select-ccs" id="rPurpose" onchange="togglePurposeOther()">
+                <option value="">Choose your purpose...</option>
+                <option value="C Programming">C Programming</option>
+                <option value="C# Programming">C# Programming</option>
+                <option value="Java Programming">Java Programming</option>
+                <option value="Python Programming">Python Programming</option>
+                <option value="PHP / Web Development">PHP / Web Development</option>
+                <option value="SQL / Database">SQL / Database</option>
+                <option value="HTML / CSS">HTML / CSS</option>
+                <option value="JavaScript">JavaScript</option>
+                <option value="Mobile Development">Mobile Development</option>
+                <option value="Networking">Networking</option>
+                <option value="Research Paper">Research Paper</option>
+                <option value="Thesis">Thesis</option>
+                <option value="Browsing / Research">Browsing / Research</option>
+                <option value="Group Work">Group Work</option>
+                <option value="Other">Other (please specify)</option>
+              </select>
+              <input class="form-control-ccs" type="text" id="rPurposeOther" placeholder="Please specify your purpose..." style="display:none;margin-top:.5rem;"/>
             </div>
             <div class="col-md-4">
               <label class="form-label-ccs">Laboratory <span style="color:var(--red)">*</span></label>
@@ -590,7 +613,10 @@ $sess_pct = min(100, ($sess / 30) * 100);
 <div class="view" id="view-sitin-summary">
   <div class="view-header">
     <div class="view-title"><i class="fa-solid fa-chart-simple"></i> My Sit-in Summary</div>
-    <button class="btn-ccs-export" onclick="exportSummaryCSV()"><i class="fa-solid fa-download"></i> Export CSV</button>
+    <div class="d-flex gap-2 flex-wrap">
+      <button class="btn-ccs-export" onclick="exportSummaryCSV()"><i class="fa-solid fa-file-csv"></i> Export CSV</button>
+      <button class="btn-ccs-export" onclick="printMySummary()"><i class="fa-solid fa-print"></i> Print</button>
+    </div>
   </div>
 
   <!-- Stats row -->
@@ -636,7 +662,7 @@ $sess_pct = min(100, ($sess / 30) * 100);
               <th>Time Out</th>
               <th>Duration</th>
               <th>Lab</th>
-              <th>PC # / Reservation</th>
+              <th>PC #</th>
               <th>Purpose</th>
               <th>Status</th>
             </tr>
@@ -785,7 +811,7 @@ async function loadHistory() {
   histData = <?= json_encode(array_map(fn($h) => [
     'purpose'    => $h['purpose']    ?? '-',
     'lab'        => $h['lab']        ?? '-',
-    'pc_number'  => $h['pc_number']  ?? '-',
+    'pc_number'  => $h['effective_pc'] ?? $h['pc_number'] ?? '-',
     'login'      => !empty($h['created_at'])    ? date('h:i A', strtotime($h['created_at']))    : '-',
     'logout'     => !empty($h['timed_out_at'])  ? date('h:i A', strtotime($h['timed_out_at']))  : '-',
     'date'       => !empty($h['created_at'])    ? date('Y-m-d', strtotime($h['created_at']))    : '-',
@@ -929,12 +955,30 @@ function clearPcSelection() {
   document.getElementById('pcConfirmStrip').classList.remove('show');
 }
 
+// Toggle visibility of the "Other" custom-purpose input
+function togglePurposeOther() {
+  const sel = document.getElementById('rPurpose');
+  const oth = document.getElementById('rPurposeOther');
+  if (!sel || !oth) return;
+  if (sel.value === 'Other') {
+    oth.style.display = 'block';
+    oth.focus();
+  } else {
+    oth.style.display = 'none';
+    oth.value = '';
+  }
+}
+
 async function submitReservation() {
-  const purpose = document.getElementById('rPurpose').value.trim();
+  const purposeSel = document.getElementById('rPurpose').value;
+  const purposeOther = (document.getElementById('rPurposeOther')?.value || '').trim();
+  // Use the custom "Other" text when Other is selected, otherwise use the dropdown value
+  const purpose = purposeSel === 'Other' ? purposeOther : purposeSel;
   const lab     = document.getElementById('rLab').value;
   const date    = document.getElementById('rDate').value;
   const time    = document.getElementById('rTime').value;
-  if (!purpose || !lab || !date || !time) { alert('Please fill in all fields.'); return; }
+  if (!purpose) { alert('Please choose a purpose (or specify one if you picked "Other").'); return; }
+  if (!lab || !date || !time) { alert('Please fill in all fields.'); return; }
   if (!selectedPc) { alert('Please select a PC from the lab map.'); return; }
 
   try {
@@ -947,6 +991,8 @@ async function submitReservation() {
       showToast('Reservation submitted! Waiting for admin approval.');
       clearPcSelection(); loadMyReservations(); loadLabMap();
       document.getElementById('rPurpose').value = '';
+      const oth = document.getElementById('rPurposeOther');
+      if (oth) { oth.value = ''; oth.style.display = 'none'; }
     } else {
       alert(d.message || 'Could not submit reservation.');
     }
@@ -958,23 +1004,23 @@ async function submitReservation() {
 // -- MY RESERVATIONS --
 async function loadMyReservations() {
   const el = document.getElementById('myResList');
-  el.innerHTML = '<p style="font-size:.82rem;color:#888;text-align:center;">Loading</p>';
+  el.innerHTML = '<p style="font-size:.82rem;color:var(--text-3);text-align:center;">Loading</p>';
   try {
     const r = await fetch('api/reservation_fetch.php');
     const data = await r.json();
-    if (!data.length) { el.innerHTML = '<p style="font-size:.82rem;color:#888;text-align:center;font-style:italic;">No reservations yet.</p>'; return; }
+    if (!data.length) { el.innerHTML = '<p style="font-size:.82rem;color:var(--text-3);text-align:center;font-style:italic;">No reservations yet.</p>'; return; }
     const statusColors = { Pending:'#8b5cf6', Approved:'#10b981', Rejected:'#ef4444', Cancelled:'#64748b', Done:'#64748b' };
     el.innerHTML = data.map(r => `
-      <div style="background:#f8fafc;border-radius:9px;padding:.6rem .85rem;margin-bottom:.5rem;border:1px solid #e2e8f0;">
+      <div style="background:var(--card-2);border-radius:9px;padding:.6rem .85rem;margin-bottom:.5rem;border:1px solid var(--border);">
         <div style="display:flex;justify-content:space-between;align-items:center;">
-          <span style="font-weight:700;font-size:.82rem;">Lab ${r.lab} - PC ${r.pc_number}</span>
+          <span style="font-weight:700;font-size:.82rem;color:var(--text);">Lab ${r.lab} - PC ${r.pc_number}</span>
           <span style="font-size:.7rem;font-weight:700;padding:2px 8px;border-radius:20px;background:rgba(100,116,139,.1);color:${statusColors[r.status]||'#64748b'}">${r.status}</span>
         </div>
-        <div style="font-size:.75rem;color:#64748b;margin-top:.2rem;"><i class="fa-regular fa-calendar"></i> ${r.date} ${r.time_in} &nbsp;|&nbsp; ${r.purpose}</div>
+        <div style="font-size:.75rem;color:var(--text-3);margin-top:.2rem;"><i class="fa-regular fa-calendar"></i> ${r.date} ${r.time_in} &nbsp;|&nbsp; ${r.purpose}</div>
         ${r.status === 'Pending' ? `<button onclick="cancelReservation(${r.id})" style="margin-top:.4rem;background:none;border:none;color:#ef4444;font-size:.72rem;cursor:pointer;font-weight:700;padding:0;"> Cancel</button>` : ''}
       </div>`).join('');
   } catch(e) {
-    el.innerHTML = '<p style="font-size:.82rem;color:#888;text-align:center;font-style:italic;">No reservations yet.</p>';
+    el.innerHTML = '<p style="font-size:.82rem;color:var(--text-3);text-align:center;font-style:italic;">No reservations yet.</p>';
   }
 }
 async function cancelReservation(id) {
@@ -1187,12 +1233,6 @@ function fmtDur(mins) {
   return h > 0 ? `${h}h ${m}m` : `${m}m`;
 }
 
-// PC toggle state (in-memory per session)
-// Load persisted PC disabled state from localStorage
-const pcDisabled = (() => {
-  try { return JSON.parse(localStorage.getItem('pcDisabled') || '{}'); } catch(e) { return {}; }
-})();
-
 async function loadSitinSummary() {
   // Always use PHP-injected data — api/reports.php is admin-only
   // so fetching it from student dashboard returns empty array
@@ -1201,7 +1241,7 @@ async function loadSitinSummary() {
     'id_number'    => $h['id_number'] ?? '',
     'purpose'      => $h['purpose'] ?? '-',
     'lab'          => $h['lab'] ?? '-',
-    'pc_number'    => $h['pc_number'] ?? null,
+    'pc_number'    => $h['effective_pc'] ?? $h['pc_number'] ?? null,
     'created_at'   => $h['created_at'] ?? null,
     'timed_out_at' => $h['timed_out_at'] ?? null,
     'status'       => $h['status'] ?? 'Done',
@@ -1244,21 +1284,18 @@ function renderSummaryTable() {
       const date  = s.created_at ? new Date(s.created_at).toLocaleDateString('en-PH',{month:'short',day:'numeric',year:'numeric'}) : '-';
       const tIn   = s.created_at  ? new Date(s.created_at).toLocaleTimeString('en-PH',{hour:'2-digit',minute:'2-digit'}) : '-';
       const tOut  = s.timed_out_at ? new Date(s.timed_out_at).toLocaleTimeString('en-PH',{hour:'2-digit',minute:'2-digit'}) : '-';
-      const pcNum = s.pc_number || '-';
-      const isDisabled = pcDisabled[`${s.lab}_${s.pc_number}`];
-      const toggleLabel = isDisabled ? 'Disabled' : 'Enabled';
-      const toggleClass = isDisabled ? 'disabled' : 'enabled';
       const statusColor = s.status === 'Active' ? '#10b981' : '#64748b';
       const statusBg    = s.status === 'Active' ? 'rgba(16,185,129,.12)' : 'rgba(100,116,139,.12)';
+      // Clean PC# display — a small badge with PC label, or em-dash if no PC
       const pcCell = s.pc_number
-        ? `<div style="display:flex;flex-direction:column;align-items:center;gap:4px;"><span style="font-weight:700;font-size:.9rem;">${s.pc_number}</span><button class="pc-toggle-btn ${toggleClass}" onclick="togglePc('${s.lab}',${s.pc_number},this)"><i class="fa-solid fa-${isDisabled ? 'ban' : 'circle-check'}" style="font-size:.6rem;"></i> ${toggleLabel}</button></div>`
-        : '-';
+        ? `<span style="display:inline-flex;align-items:center;gap:4px;background:rgba(201,168,76,.12);color:#92400e;border:1px solid rgba(201,168,76,.3);padding:3px 10px;border-radius:6px;font-family:'Cinzel Decorative',serif;font-size:.85rem;font-weight:700;"><i class="fa-solid fa-desktop" style="font-size:.65rem;color:#b45309;"></i> PC ${s.pc_number}</span>`
+        : '<span style="color:var(--text-3,#9ca3af);font-size:.85rem;">—</span>';
       return `<tr>
         <td>${date}</td>
         <td>${tIn}</td>
         <td>${tOut}</td>
         <td>${fmtDur(dur)}</td>
-        <td>${s.lab}</td>
+        <td><span style="font-family:'Cinzel Decorative',serif;font-weight:900;color:var(--pur-900,#160837);">${s.lab}</span></td>
         <td style="text-align:center;">${pcCell}</td>
         <td style="max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${s.purpose}</td>
         <td><span style="font-size:.72rem;font-weight:700;padding:2px 8px;border-radius:20px;background:${statusBg};color:${statusColor}">${s.status}</span></td>
@@ -1279,18 +1316,6 @@ function renderSummaryTable() {
   pgEl.innerHTML = pg;
 }
 
-function togglePc(lab, pcNum, btn) {
-  const key = `${lab}_${pcNum}`;
-  pcDisabled[key] = !pcDisabled[key];
-  // Persist to localStorage
-  try { localStorage.setItem('pcDisabled', JSON.stringify(pcDisabled)); } catch(e) {}
-  // Update button text and icon
-  const isNowDisabled = pcDisabled[key];
-  btn.innerHTML = `<i class="fa-solid fa-${isNowDisabled ? 'ban' : 'circle-check'}" style="font-size:.6rem;"></i> ${isNowDisabled ? 'Disabled' : 'Enabled'}`;
-  btn.className = `pc-toggle-btn ${isNowDisabled ? 'disabled' : 'enabled'}`;
-  showToast(`PC ${pcNum} in Lab ${lab} is now ${isNowDisabled ? 'DISABLED' : 'ENABLED'} for reservation.`, isNowDisabled ? 'warning' : 'success');
-}
-
 function exportSummaryCSV() {
   const h = ['Date','Time In','Time Out','Duration','Lab','PC #','Purpose','Status'];
   const rows = summaryData.map(s => {
@@ -1305,6 +1330,82 @@ function exportSummaryCSV() {
   a.href = 'data:text/csv,' + encodeURIComponent(csv);
   a.download = 'my_sitin_summary.csv';
   a.click();
+}
+
+// Print a clean summary in a new browser window
+function printMySummary() {
+  // Make sure we have data — if user opened Print from History tab, summaryData may be empty
+  if (!summaryData || !summaryData.length) loadSitinSummary();
+  if (!summaryData || !summaryData.length) {
+    alert('No data to print yet.');
+    return;
+  }
+  const studentName = <?= json_encode(trim($fullname ?: 'Student')) ?>;
+  const idNum       = <?= json_encode($su['id_number'] ?? '') ?>;
+  const today       = new Date().toLocaleString('en-PH', { dateStyle:'long', timeStyle:'short' });
+
+  let totalMin = 0, longest = 0;
+  const rowsHtml = summaryData.map(s => {
+    const dur  = calcDuration(s.created_at, s.timed_out_at) || 0;
+    if (dur > 0) { totalMin += dur; if (dur > longest) longest = dur; }
+    const date = s.created_at ? new Date(s.created_at).toLocaleDateString('en-PH',{month:'short',day:'numeric',year:'numeric'}) : '—';
+    const tIn  = s.created_at  ? new Date(s.created_at).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'}) : '—';
+    const tOut = s.timed_out_at ? new Date(s.timed_out_at).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'}) : '—';
+    return `<tr>
+      <td>${date}</td><td>${tIn}</td><td>${tOut}</td>
+      <td>${fmtDur(dur)}</td><td>${s.lab||''}</td>
+      <td>${s.pc_number ? 'PC '+s.pc_number : '—'}</td>
+      <td>${s.purpose||''}</td><td>${s.status||''}</td>
+    </tr>`;
+  }).join('');
+
+  const total  = summaryData.length;
+  const avgDur = total ? fmtDur(totalMin/total) : '0m';
+  const totalH = (totalMin/60).toFixed(1) + 'h';
+
+  const w = window.open('', '_blank', 'width=1100,height=800');
+  if (!w) { alert('Please allow pop-ups to print.'); return; }
+  w.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"/>' +
+    '<title>My Sit-in Summary - ' + studentName + '</title>' +
+    '<style>' +
+    '*{box-sizing:border-box;margin:0;padding:0}' +
+    'body{font-family:Arial,Helvetica,sans-serif;color:#160837;padding:30px;background:#fff;font-size:11px;line-height:1.5}' +
+    '.header{text-align:center;border-bottom:3px double #160837;padding-bottom:14px;margin-bottom:18px}' +
+    '.header h1{font-size:20px;letter-spacing:1.5px;font-weight:800}' +
+    '.header .sub{font-size:11px;color:#475569;margin-top:4px}' +
+    '.meta{font-size:10px;color:#64748b;margin-top:6px}' +
+    '.student{margin-bottom:14px;padding:10px 14px;background:#f8f5ee;border-left:4px solid #C9A84C;border-radius:4px}' +
+    '.student b{font-size:13px}' +
+    '.stats{display:flex;gap:14px;margin-bottom:14px;flex-wrap:wrap}' +
+    '.stat{flex:1;min-width:160px;padding:10px;background:#f1f5f9;border:1px solid #cbd5e1;border-radius:6px;text-align:center}' +
+    '.stat .val{font-size:18px;font-weight:800;color:#160837}' +
+    '.stat .lbl{font-size:9px;color:#64748b;text-transform:uppercase;letter-spacing:.6px;margin-top:2px}' +
+    'table{width:100%;border-collapse:collapse;font-size:10px}' +
+    'thead{background:#160837;color:#fff}' +
+    'th{padding:7px 6px;text-align:left;font-weight:600;letter-spacing:.4px}' +
+    'td{padding:6px;border-bottom:1px solid #e2e8f0;color:#334155}' +
+    'tr:nth-child(even) td{background:#fafafa}' +
+    '.footer{margin-top:24px;font-size:9px;color:#64748b;padding-top:8px;border-top:1px solid #e2e8f0;display:flex;justify-content:space-between}' +
+    '@media print { body{padding:18px} }' +
+    '</style></head><body>' +
+    '<div class="header"><h1>MY SIT-IN SUMMARY</h1>' +
+    '<div class="sub">College of Computer Studies — University of Cebu</div>' +
+    '<div class="meta">Generated: ' + today + '</div></div>' +
+    '<div class="student"><b>' + studentName + '</b> &nbsp;·&nbsp; ID: ' + idNum + '</div>' +
+    '<div class="stats">' +
+    '<div class="stat"><div class="val">' + totalH + '</div><div class="lbl">Total Sit-in Hours</div></div>' +
+    '<div class="stat"><div class="val">' + total + '</div><div class="lbl">Total Sessions</div></div>' +
+    '<div class="stat"><div class="val">' + avgDur + '</div><div class="lbl">Avg Session</div></div>' +
+    '<div class="stat"><div class="val">' + fmtDur(longest) + '</div><div class="lbl">Longest Session</div></div>' +
+    '</div>' +
+    '<table><thead><tr>' +
+    '<th>Date</th><th>Time In</th><th>Time Out</th><th>Duration</th>' +
+    '<th>Lab</th><th>PC #</th><th>Purpose</th><th>Status</th>' +
+    '</tr></thead><tbody>' + rowsHtml + '</tbody></table>' +
+    '<div class="footer"><span>CCS Sit-in Monitoring System</span><span>' + today + '</span></div>' +
+    '<scr' + 'ipt>setTimeout(function(){window.print();},300);</scr' + 'ipt>' +
+    '</body></html>');
+  w.document.close();
 }
 
 // -- LAB AVAILABILITY --
