@@ -1,403 +1,493 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>CCS | Login</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Serif+Display&display=swap" rel="stylesheet"/>
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet"/>
-  <link href="style.css" rel="stylesheet"/>
-  <style>
-    /* ── MODAL OVERLAY ─────────────────────────────── */
-    .ccs-overlay {
-      display: none;
-      position: fixed; inset: 0; z-index: 1100;
-      background: rgba(10,22,60,0.72);
-      backdrop-filter: blur(8px);
-      align-items: center; justify-content: center;
-      padding: 1rem;
-      animation: fadeOverlay .2s ease;
-    }
-    .ccs-overlay.show { display: flex; }
-    @keyframes fadeOverlay { from { opacity:0; } to { opacity:1; } }
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>CCS Sit-in Portal — University of Cebu</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Cinzel:wght@500;600;700&family=Barlow:wght@300;400;500;600;700&family=Barlow+Condensed:wght@500;600;700;800&display=swap" rel="stylesheet"/>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet"/>
+<link href="style.css" rel="stylesheet"/>
 
-    .ccs-modal-box {
-      background: #fff;
-      border-radius: 20px;
-      width: 100%; max-width: 720px;
-      max-height: 88vh;
-      overflow-y: auto;
-      box-shadow: 0 32px 80px rgba(10,22,60,0.35);
-      animation: slideUp .25s cubic-bezier(.22,.9,.45,1);
-      position: relative;
-    }
-    @keyframes slideUp { from { transform:translateY(28px); opacity:0; } to { transform:translateY(0); opacity:1; } }
+<style>
+/* ══════════════════════════════════════════════════════
+   LANDING PAGE STYLES — CCS SIT-IN PORTAL
+   ══════════════════════════════════════════════════════ */
+html { scroll-behavior: smooth; }
 
-    .ccs-modal-header {
-      background: linear-gradient(135deg, #0a1e5e, #1a3a9e);
-      color: #fff;
-      padding: 1.8rem 2rem 1.4rem;
-      border-radius: 20px 20px 0 0;
-      position: relative;
-    }
-    .ccs-modal-header h2 {
-      font-family: 'DM Serif Display', serif;
-      font-size: 1.6rem; margin: 0; font-weight: 400;
-    }
-    .ccs-modal-header p {
-      font-size: .85rem; opacity: .75; margin: .3rem 0 0;
-    }
-    .ccs-modal-close {
-      position: absolute; top: 1rem; right: 1.2rem;
-      background: rgba(255,255,255,.15); border: none;
-      color: #fff; width: 32px; height: 32px;
-      border-radius: 50%; cursor: pointer; font-size: .85rem;
-      display: flex; align-items: center; justify-content: center;
-      transition: background .15s;
-    }
-    .ccs-modal-close:hover { background: rgba(255,255,255,.28); }
-    .ccs-modal-body { padding: 1.8rem 2rem; }
+/* ── HERO ── */
+.lp-hero {
+  background: var(--pur-900);
+  position: relative; overflow: hidden;
+  padding: 90px 24px 80px; text-align: center;
+}
+.lp-hero::before {
+  content:''; position:absolute; inset:0; pointer-events:none;
+  background:
+    radial-gradient(ellipse 70% 60% at 50% 0%, rgba(201,168,76,.10) 0%, transparent 70%),
+    radial-gradient(circle at 10% 80%, rgba(92,33,237,.35) 0%, transparent 50%),
+    radial-gradient(circle at 90% 20%, rgba(45,14,107,.6) 0%, transparent 50%);
+}
+.lp-ring {
+  position:absolute; border-radius:50%;
+  border:1.5px solid rgba(201,168,76,.07); pointer-events:none;
+}
+.lp-ring.r1{width:500px;height:500px;top:-160px;right:-120px;}
+.lp-ring.r2{width:320px;height:320px;bottom:-80px;left:-80px;border-color:rgba(201,168,76,.04);}
+.lp-ring.r3{width:200px;height:200px;top:60px;left:8%;border-color:rgba(255,255,255,.03);}
 
-    /* ── ABOUT SECTIONS ─────────────────────────────── */
-    .about-section {
-      display: flex; gap: 1rem; align-items: flex-start;
-      padding: 1rem; border-radius: 12px;
-      border: 1px solid #e8eef8;
-      margin-bottom: .85rem;
-      transition: box-shadow .15s;
-    }
-    .about-section:hover { box-shadow: 0 4px 18px rgba(10,22,60,.08); }
-    .about-icon {
-      width: 44px; height: 44px; border-radius: 11px; flex-shrink: 0;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 1.1rem;
-    }
-    .about-icon.blue  { background: rgba(37,99,235,.1);  color: #2563eb; }
-    .about-icon.gold  { background: rgba(201,152,0,.1);  color: #b98900; }
-    .about-icon.green { background: rgba(16,185,129,.1); color: #059669; }
-    .about-icon.red   { background: rgba(220,38,38,.1);  color: #dc2626; }
-    .about-icon.navy  { background: rgba(10,22,60,.08);  color: #0a1e5e; }
-    .about-section h6 { font-size: .88rem; font-weight: 700; color: #0a1e5e; margin: 0 0 .25rem; }
-    .about-section p  { font-size: .8rem;  color: #64748b; margin: 0; line-height: 1.55; }
+.lp-hero-inner{position:relative;z-index:1;max-width:760px;margin:0 auto;}
 
-    /* ── COMMUNITY DROPDOWN ──────────────────────────── */
-    .comm-dropdown {
-      display: none;
-      position: absolute;
-      top: calc(100% + 10px);
-      right: 0;
-      width: 300px;
-      background: #fff;
-      border-radius: 14px;
-      box-shadow: 0 12px 40px rgba(10,22,60,.18);
-      border: 1px solid #e2e8f0;
-      padding: .6rem;
-      z-index: 1050;
-      animation: slideUp .18s ease;
-    }
-    .comm-dropdown.show { display: block; }
-    .comm-item {
-      display: flex; align-items: center; gap: .85rem;
-      padding: .7rem .85rem; border-radius: 9px;
-      text-decoration: none; color: inherit;
-      transition: background .12s;
-    }
-    .comm-item:hover { background: #f1f5ff; }
-    .comm-item-icon {
-      width: 38px; height: 38px; border-radius: 9px; flex-shrink: 0;
-      display: flex; align-items: center; justify-content: center;
-      font-size: .95rem;
-    }
-    .comm-item-title { font-size: .83rem; font-weight: 700; color: #0a1e5e; display: block; }
-    .comm-item-sub   { font-size: .72rem; color: #94a3b8; display: block; margin-top: 1px; }
-    .comm-divider { border: none; border-top: 1px solid #e8eef8; margin: .4rem 0; }
+.lp-badge {
+  display:inline-flex;align-items:center;gap:8px;
+  background:rgba(201,168,76,.1);border:1px solid rgba(201,168,76,.25);
+  color:var(--gold-300);font-family:'Barlow Condensed',sans-serif;
+  font-size:.72rem;font-weight:700;letter-spacing:.18em;text-transform:uppercase;
+  padding:5px 16px;border-radius:99px;margin-bottom:24px;
+}
+.lp-hero-logo {
+  width:88px;height:88px;object-fit:contain;
+  filter:drop-shadow(0 6px 24px rgba(0,0,0,.45));
+  margin-bottom:20px;
+  animation:heroIn .7s cubic-bezier(.22,.9,.45,1) both;
+}
+@keyframes heroIn{from{opacity:0;transform:scale(.7) translateY(10px)}to{opacity:1;transform:scale(1)translateY(0)}}
 
-    /* ── HOME MODAL – HERO ───────────────────────────── */
-    .home-hero {
-      background: linear-gradient(135deg, #0a1e5e, #1a3a9e);
-      padding: 1.8rem 2rem;
-      border-radius: 20px 20px 0 0;
-      color: #fff; text-align: center;
-    }
-    .home-hero h2 { font-family:'DM Serif Display',serif; font-size:1.5rem; font-weight:400; margin:.6rem 0 .4rem; }
-    .home-hero p  { font-size:.82rem; opacity:.75; margin:0; }
-    .home-stat-grid {
-      display: grid; grid-template-columns: repeat(3,1fr); gap: .75rem;
-      padding: 1.4rem 2rem;
-    }
-    .home-stat {
-      background: #f8faff;
-      border: 1px solid #e2eaf8;
-      border-radius: 12px; padding: 1rem .75rem; text-align: center;
-    }
-    .home-stat .num { font-family:'DM Serif Display',serif; font-size:2rem; color:#0a1e5e; line-height:1; }
-    .home-stat .lbl { font-size:.72rem; color:#94a3b8; font-weight:600; text-transform:uppercase; letter-spacing:.5px; margin-top:.3rem; }
-    .home-feature-list { padding: 0 2rem 1.8rem; display:flex; flex-direction:column; gap:.65rem; }
-    .home-feature {
-      display: flex; align-items: center; gap: .75rem;
-      padding: .7rem 1rem; border-radius: 10px;
-      background: #f8faff; border: 1px solid #e8eef8;
-      font-size: .82rem; color: #334155;
-    }
-    .home-feature i { width: 20px; text-align:center; color: #2563eb; }
+.lp-hero-title {
+  font-family:'Cinzel Decorative',serif !important;
+  color:#fff !important;
+  font-size:clamp(1.8rem,5vw,3.2rem);
+  font-weight:900;letter-spacing:.01em;line-height:1.15;
+  margin-bottom:10px;animation:fadeUp .6s .1s both;
+}
+.lp-hero-title span{color:var(--gold-400);}
+.lp-hero-sub {
+  font-family:'Barlow Condensed',sans-serif;
+  font-size:.82rem;font-weight:700;letter-spacing:.2em;text-transform:uppercase;
+  color:rgba(255,255,255,.4);margin-bottom:20px;animation:fadeUp .6s .18s both;
+}
+.lp-hero-desc {
+  font-size:1.05rem;font-weight:400;color:rgba(255,255,255,.6);
+  max-width:520px;margin:0 auto 36px;line-height:1.65;animation:fadeUp .6s .25s both;
+}
+.lp-hero-actions{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;animation:fadeUp .6s .32s both;}
 
-    /* ── CLAMPED NAV DROPDOWN PARENT ───────────────────── */
-    .nav-community-wrap { position: relative; }
+.lp-btn-gold {
+  background:var(--gold-500);color:var(--pur-900) !important;
+  border:2px solid var(--gold-500);border-radius:var(--radius-sm);
+  padding:0 28px;min-height:48px;
+  font-family:'Cinzel',serif !important;font-size:.85rem;font-weight:700;
+  letter-spacing:.14em;text-transform:uppercase;
+  display:inline-flex;align-items:center;gap:8px;
+  text-decoration:none;transition:all .18s;
+}
+.lp-btn-gold:hover{background:var(--gold-400);border-color:var(--gold-400);transform:translateY(-2px);box-shadow:0 8px 24px rgba(201,168,76,.35);}
 
-    /* ── POINT BADGE (for community) ─────────────────── */
-    .badge-new {
-      background: #ef4444; color: #fff;
-      font-size: .58rem; font-weight: 800;
-      padding: 1px 5px; border-radius: 20px;
-      vertical-align: middle; margin-left: 3px;
-    }
-  </style>
+.lp-btn-ghost {
+  background:rgba(255,255,255,.07);color:rgba(255,255,255,.8) !important;
+  border:1.5px solid rgba(255,255,255,.18);border-radius:var(--radius-sm);
+  padding:0 24px;min-height:48px;
+  font-family:'Barlow Condensed',sans-serif !important;font-size:.82rem;font-weight:700;
+  letter-spacing:.14em;text-transform:uppercase;
+  display:inline-flex;align-items:center;gap:8px;
+  text-decoration:none;transition:all .15s;
+}
+.lp-btn-ghost:hover{background:rgba(255,255,255,.14);color:#fff !important;border-color:rgba(255,255,255,.35);}
+
+/* stat bar */
+.lp-stats-bar{display:flex;justify-content:center;margin-top:52px;animation:fadeUp .6s .4s both;}
+.lp-stat{padding:14px 32px;border-right:1px solid rgba(255,255,255,.1);text-align:center;}
+.lp-stat:last-child{border-right:none;}
+.lp-stat-num{font-family:'Cinzel',serif;font-size:1.7rem;font-weight:700;color:var(--gold-400);line-height:1;}
+.lp-stat-lbl{font-family:'Barlow Condensed',sans-serif;font-size:.66rem;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:rgba(255,255,255,.35);margin-top:4px;}
+
+/* scroll cue */
+.lp-scroll-cue{display:flex;flex-direction:column;align-items:center;gap:5px;padding-top:14px;animation:cueBob 2s ease-in-out infinite;}
+.lp-scroll-cue span{font-family:'Barlow Condensed',sans-serif;font-size:.66rem;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.28);}
+.lp-scroll-cue i{color:rgba(201,168,76,.45);font-size:.82rem;}
+@keyframes cueBob{0%,100%{transform:translateY(0)}50%{transform:translateY(5px)}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── SECTION SHELLS ── */
+.lp-sec-dark{background:var(--pur-950);padding:80px 24px;}
+.lp-sec-cream{background:var(--bg);padding:80px 24px;}
+.lp-sec-mid{background:var(--pur-900);padding:80px 24px;position:relative;overflow:hidden;}
+.lp-sec-mid::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 80% 60% at 50% 100%,rgba(124,58,237,.18) 0%,transparent 70%);pointer-events:none;}
+
+.lp-eyebrow{font-family:'Barlow Condensed',sans-serif;font-size:.7rem;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--gold-600);margin-bottom:8px;}
+.lp-eyebrow.lt{color:var(--gold-400);}
+.lp-gold-rule{width:40px;height:3px;background:var(--gold-500);border-radius:99px;margin-bottom:20px;}
+.lp-sec-title{font-family:'Cinzel',serif !important;font-size:clamp(1.4rem,3vw,2rem);font-weight:700;color:#fff !important;margin-bottom:12px;}
+.lp-sec-title.dk{color:var(--pur-900) !important;}
+.lp-sec-desc{font-size:.95rem;color:rgba(255,255,255,.55);max-width:500px;line-height:1.65;}
+.lp-sec-desc.dk{color:var(--text-2);}
+
+/* ── FEATURE CARDS ── */
+.lp-feat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:16px;max-width:1100px;margin:48px auto 0;}
+.lp-feat-card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:var(--radius-lg);padding:28px 24px;position:relative;overflow:hidden;transition:all .18s;}
+.lp-feat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--gold-500),transparent);opacity:0;transition:opacity .2s;}
+.lp-feat-card:hover{background:rgba(255,255,255,.07);border-color:rgba(201,168,76,.22);transform:translateY(-3px);}
+.lp-feat-card:hover::before{opacity:1;}
+.lp-feat-icon{width:44px;height:44px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;margin-bottom:16px;}
+.fi-gold{background:rgba(201,168,76,.15);color:var(--gold-400);}
+.fi-pur{background:rgba(124,58,237,.2);color:var(--pur-400);}
+.fi-green{background:rgba(16,185,129,.15);color:#34d399;}
+.fi-blue{background:rgba(37,99,235,.15);color:#60a5fa;}
+.lp-feat-title{font-family:'Cinzel',serif !important;font-size:.88rem;font-weight:700;color:#fff !important;margin-bottom:8px;}
+.lp-feat-desc{font-size:.82rem;color:rgba(255,255,255,.5);line-height:1.6;}
+
+/* ── HOW IT WORKS ── */
+.lp-steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:0;max-width:900px;margin:48px auto 0;position:relative;}
+.lp-steps::before{content:'';position:absolute;top:28px;left:12%;right:12%;height:1px;background:linear-gradient(90deg,transparent,rgba(201,168,76,.25),transparent);pointer-events:none;}
+.lp-step{text-align:center;padding:0 18px;}
+.lp-step-num{width:56px;height:56px;border-radius:50%;background:var(--bg);border:2px solid var(--gold-500);font-family:'Cinzel',serif;font-size:1.1rem;font-weight:700;color:var(--gold-600);display:flex;align-items:center;justify-content:center;margin:0 auto 18px;box-shadow:0 0 0 6px rgba(201,168,76,.08);position:relative;z-index:1;}
+.lp-step-title{font-family:'Cinzel',serif !important;font-size:.85rem;font-weight:700;color:var(--pur-900) !important;margin-bottom:8px;}
+.lp-step-desc{font-size:.8rem;color:var(--text-2);line-height:1.6;}
+
+/* ── LEADERBOARD ── */
+.lp-lb-inner{max-width:860px;margin:0 auto;position:relative;z-index:1;}
+
+/* podium */
+.lp-podium{display:flex;justify-content:center;align-items:flex-end;gap:12px;margin:48px auto 36px;max-width:500px;}
+.lp-pod{flex:1;display:flex;flex-direction:column;align-items:center;max-width:140px;}
+.lp-pod.p1{order:2;}.lp-pod.p2{order:1;}.lp-pod.p3{order:3;}
+.lp-pod-av{width:52px;height:52px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Cinzel',serif;font-weight:700;font-size:.9rem;border:2.5px solid rgba(255,255,255,.15);margin-bottom:8px;flex-shrink:0;}
+.lp-pod.p1 .lp-pod-av{width:68px;height:68px;font-size:1.1rem;border-color:var(--gold-500);box-shadow:0 0 0 5px rgba(201,168,76,.18),0 8px 24px rgba(0,0,0,.4);}
+.lp-pod-medal{font-size:1.35rem;margin-bottom:4px;}
+.lp-pod.p1 .lp-pod-medal{font-size:1.65rem;}
+.lp-pod-name{font-family:'Barlow Condensed',sans-serif;font-size:.78rem;font-weight:700;color:rgba(255,255,255,.85);text-align:center;max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.lp-pod.p1 .lp-pod-name{font-size:.9rem;color:var(--gold-300);}
+.lp-pod-pts{font-family:'Cinzel',serif;font-size:.68rem;font-weight:700;color:rgba(255,255,255,.38);margin-top:2px;}
+.lp-pod.p1 .lp-pod-pts{color:var(--gold-500);font-size:.78rem;}
+.lp-pod-base{width:100%;border-radius:6px 6px 0 0;margin-top:10px;}
+.lp-pod.p1 .lp-pod-base{height:44px;background:rgba(201,168,76,.22);border:1px solid rgba(201,168,76,.28);border-bottom:none;}
+.lp-pod.p2 .lp-pod-base{height:28px;background:rgba(148,163,184,.13);border:1px solid rgba(148,163,184,.18);border-bottom:none;}
+.lp-pod.p3 .lp-pod-base{height:18px;background:rgba(180,120,50,.13);border:1px solid rgba(180,120,50,.18);border-bottom:none;}
+
+/* list */
+.lp-lb-card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:var(--radius-lg);overflow:hidden;}
+.lp-lb-row{display:flex;align-items:center;gap:14px;padding:13px 20px;border-bottom:1px solid rgba(255,255,255,.05);transition:background .12s;}
+.lp-lb-row:last-child{border-bottom:none;}
+.lp-lb-row:hover{background:rgba(255,255,255,.04);}
+.lp-lb-rank{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Cinzel',serif;font-weight:700;font-size:.72rem;flex-shrink:0;background:rgba(255,255,255,.06);color:rgba(255,255,255,.38);border:1.5px solid rgba(255,255,255,.1);}
+.lp-lb-av{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Cinzel',serif;font-weight:700;font-size:.7rem;flex-shrink:0;}
+.lp-lb-info{flex:1;min-width:0;}
+.lp-lb-name{font-family:'Barlow',sans-serif;font-size:.85rem;font-weight:700;color:#fff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.lp-lb-course{font-family:'Barlow Condensed',sans-serif;font-size:.68rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.32);margin-top:1px;}
+.lp-lb-pill{background:rgba(201,168,76,.14);border:1px solid rgba(201,168,76,.24);color:var(--gold-300);font-family:'Cinzel',serif;font-size:.75rem;font-weight:700;padding:3px 12px;border-radius:99px;flex-shrink:0;white-space:nowrap;}
+
+/* skeleton */
+.lp-sk-row{display:flex;align-items:center;gap:12px;padding:13px 20px;border-bottom:1px solid rgba(255,255,255,.05);}
+.lp-sk-c{width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.07);flex-shrink:0;animation:lbShim 1.4s infinite;}
+.lp-sk-lines{flex:1;display:flex;flex-direction:column;gap:6px;}
+.lp-sk-l{height:9px;border-radius:99px;background:rgba(255,255,255,.07);animation:lbShim 1.4s infinite;}
+.lp-sk-l.s{width:42%;}
+.lp-sk-p{width:54px;height:24px;border-radius:99px;background:rgba(255,255,255,.07);flex-shrink:0;animation:lbShim 1.4s infinite;}
+@keyframes lbShim{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* states */
+.lp-lb-empty,.lp-lb-err{padding:40px 20px;text-align:center;font-size:.85rem;color:rgba(255,255,255,.3);}
+.lp-lb-empty i{display:block;font-size:2rem;margin-bottom:10px;opacity:.28;}
+.lp-lb-err{color:rgba(239,68,68,.65);}
+.lp-lb-err i{display:block;font-size:1.5rem;margin-bottom:8px;}
+
+/* lb footer */
+.lp-lb-footer{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-top:20px;}
+.lp-lb-ts{font-family:'Barlow Condensed',sans-serif;font-size:.68rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.22);}
+.lp-refresh-btn{background:none;border:1px solid rgba(255,255,255,.15);color:rgba(255,255,255,.45);border-radius:var(--radius-sm);padding:5px 14px;font-family:'Barlow Condensed',sans-serif;font-size:.72rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;display:flex;align-items:center;gap:6px;transition:all .15s;}
+.lp-refresh-btn:hover{border-color:var(--gold-500);color:var(--gold-400);}
+.lp-refresh-btn.spinning i{animation:spin .6s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── LOGIN SECTION ── */
+.lp-login-sec{background:var(--bg);padding:80px 24px 100px;position:relative;}
+.lp-login-sec::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--border-2),transparent);}
+.lp-login-head{text-align:center;margin-bottom:36px;}
+
+/* ── FOOTER ── */
+.lp-footer{background:var(--pur-950);padding:22px 24px;text-align:center;border-top:1px solid rgba(201,168,76,.1);}
+.lp-footer p{font-family:'Barlow Condensed',sans-serif;font-size:.7rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.22);margin:0;}
+.lp-footer span{color:var(--gold-500);}
+
+/* ── MODALS (reused) ── */
+.ccs-overlay{display:none;position:fixed;inset:0;z-index:1100;background:rgba(10,5,30,.78);backdrop-filter:blur(8px);align-items:center;justify-content:center;padding:1rem;animation:fadeOv .2s ease;}
+.ccs-overlay.show{display:flex;}
+@keyframes fadeOv{from{opacity:0}to{opacity:1}}
+.ccs-modal-box{background:#fff;border-radius:20px;width:100%;max-width:720px;max-height:88vh;overflow-y:auto;box-shadow:0 32px 80px rgba(10,5,30,.5);animation:slideUp .25s cubic-bezier(.22,.9,.45,1);position:relative;}
+@keyframes slideUp{from{transform:translateY(28px);opacity:0}to{transform:translateY(0);opacity:1}}
+.ccs-modal-header{background:linear-gradient(135deg,var(--pur-900),var(--pur-700));color:#fff;padding:1.8rem 2rem 1.4rem;border-radius:20px 20px 0 0;position:relative;}
+.ccs-modal-header h2{font-family:'Cinzel',serif !important;font-size:1.5rem;margin:0;font-weight:700;color:#fff !important;}
+.ccs-modal-header p{font-size:.85rem;opacity:.6;margin:.3rem 0 0;}
+.ccs-modal-close{position:absolute;top:1rem;right:1.2rem;background:rgba(255,255,255,.12);border:none;color:#fff;width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:.85rem;display:flex;align-items:center;justify-content:center;transition:background .15s;}
+.ccs-modal-close:hover{background:rgba(255,255,255,.24);}
+.ccs-modal-body{padding:1.8rem 2rem;}
+.about-section{display:flex;gap:1rem;align-items:flex-start;padding:1rem;border-radius:12px;border:1px solid #e8eef8;margin-bottom:.85rem;transition:box-shadow .15s;}
+.about-section:hover{box-shadow:0 4px 18px rgba(22,8,55,.08);}
+.about-icon{width:44px;height:44px;border-radius:11px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:1.1rem;}
+.about-icon.blue{background:rgba(37,99,235,.1);color:#2563eb;}.about-icon.gold{background:rgba(201,168,76,.1);color:#b98900;}.about-icon.green{background:rgba(16,185,129,.1);color:#059669;}.about-icon.red{background:rgba(220,38,38,.1);color:#dc2626;}.about-icon.navy{background:rgba(22,8,55,.08);color:var(--pur-900);}
+.about-section h6{font-size:.88rem;font-weight:700;color:var(--pur-900);margin:0 0 .25rem;font-family:'Cinzel',serif !important;}
+.about-section p{font-size:.8rem;color:#64748b;margin:0;line-height:1.55;}
+.home-hero{background:linear-gradient(135deg,var(--pur-900),var(--pur-700));padding:1.8rem 2rem;border-radius:20px 20px 0 0;color:#fff;text-align:center;}
+.home-hero h2{font-family:'Cinzel',serif !important;font-size:1.5rem;font-weight:700;margin:.6rem 0 .4rem;color:#fff !important;}
+.home-hero p{font-size:.82rem;opacity:.6;margin:0;}
+.home-stat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:.75rem;padding:1.4rem 2rem;}
+.home-stat{background:#f8f5ff;border:1px solid #ede9fe;border-radius:12px;padding:1rem .75rem;text-align:center;}
+.home-stat .num{font-family:'Cinzel',serif;font-size:2rem;color:var(--pur-900);line-height:1;}
+.home-stat .lbl{font-size:.72rem;color:#94a3b8;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-top:.3rem;font-family:'Barlow Condensed',sans-serif;}
+.home-feature-list{padding:0 2rem 1.8rem;display:flex;flex-direction:column;gap:.65rem;}
+.home-feature{display:flex;align-items:center;gap:.75rem;padding:.7rem 1rem;border-radius:10px;background:#f8f5ff;border:1px solid #ede9fe;font-size:.82rem;color:#334155;}
+.home-feature i{width:20px;text-align:center;color:var(--pur-700);}
+.comm-dropdown{display:none;position:absolute;top:calc(100% + 10px);right:0;width:300px;background:#fff;border-radius:14px;box-shadow:0 12px 40px rgba(22,8,55,.18);border:1px solid #e2e8f0;padding:.6rem;z-index:1050;animation:slideUp .18s ease;}
+.comm-dropdown.show{display:block;}
+.comm-item{display:flex;align-items:center;gap:.85rem;padding:.7rem .85rem;border-radius:9px;text-decoration:none;color:inherit;transition:background .12s;}
+.comm-item:hover{background:#f5f3ff;}
+.comm-item-icon{width:38px;height:38px;border-radius:9px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:.95rem;}
+.comm-item-title{font-size:.83rem;font-weight:700;color:var(--pur-900);display:block;font-family:'Cinzel',serif !important;}
+.comm-item-sub{font-size:.72rem;color:#94a3b8;display:block;margin-top:1px;}
+.comm-divider{border:none;border-top:1px solid #e8eef8;margin:.4rem 0;}
+.nav-community-wrap{position:relative;}
+.badge-new{background:#ef4444;color:#fff;font-size:.58rem;font-weight:800;padding:1px 5px;border-radius:20px;vertical-align:middle;margin-left:3px;}
+
+/* ── RESPONSIVE ── */
+@media(max-width:640px){
+  .lp-hero{padding:56px 16px 48px;}
+  .lp-stats-bar{flex-wrap:wrap;}
+  .lp-stat{padding:10px 14px;border-right:none;border-bottom:1px solid rgba(255,255,255,.07);}
+  .lp-stat:last-child{border-bottom:none;}
+  .lp-steps::before{display:none;}
+  .lp-sec-dark,.lp-sec-cream,.lp-sec-mid,.lp-lb-sec,.lp-login-sec{padding:56px 16px;}
+  .lp-podium{max-width:300px;gap:6px;}
+  .lp-pod-av{width:42px;height:42px;font-size:.75rem;}
+  .lp-pod.p1 .lp-pod-av{width:54px;height:54px;}
+}
+</style>
 </head>
 <body>
 
-  <!-- Navbar -->
-  <nav class="navbar navbar-expand-lg navbar-dark px-4">
-    <a class="navbar-brand fw-semibold d-flex align-items-center" href="index.html" style="font-size:.9rem; text-decoration:none;">
-      <img src="images/UC_LOGO.png" alt="UC Logo" class="nav-logo me-2" onerror="this.src='images/UC_LOGO.jpg'; this.onerror=null;"/>
-      College of Computer Studies Sit-in Monitoring System
-    </a>
-    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMenu">
-      <span class="navbar-toggler-icon"></span>
-    </button>
-    <div class="collapse navbar-collapse" id="navMenu">
-      <ul class="navbar-nav ms-auto gap-1 align-items-lg-center">
-
-        <!-- HOME -->
-        <li class="nav-item">
-          <a class="nav-link" href="#" onclick="openHomeModal(event)">Home</a>
-        </li>
-
-        <!-- COMMUNITY dropdown -->
-        <li class="nav-item nav-community-wrap">
-          <a class="nav-link" href="#" onclick="toggleCommunity(event)">
-            Community ▾
+<!-- ══════════════ NAVBAR ══════════════ -->
+<nav class="navbar navbar-expand-lg navbar-dark px-4" style="position:sticky;top:0;z-index:1000;box-shadow:0 2px 20px rgba(0,0,0,.3);">
+  <a class="navbar-brand fw-semibold d-flex align-items-center" href="#" style="font-size:.88rem;text-decoration:none;gap:10px;">
+    <img src="images/UC_LOGO.png" alt="UC Logo" class="nav-logo" onerror="this.src='images/UC_LOGO.jpg';this.onerror=null;"/>
+    <span style="font-family:'Cinzel',serif;letter-spacing:.06em;">College of Computer Studies</span>
+  </a>
+  <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMenu"><span class="navbar-toggler-icon"></span></button>
+  <div class="collapse navbar-collapse" id="navMenu">
+    <ul class="navbar-nav ms-auto gap-1 align-items-lg-center">
+      <li class="nav-item"><a class="nav-link" href="#" onclick="openHomeModal(event)">Home</a></li>
+      <li class="nav-item nav-community-wrap">
+        <a class="nav-link" href="#" onclick="toggleCommunity(event)">Community ▾</a>
+        <div class="comm-dropdown" id="commDropdown">
+          <a class="comm-item" href="#" onclick="closeAll()">
+            <div class="comm-item-icon" style="background:rgba(37,99,235,.1);color:#2563eb;"><i class="fa-solid fa-users"></i></div>
+            <div><span class="comm-item-title">Student Groups</span><span class="comm-item-sub">Connect with classmates &amp; orgs</span></div>
           </a>
-          <div class="comm-dropdown" id="commDropdown">
-            <a class="comm-item" href="#" onclick="closeAll()">
-              <div class="comm-item-icon" style="background:rgba(37,99,235,.1);color:#2563eb;">
-                <i class="fa-solid fa-users"></i>
-              </div>
-              <div>
-                <span class="comm-item-title">Student Groups</span>
-                <span class="comm-item-sub">Connect with your classmates & org</span>
-              </div>
-            </a>
-            <hr class="comm-divider"/>
-            <a class="comm-item" href="#" onclick="closeAll()">
-              <div class="comm-item-icon" style="background:rgba(16,185,129,.1);color:#059669;">
-                <i class="fa-solid fa-calendar-days"></i>
-              </div>
-              <div>
-                <span class="comm-item-title">Lab Events <span class="badge-new">NEW</span></span>
-                <span class="comm-item-sub">Upcoming workshops & hackathons</span>
-              </div>
-            </a>
-            <hr class="comm-divider"/>
-            <a class="comm-item" href="#" onclick="closeAll()">
-              <div class="comm-item-icon" style="background:rgba(245,158,11,.1);color:#b98900;">
-                <i class="fa-solid fa-trophy"></i>
-              </div>
-              <div>
-                <span class="comm-item-title">Leaderboard</span>
-                <span class="comm-item-sub">Top sit-in students this semester</span>
-              </div>
-            </a>
-            <hr class="comm-divider"/>
-            <a class="comm-item" href="#" onclick="closeAll()">
-              <div class="comm-item-icon" style="background:rgba(139,92,246,.1);color:#7c3aed;">
-                <i class="fa-solid fa-comment-dots"></i>
-              </div>
-              <div>
-                <span class="comm-item-title">Feedback Board</span>
-                <span class="comm-item-sub">Share your lab session experience</span>
-              </div>
-            </a>
-          </div>
-        </li>
+          <hr class="comm-divider"/>
+          <a class="comm-item" href="#" onclick="closeAll()">
+            <div class="comm-item-icon" style="background:rgba(16,185,129,.1);color:#059669;"><i class="fa-solid fa-calendar-days"></i></div>
+            <div><span class="comm-item-title">Lab Events <span class="badge-new">NEW</span></span><span class="comm-item-sub">Upcoming workshops &amp; hackathons</span></div>
+          </a>
+          <hr class="comm-divider"/>
+          <a class="comm-item" href="#lp-lb" onclick="closeAll()">
+            <div class="comm-item-icon" style="background:rgba(201,168,76,.1);color:#b98900;"><i class="fa-solid fa-trophy"></i></div>
+            <div><span class="comm-item-title">Leaderboard</span><span class="comm-item-sub">Top sit-in students this semester</span></div>
+          </a>
+          <hr class="comm-divider"/>
+          <a class="comm-item" href="#" onclick="closeAll()">
+            <div class="comm-item-icon" style="background:rgba(139,92,246,.1);color:#7c3aed;"><i class="fa-solid fa-comment-dots"></i></div>
+            <div><span class="comm-item-title">Feedback Board</span><span class="comm-item-sub">Share your lab session experience</span></div>
+          </a>
+        </div>
+      </li>
+      <li class="nav-item"><a class="nav-link" href="#" onclick="openAboutModal(event)">About</a></li>
+      <li class="nav-item"><a class="nav-link active" href="#lp-login">Login</a></li>
+      <li class="nav-item"><a class="nav-link" href="register.html">Register</a></li>
+    </ul>
+  </div>
+</nav>
 
-        <!-- ABOUT -->
-        <li class="nav-item">
-          <a class="nav-link" href="#" onclick="openAboutModal(event)">About</a>
-        </li>
-
-        <li class="nav-item"><a class="nav-link active" href="#">Login</a></li>
-        <li class="nav-item"><a class="nav-link" href="register.html">Register</a></li>
-      </ul>
+<!-- ══════════════ HERO ══════════════ -->
+<section class="lp-hero">
+  <div class="lp-ring r1"></div>
+  <div class="lp-ring r2"></div>
+  <div class="lp-ring r3"></div>
+  <div class="lp-hero-inner">
+    <div class="lp-badge"><i class="fa-solid fa-building-columns"></i> University of Cebu — College of Computer Studies</div>
+    <img src="images/logo.png" alt="CCS Logo" class="lp-hero-logo" onerror="this.style.display='none'"/>
+    <h1 class="lp-hero-title">CCS <span>Sit-in</span> Portal</h1>
+    <p class="lp-hero-sub">Laboratory Monitoring System</p>
+    <p class="lp-hero-desc">Reserve a lab PC, track your sessions, earn points, and compete with fellow CCS students — all in one place.</p>
+    <div class="lp-hero-actions">
+      <a href="#lp-login" class="lp-btn-gold"><i class="fa-solid fa-right-to-bracket"></i> Sign In</a>
+      <a href="register.html" class="lp-btn-ghost"><i class="fa-solid fa-user-plus"></i> Create Account</a>
     </div>
-  </nav>
+    <div class="lp-stats-bar">
+      <div class="lp-stat"><div class="lp-stat-num">4</div><div class="lp-stat-lbl">CCS Labs</div></div>
+      <div class="lp-stat"><div class="lp-stat-num">30</div><div class="lp-stat-lbl">Sessions / Semester</div></div>
+      <div class="lp-stat"><div class="lp-stat-num">160</div><div class="lp-stat-lbl">PCs Available</div></div>
+      <div class="lp-stat"><div class="lp-stat-num">24/7</div><div class="lp-stat-lbl">Online Access</div></div>
+    </div>
+    <div class="lp-scroll-cue"><span>Discover</span><i class="fa-solid fa-chevron-down"></i></div>
+  </div>
+</section>
 
-
-  <!-- ═══════════════ HOME MODAL ═══════════════ -->
-  <div class="ccs-overlay" id="homeOverlay" onclick="handleOverlayClick(event,'homeOverlay')">
-    <div class="ccs-modal-box" style="max-width:600px;">
-      <div class="home-hero">
-        <button class="ccs-modal-close" onclick="closeModal('homeOverlay')"><i class="fa-solid fa-xmark"></i></button>
-        <img src="images/logo.png" alt="CCS Logo" style="width:70px;height:70px;object-fit:contain;border-radius:50%;background:rgba(255,255,255,.1);padding:8px;" onerror="this.style.display='none'"/>
-        <h2>CCS Sit-in Monitoring System</h2>
-        <p>University of Cebu — College of Computer Studies</p>
+<!-- ══════════════ FEATURES ══════════════ -->
+<section class="lp-sec-dark">
+  <div style="max-width:1100px;margin:0 auto;">
+    <div class="lp-eyebrow lt">What You Can Do</div>
+    <div class="lp-gold-rule"></div>
+    <h2 class="lp-sec-title">Everything you need,<br>in one portal.</h2>
+    <p class="lp-sec-desc">From PC reservations to session reports — the CCS portal handles it all so you can focus on learning.</p>
+    <div class="lp-feat-grid">
+      <div class="lp-feat-card">
+        <div class="lp-feat-icon fi-gold"><i class="fa-solid fa-desktop"></i></div>
+        <div class="lp-feat-title">Reserve a PC</div>
+        <div class="lp-feat-desc">Book your preferred computer in Labs 524, 526, 528, or 530. See real-time availability before you walk in.</div>
       </div>
-      <div class="home-stat-grid">
-        <div class="home-stat">
-          <div class="num">4</div>
-          <div class="lbl">Labs Available</div>
-        </div>
-        <div class="home-stat">
-          <div class="num">30</div>
-          <div class="lbl">Sessions / Student</div>
-        </div>
-        <div class="home-stat">
-          <div class="num">24/7</div>
-          <div class="lbl">Online Access</div>
-        </div>
+      <div class="lp-feat-card">
+        <div class="lp-feat-icon fi-pur"><i class="fa-solid fa-clock-rotate-left"></i></div>
+        <div class="lp-feat-title">Track Sessions</div>
+        <div class="lp-feat-desc">View your full sit-in history, session duration, and remaining sessions (30 per semester) at a glance.</div>
       </div>
-      <div class="home-feature-list">
-        <div class="home-feature">
-          <i class="fa-solid fa-calendar-plus"></i>
-          <span><strong>Reserve a Lab PC</strong> — Book your preferred PC in Labs 524, 526, 528, or 530</span>
-        </div>
-        <div class="home-feature">
-          <i class="fa-solid fa-clock-rotate-left"></i>
-          <span><strong>Track Your Sessions</strong> — View your sit-in history, duration, and remaining sessions</span>
-        </div>
-        <div class="home-feature">
-          <i class="fa-solid fa-star"></i>
-          <span><strong>Earn Points</strong> — Get rewarded for completing sit-in sessions and climb the leaderboard</span>
-        </div>
-        <div class="home-feature">
-          <i class="fa-solid fa-desktop"></i>
-          <span><strong>Check Lab Status</strong> — See real-time PC availability before heading to the lab</span>
-        </div>
-        <div style="text-align:center;margin-top:.5rem;">
-          <a href="register.html" style="
-            display:inline-block;background:linear-gradient(135deg,#0a1e5e,#2563eb);
-            color:#fff;text-decoration:none;border-radius:10px;
-            padding:.65rem 2rem;font-size:.85rem;font-weight:700;
-          ">Get Started — Register Now</a>
-        </div>
+      <div class="lp-feat-card">
+        <div class="lp-feat-icon fi-green"><i class="fa-solid fa-star"></i></div>
+        <div class="lp-feat-title">Earn Points</div>
+        <div class="lp-feat-desc">Get rewarded for every completed session. Accumulate points and climb the leaderboard against other students.</div>
+      </div>
+      <div class="lp-feat-card">
+        <div class="lp-feat-icon fi-blue"><i class="fa-solid fa-bell"></i></div>
+        <div class="lp-feat-title">Stay Updated</div>
+        <div class="lp-feat-desc">Receive lab announcements, event notices, and admin messages directly in your student dashboard.</div>
       </div>
     </div>
   </div>
+</section>
 
-
-  <!-- ═══════════════ ABOUT MODAL ═══════════════ -->
-  <div class="ccs-overlay" id="aboutOverlay" onclick="handleOverlayClick(event,'aboutOverlay')">
-    <div class="ccs-modal-box">
-      <div class="ccs-modal-header">
-        <button class="ccs-modal-close" onclick="closeModal('aboutOverlay')"><i class="fa-solid fa-xmark"></i></button>
-        <div style="display:flex;align-items:center;gap:.75rem;">
-          <div style="width:42px;height:42px;border-radius:10px;background:rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;font-size:1.1rem;">
-            <i class="fa-solid fa-circle-info"></i>
-          </div>
-          <div>
-            <h2>About the System</h2>
-            <p>CCS Sit-in Monitoring System — University of Cebu</p>
-          </div>
-        </div>
+<!-- ══════════════ HOW IT WORKS ══════════════ -->
+<section class="lp-sec-cream">
+  <div style="max-width:900px;margin:0 auto;text-align:center;">
+    <div class="lp-eyebrow">Simple &amp; Fast</div>
+    <div class="lp-gold-rule" style="margin:0 auto 20px;"></div>
+    <h2 class="lp-sec-title dk">How It Works</h2>
+    <p class="lp-sec-desc dk" style="margin:0 auto;">Getting started takes less than a minute.</p>
+    <div class="lp-steps">
+      <div class="lp-step">
+        <div class="lp-step-num">1</div>
+        <div class="lp-step-title">Register</div>
+        <div class="lp-step-desc">Create your account with your UC student ID. One-time setup, completely free.</div>
       </div>
-      <div class="ccs-modal-body">
-
-        <div class="about-section">
-          <div class="about-icon blue"><i class="fa-solid fa-bullseye"></i></div>
-          <div>
-            <h6>Our Purpose</h6>
-            <p>The CCS Sit-in Monitoring System is designed to streamline the management of student sit-in sessions in the College of Computer Studies laboratories. It replaces manual logbook tracking with a fast, digital solution that benefits both students and administrators.</p>
-          </div>
-        </div>
-
-        <div class="about-section">
-          <div class="about-icon navy"><i class="fa-solid fa-flask"></i></div>
-          <div>
-            <h6>Laboratory Coverage</h6>
-            <p>The system covers four CCS computer labs — <strong>Lab 524, Lab 526, Lab 528, and Lab 530</strong>. Each lab has 40 PCs that students can view and reserve in real time through the student dashboard.</p>
-          </div>
-        </div>
-
-        <div class="about-section">
-          <div class="about-icon gold"><i class="fa-solid fa-user-graduate"></i></div>
-          <div>
-            <h6>For Students</h6>
-            <p>Students can reserve a PC, monitor their sit-in history, check remaining sessions (30 per semester), earn points for completed sessions, and view the leaderboard. All features are accessible after a one-time registration.</p>
-          </div>
-        </div>
-
-        <div class="about-section">
-          <div class="about-icon green"><i class="fa-solid fa-shield-halved"></i></div>
-          <div>
-            <h6>For Administrators</h6>
-            <p>CCS lab administrators can log students in and out, view real-time sit-in activity, manage reservations, generate reports, post announcements, award points, and monitor feedback — all from a single secure admin dashboard.</p>
-          </div>
-        </div>
-
-        <div class="about-section">
-          <div class="about-icon red"><i class="fa-solid fa-code"></i></div>
-          <div>
-            <h6>Technology Stack</h6>
-            <p>Built with <strong>PHP, MySQL, Bootstrap 5, and Chart.js</strong>. Hosted locally via XAMPP for the University of Cebu CCS department. The system was developed as a final capstone project by BS Computer Science students.</p>
-          </div>
-        </div>
-
-        <div style="background:#f8faff;border:1px solid #e2eaf8;border-radius:12px;padding:1rem 1.2rem;text-align:center;margin-top:.5rem;">
-          <div style="font-size:.78rem;color:#94a3b8;font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:.35rem;">Need Help?</div>
-          <div style="font-size:.83rem;color:#334155;">Contact the CCS Lab Administrator or visit the laboratory during operating hours.</div>
-          <div style="font-size:.78rem;color:#2563eb;margin-top:.35rem;font-weight:600;">
-            <i class="fa-solid fa-location-dot"></i> University of Cebu — College of Computer Studies, Lab 524
-          </div>
-        </div>
-
+      <div class="lp-step">
+        <div class="lp-step-num">2</div>
+        <div class="lp-step-title">Reserve</div>
+        <div class="lp-step-desc">Pick an available lab and PC slot that fits your schedule.</div>
+      </div>
+      <div class="lp-step">
+        <div class="lp-step-num">3</div>
+        <div class="lp-step-title">Sit In</div>
+        <div class="lp-step-desc">Show up, get logged in by the admin, and your session is tracked automatically.</div>
+      </div>
+      <div class="lp-step">
+        <div class="lp-step-num">4</div>
+        <div class="lp-step-title">Earn &amp; Rank</div>
+        <div class="lp-step-desc">Every session earns you points. Climb the leaderboard and build your record.</div>
       </div>
     </div>
   </div>
+</section>
 
+<!-- ══════════════ LEADERBOARD ══════════════ -->
+<section class="lp-sec-mid" id="lp-lb">
+  <div class="lp-lb-inner">
 
-  <!-- Login wrapper -->
-  <div class="login-wrapper d-flex align-items-center justify-content-center p-3">
+    <!-- header -->
+    <div style="text-align:center;">
+      <div class="lp-eyebrow lt">This Semester</div>
+      <div class="lp-gold-rule" style="margin:0 auto 20px;"></div>
+      <h2 class="lp-sec-title" style="display:flex;align-items:center;justify-content:center;gap:12px;">
+        <i class="fa-solid fa-trophy" style="color:var(--gold-400);font-size:1.3rem;"></i> Top Students
+      </h2>
+      <p class="lp-sec-desc" style="margin:0 auto;">Who's putting in the most lab hours this semester?</p>
+    </div>
+
+    <!-- podium -->
+    <div class="lp-podium" id="lpPodium" style="display:none;"></div>
+
+    <!-- skeleton -->
+    <div class="lp-lb-card" id="lpSkeleton">
+      <div class="lp-sk-row"><div class="lp-sk-c"></div><div class="lp-sk-lines"><div class="lp-sk-l"></div><div class="lp-sk-l s"></div></div><div class="lp-sk-p"></div></div>
+      <div class="lp-sk-row"><div class="lp-sk-c"></div><div class="lp-sk-lines"><div class="lp-sk-l"></div><div class="lp-sk-l s"></div></div><div class="lp-sk-p"></div></div>
+      <div class="lp-sk-row"><div class="lp-sk-c"></div><div class="lp-sk-lines"><div class="lp-sk-l"></div><div class="lp-sk-l s"></div></div><div class="lp-sk-p"></div></div>
+      <div class="lp-sk-row"><div class="lp-sk-c"></div><div class="lp-sk-lines"><div class="lp-sk-l"></div><div class="lp-sk-l s"></div></div><div class="lp-sk-p"></div></div>
+      <div class="lp-sk-row" style="border-bottom:none;"><div class="lp-sk-c"></div><div class="lp-sk-lines"><div class="lp-sk-l"></div><div class="lp-sk-l s"></div></div><div class="lp-sk-p"></div></div>
+    </div>
+
+    <!-- rows 4–10 -->
+    <div class="lp-lb-card" id="lpList" style="display:none;"></div>
+
+    <!-- empty -->
+    <div class="lp-lb-card lp-lb-empty" id="lpEmpty" style="display:none;">
+      <i class="fa-solid fa-trophy"></i>
+      No leaderboard data yet — complete sit-in sessions to appear here!
+    </div>
+
+    <!-- error -->
+    <div class="lp-lb-card lp-lb-err" id="lpError" style="display:none;">
+      <i class="fa-solid fa-triangle-exclamation"></i>
+      Could not load leaderboard.
+      <button onclick="loadLpLb(true)" style="background:none;border:none;color:var(--gold-400);font-weight:700;cursor:pointer;margin-left:4px;">Try again</button>
+    </div>
+
+    <!-- footer -->
+    <div class="lp-lb-footer">
+      <span class="lp-lb-ts" id="lpUpdated"></span>
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+        <button class="lp-refresh-btn" id="lpRefBtn" onclick="loadLpLb(true)">
+          <i class="fa-solid fa-arrows-rotate"></i> Refresh
+        </button>
+        <a href="register.html"
+           style="background:var(--gold-500);color:var(--pur-900);text-decoration:none;border-radius:var(--radius-sm);padding:6px 18px;font-family:'Cinzel',serif;font-size:.78rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;display:inline-flex;align-items:center;gap:6px;transition:all .15s;"
+           onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''">
+          <i class="fa-solid fa-user-plus"></i> Join the Board
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════ LOGIN ══════════════ -->
+<section class="lp-login-sec" id="lp-login">
+  <div class="lp-login-head">
+    <div class="lp-eyebrow">Welcome Back</div>
+    <div class="lp-gold-rule" style="margin:0 auto 16px;"></div>
+    <h2 class="lp-sec-title dk" style="font-size:1.75rem;">Sign In to Your Account</h2>
+    <p style="font-family:'Barlow',sans-serif;font-size:.9rem;color:var(--text-2);max-width:400px;margin:0 auto;">
+      Enter your student credentials to access your dashboard, reservations, and session history.
+    </p>
+  </div>
+
+  <div class="login-wrapper d-flex align-items-center justify-content-center p-0" style="min-height:auto;">
     <div class="login-card d-flex">
-
-      <!-- Brand panel -->
       <div class="brand-panel d-none d-md-flex flex-column align-items-center justify-content-center p-5 col-md-5 gap-3">
-        <img src="images/logo.png" alt="UC CCS Logo" style="width:180px;height:auto;background:transparent;" onerror="this.src='images/logo.jpg'; this.onerror=null;"/>
+        <img src="images/logo.png" alt="UC CCS Logo" style="width:180px;height:auto;background:transparent;" onerror="this.src='images/logo.jpg';this.onerror=null;"/>
         <div class="gold-divider"></div>
         <p class="brand-tagline text-center mb-0">
           <strong>CCS Sit-in Portal</strong>
           University of Cebu<br>College of Computer Studies
         </p>
       </div>
-
-      <!-- Form panel -->
       <div class="form-panel d-flex flex-column justify-content-center p-5 col-12 col-md-7">
         <p class="text-muted mb-1" style="font-size:.85rem;">Welcome back 👋</p>
         <h1 class="form-title mb-1">Sign in</h1>
         <p class="text-muted mb-4" style="font-size:.88rem;">Enter your student credentials to continue</p>
-
         <form id="login-form">
-          <div id="loginError" style="
-            display:none;
-            background:#fee2e2;
-            border:1px solid #fca5a5;
-            color:#991b1b;
-            border-radius:7px;
-            padding:.55rem .85rem;
-            font-size:.82rem;
-            font-weight:500;
-            margin-bottom:1rem;
-          "></div>
-
+          <div id="loginError" style="display:none;background:#fee2e2;border:1px solid #fca5a5;color:#991b1b;border-radius:7px;padding:.55rem .85rem;font-size:.82rem;font-weight:500;margin-bottom:1rem;"></div>
           <div class="mb-3">
             <label for="idNumber" class="form-label">ID Number</label>
             <input type="text" class="form-control" id="idNumber" name="idNumber" placeholder="e.g. 20-1234-567" required/>
           </div>
-
           <div class="mb-3">
             <label for="password" class="form-label">Password</label>
             <input type="password" class="form-control" id="password" name="password" placeholder="••••••••" required/>
           </div>
-
           <div class="d-flex justify-content-between align-items-center mb-4">
             <div class="form-check">
               <input class="form-check-input" type="checkbox" id="rememberMe"/>
@@ -405,56 +495,163 @@
             </div>
             <a href="#" class="forgot-link">Forgot password?</a>
           </div>
-
           <button type="submit" class="btn btn-ccs text-white w-100 mb-3">Login</button>
           <div class="or-divider mb-3">or</div>
-          <p class="register-hint mb-0">
-            Don't have an account? <a href="register.html">Register now</a>
-          </p>
+          <p class="register-hint mb-0">Don't have an account? <a href="register.html">Register now</a></p>
         </form>
       </div>
     </div>
   </div>
+</section>
 
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-  <script src="script.js"></script>
-  <script>
-    // ── MODAL HELPERS ──────────────────────────────
-    function openHomeModal(e)  { e?.preventDefault(); closeAll(); document.getElementById('homeOverlay').classList.add('show'); }
-    function openAboutModal(e) { e?.preventDefault(); closeAll(); document.getElementById('aboutOverlay').classList.add('show'); }
-    function closeModal(id)    { document.getElementById(id).classList.remove('show'); }
-    function handleOverlayClick(e, id) { if (e.target.id === id) closeModal(id); }
+<!-- ══════════════ FOOTER ══════════════ -->
+<footer class="lp-footer">
+  <p>© 2026 <span>University of Cebu</span> · College of Computer Studies · CCS Sit-in Monitoring System</p>
+</footer>
 
-    // ── COMMUNITY DROPDOWN ─────────────────────────
-    function toggleCommunity(e) {
-      e?.preventDefault();
-      const dd = document.getElementById('commDropdown');
-      const wasOpen = dd.classList.contains('show');
-      closeAll();
-      if (!wasOpen) dd.classList.add('show');
-    }
+<!-- ══════════════ HOME MODAL ══════════════ -->
+<div class="ccs-overlay" id="homeOverlay" onclick="handleOverlayClick(event,'homeOverlay')">
+  <div class="ccs-modal-box" style="max-width:600px;">
+    <div class="home-hero">
+      <button class="ccs-modal-close" onclick="closeModal('homeOverlay')"><i class="fa-solid fa-xmark"></i></button>
+      <img src="images/logo.png" alt="CCS Logo" style="width:70px;height:70px;object-fit:contain;border-radius:50%;background:rgba(255,255,255,.1);padding:8px;" onerror="this.style.display='none'"/>
+      <h2>CCS Sit-in Monitoring System</h2>
+      <p>University of Cebu — College of Computer Studies</p>
+    </div>
+    <div class="home-stat-grid">
+      <div class="home-stat"><div class="num">4</div><div class="lbl">Labs Available</div></div>
+      <div class="home-stat"><div class="num">30</div><div class="lbl">Sessions / Student</div></div>
+      <div class="home-stat"><div class="num">24/7</div><div class="lbl">Online Access</div></div>
+    </div>
+    <div class="home-feature-list">
+      <div class="home-feature"><i class="fa-solid fa-calendar-plus"></i><span><strong>Reserve a Lab PC</strong> — Book your preferred PC in Labs 524, 526, 528, or 530</span></div>
+      <div class="home-feature"><i class="fa-solid fa-clock-rotate-left"></i><span><strong>Track Your Sessions</strong> — View your sit-in history, duration, and remaining sessions</span></div>
+      <div class="home-feature"><i class="fa-solid fa-star"></i><span><strong>Earn Points</strong> — Get rewarded for completing sit-in sessions and climb the leaderboard</span></div>
+      <div class="home-feature"><i class="fa-solid fa-desktop"></i><span><strong>Check Lab Status</strong> — See real-time PC availability before heading to the lab</span></div>
+      <div style="text-align:center;margin-top:.5rem;">
+        <a href="register.html" style="display:inline-block;background:var(--pur-900);color:var(--gold-400);text-decoration:none;border-radius:10px;padding:.65rem 2rem;font-size:.85rem;font-weight:700;font-family:'Cinzel',serif;letter-spacing:.08em;">Get Started — Register Now</a>
+      </div>
+    </div>
+  </div>
+</div>
 
-    function closeAll() {
-      document.getElementById('commDropdown').classList.remove('show');
-      // Don't auto-close modals here
-    }
+<!-- ══════════════ ABOUT MODAL ══════════════ -->
+<div class="ccs-overlay" id="aboutOverlay" onclick="handleOverlayClick(event,'aboutOverlay')">
+  <div class="ccs-modal-box">
+    <div class="ccs-modal-header">
+      <button class="ccs-modal-close" onclick="closeModal('aboutOverlay')"><i class="fa-solid fa-xmark"></i></button>
+      <div style="display:flex;align-items:center;gap:.75rem;">
+        <div style="width:42px;height:42px;border-radius:10px;background:rgba(255,255,255,.12);display:flex;align-items:center;justify-content:center;font-size:1.1rem;color:var(--gold-400);"><i class="fa-solid fa-circle-info"></i></div>
+        <div><h2>About the System</h2><p>CCS Sit-in Monitoring System — University of Cebu</p></div>
+      </div>
+    </div>
+    <div class="ccs-modal-body">
+      <div class="about-section"><div class="about-icon blue"><i class="fa-solid fa-bullseye"></i></div><div><h6>Our Purpose</h6><p>The CCS Sit-in Monitoring System streamlines management of student sit-in sessions in the College of Computer Studies labs, replacing manual logbook tracking with a fast digital solution.</p></div></div>
+      <div class="about-section"><div class="about-icon navy"><i class="fa-solid fa-flask"></i></div><div><h6>Laboratory Coverage</h6><p>Covers four CCS computer labs — <strong>Lab 524, Lab 526, Lab 528, and Lab 530</strong>. Each lab has 40 PCs viewable and reservable in real time.</p></div></div>
+      <div class="about-section"><div class="about-icon gold"><i class="fa-solid fa-user-graduate"></i></div><div><h6>For Students</h6><p>Reserve a PC, monitor sit-in history, check remaining sessions (30 per semester), earn points, and view the leaderboard after a one-time registration.</p></div></div>
+      <div class="about-section"><div class="about-icon green"><i class="fa-solid fa-shield-halved"></i></div><div><h6>For Administrators</h6><p>Log students in/out, view real-time activity, manage reservations, generate reports, post announcements, and award points from a single secure dashboard.</p></div></div>
+      <div class="about-section"><div class="about-icon red"><i class="fa-solid fa-code"></i></div><div><h6>Technology Stack</h6><p>Built with <strong>PHP, MySQL, Bootstrap 5, and Chart.js</strong>. Hosted via XAMPP for the UC CCS department. Developed as a capstone project by BS Computer Science students.</p></div></div>
+    </div>
+  </div>
+</div>
 
-    // Close community dropdown when clicking outside
-    document.addEventListener('click', function(e) {
-      const wrap = document.querySelector('.nav-community-wrap');
-      if (wrap && !wrap.contains(e.target)) {
-        document.getElementById('commDropdown').classList.remove('show');
-      }
-    });
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="script.js"></script>
+<script>
+/* ── MODAL / DROPDOWN ─────────────────────────────────────── */
+function openHomeModal(e)  { e?.preventDefault(); closeAllModals(); document.getElementById('homeOverlay').classList.add('show'); }
+function openAboutModal(e) { e?.preventDefault(); closeAllModals(); document.getElementById('aboutOverlay').classList.add('show'); }
+function closeModal(id)    { document.getElementById(id).classList.remove('show'); }
+function handleOverlayClick(e,id){ if(e.target.id===id) closeModal(id); }
+function closeAllModals()  { ['homeOverlay','aboutOverlay'].forEach(id=>closeModal(id)); }
+function toggleCommunity(e){
+  e?.preventDefault();
+  const dd=document.getElementById('commDropdown');
+  const was=dd.classList.contains('show');
+  closeAll(); if(!was) dd.classList.add('show');
+}
+function closeAll(){ document.getElementById('commDropdown').classList.remove('show'); }
+document.addEventListener('click',e=>{ const w=document.querySelector('.nav-community-wrap'); if(w&&!w.contains(e.target)) document.getElementById('commDropdown').classList.remove('show'); });
+document.addEventListener('keydown',e=>{ if(e.key==='Escape'){ closeAllModals(); document.getElementById('commDropdown').classList.remove('show'); } });
 
-    // ESC key closes everything
-    document.addEventListener('keydown', function(e) {
-      if (e.key === 'Escape') {
-        closeModal('homeOverlay');
-        closeModal('aboutOverlay');
-        document.getElementById('commDropdown').classList.remove('show');
-      }
-    });
-  </script>
+/* ── HELPERS ──────────────────────────────────────────────── */
+const PAL=[['#4338ca','#e0e7ff'],['#0f766e','#ccfbf1'],['#b45309','#fef3c7'],['#9333ea','#f3e8ff'],['#0369a1','#e0f2fe'],['#be185d','#fce7f3'],['#059669','#d1fae5'],['#dc2626','#fee2e2']];
+function pal(i){ return PAL[i%PAL.length]; }
+function ini(name){ const p=String(name).trim().split(/\s+/); return p.length>=2?(p[0][0]+p[p.length-1][0]).toUpperCase():p[0].slice(0,2).toUpperCase(); }
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+/* ── LEADERBOARD ──────────────────────────────────────────── */
+let lpLoaded=false, lpLoading=false;
+
+function loadLpLb(force){
+  if(lpLoading) return;
+  if(lpLoaded&&!force) return;
+  lpLoading=true;
+
+  const btn=document.getElementById('lpRefBtn');
+  btn.classList.add('spinning');
+
+  document.getElementById('lpSkeleton').style.display='';
+  document.getElementById('lpPodium').style.display='none';
+  document.getElementById('lpList').style.display='none';
+  document.getElementById('lpEmpty').style.display='none';
+  document.getElementById('lpError').style.display='none';
+  document.getElementById('lpUpdated').textContent='';
+
+  fetch('api/leaderboard_public.php?limit=10')
+    .then(r=>r.json())
+    .then(json=>{
+      lpLoading=false; btn.classList.remove('spinning');
+      document.getElementById('lpSkeleton').style.display='none';
+      if(!json.success) throw new Error('api');
+      const data=json.data||[];
+      if(!data.length){ document.getElementById('lpEmpty').style.display=''; return; }
+      renderLb(data); lpLoaded=true;
+      const n=new Date();
+      document.getElementById('lpUpdated').textContent='Updated '+n.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+    })
+    .catch(()=>{ lpLoading=false; btn.classList.remove('spinning'); document.getElementById('lpSkeleton').style.display='none'; document.getElementById('lpError').style.display=''; });
+}
+
+function renderLb(data){
+  const medals=['🥇','🥈','🥉'];
+  const top3=data.slice(0,3);
+  const rest=data.slice(3);
+
+  // Podium
+  const podHtml=top3.map((s,i)=>{
+    const [fg,bg]=pal(i);
+    return `<div class="lp-pod p${i+1}">
+      <div class="lp-pod-medal">${medals[i]}</div>
+      <div class="lp-pod-av" style="background:${bg};color:${fg};">${ini(s.name)}</div>
+      <div class="lp-pod-name">${esc(s.name.split(' ')[0])}</div>
+      <div class="lp-pod-pts">⭐ ${s.points} pts</div>
+      <div class="lp-pod-base"></div>
+    </div>`;
+  }).join('');
+  document.getElementById('lpPodium').innerHTML=podHtml;
+  document.getElementById('lpPodium').style.display='flex';
+
+  // List
+  if(!rest.length) return;
+  const rowsHtml=rest.map((s,i)=>{
+    const rank=i+4;
+    const [fg,bg]=pal(rank-1);
+    return `<div class="lp-lb-row">
+      <div class="lp-lb-rank">${rank}</div>
+      <div class="lp-lb-av" style="background:${bg};color:${fg};border:1.5px solid ${fg}33;">${ini(s.name)}</div>
+      <div class="lp-lb-info">
+        <div class="lp-lb-name">${esc(s.name)}</div>
+        <div class="lp-lb-course">${esc(s.course)} · ${s.total_sitins} sit-ins</div>
+      </div>
+      <div class="lp-lb-pill">⭐ ${s.points}</div>
+    </div>`;
+  }).join('');
+  document.getElementById('lpList').innerHTML=rowsHtml;
+  document.getElementById('lpList').style.display='';
+}
+
+document.addEventListener('DOMContentLoaded', loadLpLb);
+</script>
 </body>
 </html>
